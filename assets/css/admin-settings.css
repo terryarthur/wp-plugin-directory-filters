@@ -1,0 +1,382 @@
+/**
+ * WordPress Plugin Directory Filters - Admin Settings Styles
+ *
+ * Styles for the admin settings page
+ *
+ * @package WP_Plugin_Directory_Filters
+ */
+
+/* Weight Total Display */
+.weight-total-display {
+    margin: 10px 0;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #f9f9f9;
+}
+
+.weight-status-valid {
+    color: #00a32a;
+    border-color: #00a32a;
+    background: #f0f6fc;
+}
+
+.weight-status-invalid {
+    color: #d63638;
+    border-color: #d63638;
+    background: #fcf0f1;
+}
+
+.weight-status-valid .status-text {
+    font-weight: 600;
+}
+
+.weight-status-invalid .status-text {
+    font-weight: 600;
+}
+
+/* Cache Management Controls */
+.cache-management-controls {
+    margin: 15px 0;
+}
+
+.cache-management-controls .button {
+    margin-right: 10px;
+    margin-bottom: 5px;
+}
+
+.cache-statistics {
+    background: #f6f7f7;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    padding: 12px;
+    margin: 10px 0;
+}
+
+.cache-statistics h4 {
+    margin: 0 0 8px 0;
+    color: #1d2327;
+}
+
+.cache-statistics p {
+    margin: 0;
+    color: #646970;
+}
+
+/* Algorithm Explanations */
+.wp-plugin-filters-admin-info {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #ddd;
+}
+
+.algorithm-explanations {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-top: 20px;
+}
+
+@media (max-width: 1024px) {
+    .algorithm-explanations {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+}
+
+.algorithm-explanation {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    padding: 20px;
+}
+
+.algorithm-explanation h3 {
+    margin-top: 0;
+    margin-bottom: 12px;
+    color: #1d2327;
+    font-size: 16px;
+}
+
+.algorithm-explanation h4 {
+    margin-top: 15px;
+    margin-bottom: 8px;
+    color: #1d2327;
+    font-size: 14px;
+}
+
+.algorithm-explanation ul {
+    margin: 8px 0;
+    padding-left: 20px;
+}
+
+.algorithm-explanation li {
+    margin-bottom: 6px;
+    line-height: 1.5;
+}
+
+.algorithm-explanation strong {
+    color: #1d2327;
+}
+
+/* Health Badge Styling */
+.health-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+    margin-right: 8px;
+}
+
+.health-badge-green {
+    background-color: #00a32a;
+}
+
+.health-badge-light-green {
+    background-color: #4ab866;
+}
+
+.health-badge-orange {
+    background-color: #dba617;
+}
+
+.health-badge-red {
+    background-color: #d63638;
+}
+
+/* Form Field Styling */
+.form-table th {
+    padding: 15px 10px 15px 0;
+}
+
+.form-table td {
+    padding: 10px 10px 15px 0;
+}
+
+.small-text {
+    width: 60px;
+}
+
+input.invalid {
+    border-color: #d63638;
+    box-shadow: 0 0 2px rgba(214, 54, 56, 0.3);
+}
+
+.field-error {
+    display: block;
+    margin-top: 2px;
+    color: #d63638;
+    font-size: 12px;
+}
+
+/* Weight Input Styling */
+.usability-weight-input,
+.health-weight-input {
+    text-align: center;
+    font-weight: 600;
+}
+
+/* Admin Notice Styling */
+.admin-notice {
+    margin: 15px 0;
+}
+
+.notice.inline {
+    margin: 10px 0;
+    padding: 8px 12px;
+}
+
+/* Algorithm Test Results */
+.algorithm-test-results {
+    margin: 15px 0;
+    padding: 15px;
+}
+
+.algorithm-test-results h4 {
+    margin: 0 0 10px 0;
+}
+
+.algorithm-test-results ul {
+    margin: 10px 0;
+    padding-left: 20px;
+}
+
+.algorithm-test-results li {
+    margin-bottom: 5px;
+}
+
+/* Button States */
+.button:disabled,
+.button[disabled] {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .form-table th,
+    .form-table td {
+        display: block;
+        width: 100%;
+        padding: 8px 0;
+    }
+    
+    .form-table th {
+        border-bottom: none;
+        font-weight: 600;
+    }
+    
+    .cache-management-controls .button {
+        display: block;
+        width: 100%;
+        margin: 5px 0;
+        text-align: center;
+    }
+}
+
+/* Loading States */
+.loading-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #0073aa;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-right: 8px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Help Text */
+.description {
+    color: #646970;
+    font-style: italic;
+    margin-top: 5px;
+}
+
+/* Section Headers */
+.form-table h2 {
+    margin: 30px 0 20px 0;
+    padding-top: 20px;
+    border-top: 1px solid #ddd;
+    color: #1d2327;
+}
+
+.form-table h2:first-child {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+}
+
+/* Validation Summary */
+.validation-summary {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    padding: 15px;
+    margin: 20px 0;
+}
+
+.validation-summary.valid {
+    border-color: #00a32a;
+    background: #f0f6fc;
+}
+
+.validation-summary.invalid {
+    border-color: #d63638;
+    background: #fcf0f1;
+}
+
+.validation-summary h4 {
+    margin: 0 0 10px 0;
+    color: #1d2327;
+}
+
+.validation-summary ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+/* Reset Button Styling */
+.reset-defaults {
+    margin-left: 10px;
+    color: #0073aa;
+    text-decoration: none;
+    font-size: 13px;
+}
+
+.reset-defaults:hover {
+    color: #005a87;
+    text-decoration: underline;
+}
+
+/* Settings Page Header */
+.wp-plugin-filters-settings-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.wp-plugin-filters-settings-header h1 {
+    margin: 0;
+    margin-right: auto;
+}
+
+.wp-plugin-filters-settings-header .page-actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* Tabs (if needed in future) */
+.wp-plugin-filters-tabs {
+    border-bottom: 1px solid #c3c4c7;
+    margin-bottom: 20px;
+}
+
+.wp-plugin-filters-tabs .nav-tab {
+    border: 1px solid transparent;
+    border-bottom: none;
+    color: #0073aa;
+    text-decoration: none;
+    padding: 8px 16px;
+    margin-right: 4px;
+    background: #f1f1f1;
+    border-radius: 4px 4px 0 0;
+}
+
+.wp-plugin-filters-tabs .nav-tab:hover {
+    background: #e8e8e8;
+}
+
+.wp-plugin-filters-tabs .nav-tab-active {
+    background: #fff;
+    border-color: #c3c4c7;
+    color: #1d2327;
+}
+
+/* Success/Error Indicators */
+.status-indicator {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.status-indicator.success {
+    background-color: #00a32a;
+}
+
+.status-indicator.error {
+    background-color: #d63638;
+}
+
+.status-indicator.warning {
+    background-color: #dba617;
+}

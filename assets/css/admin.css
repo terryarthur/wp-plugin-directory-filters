@@ -1,0 +1,609 @@
+/**
+ * WordPress Plugin Directory Filters - Admin Styles
+ *
+ * Styles for enhanced plugin installer interface that integrate
+ * seamlessly with WordPress admin design system
+ *
+ * @package WP_Plugin_Directory_Filters
+ */
+
+/* =====================================================
+   Filter Controls Container
+   ===================================================== */
+
+.wp-plugin-filters-controls {
+    margin: 20px 0;
+    padding: 15px 20px;
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+}
+
+.wp-plugin-filters-controls .wp-plugin-filters-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: flex-end;
+    margin-bottom: 15px;
+}
+
+.wp-plugin-filters-controls .wp-plugin-filters-row:last-child {
+    margin-bottom: 0;
+}
+
+.wp-plugin-filters-field {
+    display: flex;
+    flex-direction: column;
+    min-width: 160px;
+    flex: 1;
+    max-width: 220px;
+}
+
+.wp-plugin-filters-field label {
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: #1d2327;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.wp-plugin-filter-select,
+.wp-plugin-filter-input {
+    height: 30px;
+    line-height: 2;
+    border: 1px solid #8c8f94;
+    border-radius: 3px;
+    padding: 0 8px;
+    font-size: 13px;
+    background: #fff;
+    color: #2c3338;
+}
+
+.wp-plugin-filter-select:focus,
+.wp-plugin-filter-input:focus {
+    border-color: #2271b1;
+    box-shadow: 0 0 0 1px #2271b1;
+    outline: 2px solid transparent;
+}
+
+#wp-plugin-clear-filters {
+    height: 30px;
+    margin-top: auto;
+    padding: 0 12px;
+    font-size: 13px;
+}
+
+/* =====================================================
+   Loading States
+   ===================================================== */
+
+.wp-plugin-filters-loading .wp-plugin-filters-controls {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.wp-plugin-filters-loading .plugin-browser {
+    opacity: 0.6;
+}
+
+.wp-plugin-filters-loading .wp-filter-search .spinner {
+    visibility: visible;
+    float: none;
+    margin: 0 5px 0 0;
+}
+
+/* =====================================================
+   Enhanced Plugin Cards
+   ===================================================== */
+
+.plugin-card.wp-plugin-enhanced {
+    border-left: 4px solid #00a32a;
+}
+
+.plugin-enhanced-rating {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.star-rating-usability {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.star-rating {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.star-rating .star {
+    font-size: 16px;
+    line-height: 1;
+    width: 16px;
+    height: 16px;
+}
+
+.star-rating .star-full {
+    color: #ffb900;
+}
+
+.star-rating .star-half {
+    color: #ffb900;
+}
+
+.star-rating .star-empty {
+    color: #dcdcde;
+}
+
+.star-rating .rating-number {
+    font-size: 12px;
+    color: #646970;
+    margin-left: 4px;
+    font-weight: 500;
+}
+
+.rating-label {
+    font-size: 11px;
+    color: #646970;
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+/* =====================================================
+   Health Score Badges
+   ===================================================== */
+
+.health-score-badge {
+    display: flex;
+    align-items: center;
+}
+
+.health-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    min-width: 50px;
+    justify-content: center;
+}
+
+.health-badge-green {
+    background: #00a32a;
+    color: #fff;
+}
+
+.health-badge-light-green {
+    background: #4ab866;
+    color: #fff;
+}
+
+.health-badge-orange {
+    background: #f56e28;
+    color: #fff;
+}
+
+.health-badge-red {
+    background: #d63638;
+    color: #fff;
+}
+
+.health-badge-gray {
+    background: #646970;
+    color: #fff;
+}
+
+/* =====================================================
+   Filter Summary and Notifications
+   ===================================================== */
+
+.wp-plugin-filters-summary {
+    margin: 15px 0;
+}
+
+.wp-plugin-filters-summary p {
+    margin: 0;
+    font-size: 13px;
+}
+
+.wp-plugin-filters-error {
+    margin: 15px 0;
+}
+
+.wp-plugin-filters-no-results {
+    text-align: center;
+    padding: 60px 20px;
+    color: #646970;
+    font-style: italic;
+}
+
+.wp-plugin-filters-no-results p {
+    font-size: 16px;
+    margin: 0;
+}
+
+/* =====================================================
+   Enhanced Installation Stats
+   ===================================================== */
+
+.plugin-card .column-downloaded {
+    font-size: 13px;
+    color: #646970;
+}
+
+.plugin-card .column-updated strong {
+    color: #1d2327;
+    font-weight: 600;
+}
+
+/* =====================================================
+   Responsive Design
+   ===================================================== */
+
+@media screen and (max-width: 1200px) {
+    .wp-plugin-filters-field {
+        min-width: 140px;
+        max-width: 180px;
+    }
+}
+
+@media screen and (max-width: 960px) {
+    .wp-plugin-filters-controls .wp-plugin-filters-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+    
+    .wp-plugin-filters-field {
+        min-width: auto;
+        max-width: none;
+        flex: none;
+    }
+    
+    #wp-plugin-clear-filters {
+        margin-top: 10px;
+        align-self: flex-start;
+    }
+}
+
+@media screen and (max-width: 782px) {
+    .wp-plugin-filters-controls {
+        padding: 12px 15px;
+        margin: 15px 0;
+    }
+    
+    .wp-plugin-filters-controls .wp-plugin-filters-row {
+        gap: 8px;
+        margin-bottom: 12px;
+    }
+    
+    .wp-plugin-filters-field label {
+        font-size: 14px;
+        margin-bottom: 3px;
+    }
+    
+    .wp-plugin-filter-select,
+    .wp-plugin-filter-input {
+        height: 40px;
+        font-size: 16px;
+        padding: 0 12px;
+    }
+    
+    #wp-plugin-clear-filters {
+        height: 40px;
+        padding: 0 16px;
+        font-size: 14px;
+    }
+    
+    .plugin-enhanced-rating {
+        gap: 6px;
+    }
+    
+    .star-rating-usability {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+    
+    .rating-label {
+        font-size: 10px;
+    }
+    
+    .health-badge {
+        font-size: 10px;
+        padding: 2px 6px;
+    }
+}
+
+/* =====================================================
+   High Contrast Mode Support
+   ===================================================== */
+
+@media (prefers-contrast: high) {
+    .wp-plugin-filters-controls {
+        border: 2px solid #000;
+    }
+    
+    .wp-plugin-filter-select,
+    .wp-plugin-filter-input {
+        border: 2px solid #000;
+    }
+    
+    .wp-plugin-filter-select:focus,
+    .wp-plugin-filter-input:focus {
+        border-color: #0073aa;
+        box-shadow: 0 0 0 2px #0073aa;
+    }
+    
+    .health-badge {
+        border: 1px solid #000;
+    }
+    
+    .star-rating .star-full,
+    .star-rating .star-half {
+        color: #000;
+    }
+    
+    .star-rating .star-empty {
+        color: #666;
+        border: 1px solid #000;
+        border-radius: 50%;
+    }
+}
+
+/* =====================================================
+   Reduced Motion Support
+   ===================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+    .wp-plugin-filters-error {
+        transition: none;
+    }
+    
+    .wp-plugin-filters-loading .plugin-browser {
+        transition: none;
+    }
+    
+    .wp-plugin-filters-loading .wp-plugin-filters-controls {
+        transition: none;
+    }
+}
+
+/* =====================================================
+   WordPress Color Scheme Compatibility
+   ===================================================== */
+
+/* Light color scheme (default) is handled above */
+
+/* Admin Color Scheme: Blue */
+.admin-color-blue .wp-plugin-filter-select:focus,
+.admin-color-blue .wp-plugin-filter-input:focus {
+    border-color: #096484;
+    box-shadow: 0 0 0 1px #096484;
+}
+
+.admin-color-blue .plugin-card.wp-plugin-enhanced {
+    border-left-color: #096484;
+}
+
+/* Admin Color Scheme: Coffee */
+.admin-color-coffee .wp-plugin-filter-select:focus,
+.admin-color-coffee .wp-plugin-filter-input:focus {
+    border-color: #c7a589;
+    box-shadow: 0 0 0 1px #c7a589;
+}
+
+.admin-color-coffee .plugin-card.wp-plugin-enhanced {
+    border-left-color: #c7a589;
+}
+
+/* Admin Color Scheme: Ectoplasm */
+.admin-color-ectoplasm .wp-plugin-filter-select:focus,
+.admin-color-ectoplasm .wp-plugin-filter-input:focus {
+    border-color: #a3b745;
+    box-shadow: 0 0 0 1px #a3b745;
+}
+
+.admin-color-ectoplasm .plugin-card.wp-plugin-enhanced {
+    border-left-color: #a3b745;
+}
+
+/* Admin Color Scheme: Midnight */
+.admin-color-midnight .wp-plugin-filter-select:focus,
+.admin-color-midnight .wp-plugin-filter-input:focus {
+    border-color: #e14d43;
+    box-shadow: 0 0 0 1px #e14d43;
+}
+
+.admin-color-midnight .plugin-card.wp-plugin-enhanced {
+    border-left-color: #e14d43;
+}
+
+/* Admin Color Scheme: Ocean */
+.admin-color-ocean .wp-plugin-filter-select:focus,
+.admin-color-ocean .wp-plugin-filter-input:focus {
+    border-color: #627c83;
+    box-shadow: 0 0 0 1px #627c83;
+}
+
+.admin-color-ocean .plugin-card.wp-plugin-enhanced {
+    border-left-color: #627c83;
+}
+
+/* Admin Color Scheme: Sunrise */
+.admin-color-sunrise .wp-plugin-filter-select:focus,
+.admin-color-sunrise .wp-plugin-filter-input:focus {
+    border-color: #dd823b;
+    box-shadow: 0 0 0 1px #dd823b;
+}
+
+.admin-color-sunrise .plugin-card.wp-plugin-enhanced {
+    border-left-color: #dd823b;
+}
+
+/* =====================================================
+   Print Styles
+   ===================================================== */
+
+@media print {
+    .wp-plugin-filters-controls {
+        display: none;
+    }
+    
+    .plugin-enhanced-rating {
+        display: block;
+    }
+    
+    .health-badge {
+        border: 1px solid #000;
+        background: transparent !important;
+        color: #000 !important;
+    }
+    
+    .star-rating .star {
+        color: #000 !important;
+    }
+}
+
+/* =====================================================
+   WordPress Admin Integration Fixes
+   ===================================================== */
+
+/* Ensure proper integration with WordPress admin tables */
+.wp-list-table .plugin-card {
+    margin: 0;
+    padding: 20px;
+    border: none;
+    border-bottom: 1px solid #c3c4c7;
+    box-shadow: none;
+    background: #fff;
+}
+
+.wp-list-table .plugin-card:nth-child(even) {
+    background: #f9f9f9;
+}
+
+.wp-list-table .plugin-card:hover {
+    background: #f0f0f1;
+}
+
+/* Fix for WordPress admin responsive behavior */
+@media screen and (max-width: 782px) {
+    .wp-list-table .plugin-card {
+        padding: 15px;
+    }
+}
+
+/* Integration with WordPress admin notices */
+.wp-plugin-filters-controls + .notice {
+    margin-top: 15px;
+}
+
+.notice + .wp-plugin-filters-controls {
+    margin-top: 15px;
+}
+
+/* =====================================================
+   Accessibility Improvements
+   ===================================================== */
+
+/* Focus indicators */
+.wp-plugin-filter-select:focus,
+.wp-plugin-filter-input:focus,
+#wp-plugin-clear-filters:focus {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+}
+
+/* Screen reader text */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Skip link for keyboard users */
+.wp-plugin-filters-skip-link {
+    position: absolute;
+    left: -9999px;
+    z-index: 999999;
+    padding: 8px 16px;
+    background: #1d2327;
+    color: #fff;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.wp-plugin-filters-skip-link:focus {
+    left: 6px;
+    top: 7px;
+}
+
+/* High contrast text */
+.wp-plugin-filters-field label,
+.rating-label {
+    font-weight: 600;
+}
+
+/* Ensure adequate color contrast for all text */
+.health-badge-gray {
+    background: #50575e;
+}
+
+.star-rating .rating-number,
+.rating-label {
+    color: #50575e;
+}
+
+/* =====================================================
+   WordPress Multisite Compatibility
+   ===================================================== */
+
+.network-admin .wp-plugin-filters-controls {
+    /* Network admin specific styles if needed */
+}
+
+/* =====================================================
+   RTL Language Support
+   ===================================================== */
+
+.rtl .wp-plugin-filters-controls .wp-plugin-filters-row {
+    direction: rtl;
+}
+
+.rtl .star-rating-usability {
+    flex-direction: row-reverse;
+}
+
+.rtl .star-rating {
+    flex-direction: row-reverse;
+}
+
+.rtl .star-rating .rating-number {
+    margin-left: 0;
+    margin-right: 4px;
+}
+
+.rtl .plugin-card.wp-plugin-enhanced {
+    border-left: none;
+    border-right: 4px solid #00a32a;
+}
+
+.rtl .health-score-badge {
+    justify-content: flex-end;
+}
