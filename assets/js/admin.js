@@ -79,12 +79,14 @@
             
             var filterControlsHTML = this.buildFilterControlsHTML();
             
-            // Insert after the search box
+            // Insert ABOVE the native search box instead of inside it
             if (this.$elements.filterSearch.length) {
-                this.$elements.filterSearch.after(filterControlsHTML);
+                this.$elements.filterSearch.before(filterControlsHTML);
+            } else if ($('.wp-filter').length) {
+                $('.wp-filter').before(filterControlsHTML);
             } else {
                 // Fallback insertion point
-                $('.wp-filter').prepend(filterControlsHTML);
+                $('#plugin-filter').prepend(filterControlsHTML);
             }
             
             // Cache the new elements
@@ -143,6 +145,7 @@
                             <option value="health_score">Health</option>
                         </select>
                         
+                        <button type="button" id="wp-plugin-apply-filters" class="button button-primary">Apply Filters</button>
                         <button type="button" id="wp-plugin-clear-filters" class="button">Clear</button>
                     </div>
                 </div>
@@ -155,9 +158,10 @@
         bindEvents: function() {
             var self = this;
             
-            // Filter change events
-            $(document).on('change', '.wp-plugin-filter-select', function() {
-                self.handleFilterChange();
+            // Apply filters button - only apply when clicked
+            $(document).on('click', '#wp-plugin-apply-filters', function(e) {
+                e.preventDefault();
+                self.applyFilters();
             });
             
             // Clear filters button
@@ -185,15 +189,11 @@
         },
 
         /**
-         * Handle filter changes with debouncing
+         * Handle filter changes - no longer auto-apply
          */
         handleFilterChange: function() {
-            var self = this;
-            
-            clearTimeout(this.debounceTimers.filter);
-            this.debounceTimers.filter = setTimeout(function() {
-                self.applyFilters();
-            }, this.config.debounceDelay);
+            // Filters are now only applied when Apply Filters button is clicked
+            // This prevents breaking the native search functionality
         },
 
         /**
@@ -408,7 +408,7 @@
             var installCount = this.formatInstallCount(plugin.active_installs || 0);
             var rating = plugin.rating || 0;
             var ratingStars = this.buildStarRating(rating);
-            var lastUpdated = plugin.last_updated ? this.formatRelativeTime(plugin.last_updated) : '2 weeks ago';
+            var lastUpdated = plugin.last_updated ? this.formatRelativeTime(plugin.last_updated) : plugin.last_updated_human || 'Unknown';
             
             return `
                 <div class="plugin-card plugin-card-${plugin.slug}" data-slug="${plugin.slug}">
@@ -455,7 +455,8 @@
                                 <span class="num-ratings" aria-hidden="true">(${plugin.num_ratings || 0})</span>
                             </div>
                             <div class="wp-filters-enhanced">
-                                Health: ${this.buildHealthBadge(healthScore)} | Usability: ${this.buildStarRating(usabilityRating)}
+                                <span class="health-metric"><strong>Health Score:</strong> ${this.buildHealthBadge(healthScore)}</span>
+                                <span class="usability-metric"><strong>Usability Rating:</strong> ${this.buildStarRating(usabilityRating)}</span>
                             </div>
                         </div>
                         
@@ -797,19 +798,26 @@
          * Get plugin icon URL with fallbacks
          */
         getPluginIcon: function(plugin) {
-            // Try different icon sources from WordPress.org API
+            // First try the direct icon URL from WordPress.org API response
             if (plugin.icons) {
-                // Prefer 1x for better performance, fallback to 2x, then default
-                if (plugin.icons['1x']) return plugin.icons['1x'];
+                // Prefer higher resolution icons first
                 if (plugin.icons['2x']) return plugin.icons['2x'];
+                if (plugin.icons['1x']) return plugin.icons['1x'];
                 if (plugin.icons.default) return plugin.icons.default;
                 if (plugin.icons.svg) return plugin.icons.svg;
             }
             
-            // Try alternative icon field
-            if (plugin.icon) return plugin.icon;
+            // Try alternative icon field from API
+            if (plugin.icon && plugin.icon !== 'default') {
+                return plugin.icon;
+            }
             
-            // Use WordPress default plugin icon
+            // Construct icon URL based on plugin slug (WordPress.org standard)
+            if (plugin.slug) {
+                return `https://ps.w.org/${plugin.slug}/assets/icon-128x128.png?rev=${plugin.version || '1'}`;
+            }
+            
+            // Use WordPress default plugin icon as last resort
             return this.getDefaultIcon();
         },
 
@@ -817,8 +825,8 @@
          * Get default plugin icon (WordPress standard)
          */
         getDefaultIcon: function() {
-            // Return WordPress's default plugin icon
-            return '/wp-admin/images/generic.png';
+            // Use the WordPress.org plugin directory default icon
+            return 'https://s.w.org/plugins/geopattern-icon/plugin_ffffff.svg';
         },
 
         /**

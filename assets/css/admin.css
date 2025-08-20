@@ -12,32 +12,38 @@
    ===================================================== */
 
 .wp-plugin-filters-controls {
-    margin: 10px 0;
-    padding: 8px 12px;
-    background: #fff;
-    border: 1px solid #c3c4c7;
+    margin: 5px 0 10px 0;
+    padding: 6px 10px;
+    background: #f9f9f9;
+    border: 1px solid #ddd;
     border-radius: 3px;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.04);
 }
 
 .wp-plugin-filters-inline {
     display: flex;
     align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
+    gap: 8px;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
 }
 
 .wp-plugin-filters-inline select {
-    min-width: 120px;
-    height: 28px;
-    font-size: 12px;
-    padding: 2px 6px;
+    min-width: 100px;
+    height: 26px;
+    font-size: 11px;
+    padding: 2px 5px;
+    border: 1px solid #ddd;
+    border-radius: 2px;
+    background: #fff;
 }
 
 .wp-plugin-filters-inline .button {
-    height: 28px;
-    padding: 0 10px;
-    font-size: 12px;
-    line-height: 26px;
+    height: 26px;
+    padding: 0 8px;
+    font-size: 11px;
+    line-height: 24px;
+    margin-left: 4px;
 }
 
 .wp-plugin-filters-field label {
@@ -185,8 +191,18 @@
 .wp-filters-enhanced {
     font-size: 11px;
     color: #646970;
-    margin-top: 4px;
+    margin-top: 6px;
     font-weight: normal;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.wp-filters-enhanced .health-metric,
+.wp-filters-enhanced .usability-metric {
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .plugin-card .name {
