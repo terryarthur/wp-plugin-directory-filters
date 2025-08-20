@@ -30,6 +30,11 @@ class WP_Plugin_Filters_AJAX_Handler {
      * Constructor
      */
     public function __construct() {
+        // Ensure plugin directory constant is defined
+        if (!defined('WP_PLUGIN_FILTERS_PLUGIN_DIR')) {
+            define('WP_PLUGIN_FILTERS_PLUGIN_DIR', plugin_dir_path(dirname(__FILE__)));
+        }
+        
         require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-security-handler.php';
         $this->security_handler = new WP_Plugin_Filters_Security_Handler();
     }
@@ -38,8 +43,18 @@ class WP_Plugin_Filters_AJAX_Handler {
      * Handle plugin filter request
      */
     public function handle_filter_request() {
-        // Security validation
-        $security_check = $this->security_handler->validate_ajax_request('wp_plugin_filter_action', 'install_plugins');
+        // Add error handling for debugging
+        try {
+            // Ensure all required classes are loaded
+            if (!class_exists('WP_Plugin_Filters_API_Handler')) {
+                require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-api-handler.php';
+            }
+            if (!class_exists('WP_Plugin_Filters_Cache_Manager')) {
+                require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-cache-manager.php';
+            }
+            
+            // Security validation
+            $security_check = $this->security_handler->validate_ajax_request('wp_plugin_filter_action', 'install_plugins');
         if (is_wp_error($security_check)) {
             wp_send_json_error(array(
                 'message' => $security_check->get_error_message(),
@@ -82,10 +97,19 @@ class WP_Plugin_Filters_AJAX_Handler {
             wp_send_json_success($results);
             
         } catch (Exception $e) {
-            error_log('[WP Plugin Filters] Filter request exception: ' . $e->getMessage());
+            error_log('[WP Plugin Filters] Filter request exception: ' . $e->getMessage() . ' in ' . $e->getFile() . ' on line ' . $e->getLine());
             wp_send_json_error(array(
                 'message' => __('An error occurred while processing your request.', 'wp-plugin-filters'),
-                'code' => 'internal_error'
+                'code' => 'internal_error',
+                'debug' => WP_DEBUG ? $e->getMessage() : null
+            ), 500);
+        } catch (Error $e) {
+            // Catch PHP 7+ fatal errors
+            error_log('[WP Plugin Filters] PHP Fatal error in handle_filter_request: ' . $e->getMessage() . ' in ' . $e->getFile() . ' on line ' . $e->getLine());
+            wp_send_json_error(array(
+                'message' => __('A PHP fatal error occurred. Please check error logs.', 'wp-plugin-filters'),
+                'code' => 'php_fatal_error',
+                'debug' => WP_DEBUG ? $e->getMessage() : null
             ), 500);
         }
     }

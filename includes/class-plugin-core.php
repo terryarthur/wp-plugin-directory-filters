@@ -75,6 +75,9 @@ class WP_Plugin_Directory_Filters {
         add_action('wp_ajax_wp_plugin_rating', array($this, 'handle_rating_calculation'));
         add_action('wp_ajax_wp_plugin_clear_cache', array($this, 'handle_cache_clear'));
         
+        // Debug AJAX endpoint
+        add_action('wp_ajax_wp_plugin_test', array($this, 'handle_test_request'));
+        
         // Multisite hooks
         if (is_multisite()) {
             add_action('network_admin_menu', array($this, 'add_network_admin_menu'));
@@ -279,6 +282,28 @@ class WP_Plugin_Directory_Filters {
     public function handle_cache_clear() {
         $ajax_handler = new WP_Plugin_Filters_AJAX_Handler();
         $ajax_handler->handle_cache_clear();
+    }
+    
+    /**
+     * Handle test AJAX request (for debugging)
+     */
+    public function handle_test_request() {
+        try {
+            // Simple test response
+            wp_send_json_success(array(
+                'message' => 'AJAX is working correctly',
+                'timestamp' => current_time('mysql'),
+                'user_id' => get_current_user_id(),
+                'wp_version' => get_bloginfo('version'),
+                'php_version' => PHP_VERSION
+            ));
+        } catch (Exception $e) {
+            error_log('[WP Plugin Filters] Test AJAX error: ' . $e->getMessage());
+            wp_send_json_error(array(
+                'message' => 'Test AJAX failed: ' . $e->getMessage(),
+                'code' => 'test_error'
+            ), 500);
+        }
     }
     
     /**
