@@ -61,7 +61,8 @@
                 pluginGrid: $('.wp-list-table.plugins'),
                 spinner: $('.wp-filter-search .spinner'),
                 searchInput: $('#plugin-search-input'),
-                resultsContainer: $('.plugin-browser .wp-list-table tbody'),
+                resultsContainer: $('.plugin-browser .plugin-list-table-body, .plugin-browser .wp-list-table tbody, #the-list'),
+                pluginCards: $('.plugin-browser .plugin-card'),
                 paginationLinks: $('.tablenav-pages')
             };
         },
@@ -329,15 +330,18 @@
          * Handle successful filter response
          */
         handleFilterSuccess: function(response) {
+            console.log('[WP Plugin Filters] AJAX Success:', response);
             this.hideLoadingState();
             this.state.retryCount = 0;
             
             if (response.success && response.data) {
+                console.log('[WP Plugin Filters] Updating grid with data:', response.data);
                 this.updatePluginGrid(response.data);
                 this.updateURL(this.state.currentFilters);
                 this.updatePagination(response.data.pagination);
                 this.showFilterSummary(response.data.filters_applied);
             } else {
+                console.error('[WP Plugin Filters] Invalid response structure:', response);
                 this.showError(response.data && response.data.message ? response.data.message : wpPluginFilters.strings.error);
             }
         },
@@ -366,8 +370,43 @@
         updatePluginGrid: function(data) {
             var self = this;
             
+            console.log('[WP Plugin Filters] updatePluginGrid called with:', data);
+            
             if (!data.plugins || !Array.isArray(data.plugins)) {
+                console.error('[WP Plugin Filters] No plugins array in data:', data);
                 this.showNoResults();
+                return;
+            }
+            
+            console.log('[WP Plugin Filters] Found', data.plugins.length, 'plugins to display');
+            
+            // Try multiple selectors to find the results container
+            var containerSelectors = [
+                '.plugin-browser .plugin-list',
+                '.wp-list-table tbody',
+                '#the-list',
+                '.plugin-browser',
+                '#plugin-filter',
+                '.plugin-install-tab-featured .plugin-list',
+                '.plugin-install-tab-popular .plugin-list'
+            ];
+            
+            var $container = null;
+            for (var i = 0; i < containerSelectors.length; i++) {
+                $container = $(containerSelectors[i]).first();
+                if ($container.length) {
+                    console.log('[WP Plugin Filters] Found container with selector:', containerSelectors[i]);
+                    break;
+                }
+            }
+            
+            if (!$container || !$container.length) {
+                console.error('[WP Plugin Filters] Could not find results container. Available elements:', {
+                    pluginBrowser: $('.plugin-browser').length,
+                    pluginList: $('.plugin-list').length,
+                    wpListTable: $('.wp-list-table').length,
+                    theList: $('#the-list').length
+                });
                 return;
             }
             
@@ -375,15 +414,23 @@
                 return self.buildPluginCard(plugin);
             }).join('');
             
-            if (this.$elements.resultsContainer.length) {
-                this.$elements.resultsContainer.html(pluginCards);
-            } else {
-                // Fallback for different DOM structures
-                $('.plugin-browser .wp-list-table tbody').html(pluginCards);
+            console.log('[WP Plugin Filters] Generated', pluginCards.length, 'characters of HTML');
+            
+            // Replace the content
+            $container.html(pluginCards);
+            
+            // Update results count if available
+            if (data.pagination && data.pagination.total_results) {
+                $('.displaying-num').text(data.pagination.total_results + ' items');
             }
             
             // Enhance new cards
-            this.enhancePluginCards($('.plugin-card'));
+            this.enhancePluginCards($container.find('.plugin-card'));
+            
+            // Trigger WordPress events for compatibility
+            $(document).trigger('wp-plugin-install-success');
+            
+            console.log('[WP Plugin Filters] Grid update completed');
         },
 
         /**
