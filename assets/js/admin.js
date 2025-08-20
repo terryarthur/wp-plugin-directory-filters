@@ -437,12 +437,12 @@
          * Build HTML for a plugin card with enhanced information
          */
         buildPluginCard: function(plugin) {
-            var usabilityStars = this.buildStarRating(plugin.usability_rating || plugin.rating || 0);
-            var healthBadge = this.buildHealthBadge(plugin.health_score || 0, plugin.health_color || 'gray');
+            var healthBadge = this.buildHealthBadge(plugin.health_score || 75, plugin.health_color || 'gray');
             var lastUpdatedHuman = plugin.last_updated_human || this.formatRelativeTime(plugin.last_updated);
             var iconUrl = this.getPluginIcon(plugin);
             var installCount = this.formatInstallCount(plugin.active_installs || 0);
-            var standardRating = this.buildStarRating(plugin.rating || 0);
+            var rating = plugin.rating || 0;
+            var ratingStars = this.buildStarRating(rating);
             
             return `
                 <div class="plugin-card plugin-card-${plugin.slug}" data-slug="${plugin.slug}">
@@ -457,11 +457,6 @@
                                     ${this.escapeHtml(plugin.name)}
                                 </a>
                             </h3>
-                        </div>
-                        
-                        <div class="plugin-icon">
-                            <img src="${iconUrl}" alt="${this.escapeHtml(plugin.name)} icon" 
-                                 onerror="this.src='${this.getDefaultIcon()}'">
                         </div>
                         
                         <div class="action-links">
@@ -497,22 +492,11 @@
                     <div class="plugin-card-bottom">
                         <div class="vers column-rating">
                             <div class="star-rating">
-                                ${standardRating}
+                                ${ratingStars}
                                 <span class="num-ratings" aria-hidden="true">(${plugin.num_ratings || 0})</span>
                             </div>
-                            
-                            <!-- Enhanced Ratings -->
-                            <div class="wp-plugin-enhanced-metrics">
-                                <div class="usability-rating">
-                                    <span class="label">Usability:</span>
-                                    <div class="star-rating-small">
-                                        ${usabilityStars}
-                                    </div>
-                                </div>
-                                <div class="health-score">
-                                    <span class="label">Health:</span>
-                                    ${healthBadge}
-                                </div>
+                            <div class="plugin-health-badge">
+                                ${healthBadge}
                             </div>
                         </div>
                         
@@ -522,7 +506,7 @@
                         </div>
                         
                         <div class="column-downloaded">
-                            <span class="install-count">${installCount}+ installs</span>
+                            ${installCount}+ active installations
                         </div>
                         
                         <div class="column-compatibility">
@@ -530,6 +514,10 @@
                                 <strong>Tested up to:</strong> ${plugin.tested || 'Unknown'}
                             </span>
                         </div>
+                    </div>
+                    
+                    <div class="plugin-icon">
+                        <img src="${iconUrl}" alt="">
                     </div>
                 </div>
             `;
@@ -848,17 +836,28 @@
          * Get plugin icon URL with fallbacks
          */
         getPluginIcon: function(plugin) {
+            // Try different icon sources from WordPress.org API
             if (plugin.icons) {
-                return plugin.icons['2x'] || plugin.icons['1x'] || plugin.icons.default || this.getDefaultIcon();
+                // Prefer 1x for better performance, fallback to 2x, then default
+                if (plugin.icons['1x']) return plugin.icons['1x'];
+                if (plugin.icons['2x']) return plugin.icons['2x'];
+                if (plugin.icons.default) return plugin.icons.default;
+                if (plugin.icons.svg) return plugin.icons.svg;
             }
+            
+            // Try alternative icon field
+            if (plugin.icon) return plugin.icon;
+            
+            // Use WordPress default plugin icon
             return this.getDefaultIcon();
         },
 
         /**
-         * Get default plugin icon
+         * Get default plugin icon (WordPress standard)
          */
         getDefaultIcon: function() {
-            return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTI4IiBoZWlnaHQ9IjEyOCIgdmlld0JveD0iMCAwIDEyOCAxMjgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMjgiIGhlaWdodD0iMTI4IiBmaWxsPSIjZjZmN2Y3Ii8+CjxwYXRoIGQ9Ik00MCA0MEg4OFY4OEg0MFY0MFoiIGZpbGw9IiNkY2RjZGMiLz4KPC9zdmc+';
+            // Return WordPress's default plugin icon
+            return '/wp-admin/images/generic.png';
         },
 
         /**

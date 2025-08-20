@@ -166,27 +166,35 @@
     background-color: #d63638;
 }
 
-/* Plugin Icon Improvements */
+/* Plugin Icon - WordPress Standard Layout */
 .plugin-card .plugin-icon {
     position: absolute;
-    top: 15px;
-    right: 15px;
+    top: 20px;
+    right: 20px;
     width: 64px;
     height: 64px;
+    z-index: 1;
 }
 
 .plugin-card .plugin-icon img {
-    width: 100%;
-    height: 100%;
-    border-radius: 4px;
-    border: 1px solid #c3c4c7;
-    object-fit: cover;
+    width: 64px;
+    height: 64px;
+    border-radius: 3px;
+    border: 1px solid #dcdcde;
+    background: #f6f7f7;
 }
 
-/* Plugin Card Layout Adjustments */
+/* Plugin Card Layout - match WordPress exactly */
 .plugin-card .plugin-card-top {
     position: relative;
-    padding-right: 85px; /* Make room for icon */
+    padding: 20px 90px 20px 20px; /* Room for icon */
+    min-height: 80px;
+}
+
+/* Health Badge Positioning */
+.plugin-health-badge {
+    margin-top: 8px;
+    display: block;
 }
 
 .plugin-card .name {
