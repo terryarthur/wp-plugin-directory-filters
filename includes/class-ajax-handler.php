@@ -55,34 +55,33 @@ class WP_Plugin_Filters_AJAX_Handler {
             
             // Security validation
             $security_check = $this->security_handler->validate_ajax_request('wp_plugin_filter_action', 'install_plugins');
-        if (is_wp_error($security_check)) {
-            wp_send_json_error(array(
-                'message' => $security_check->get_error_message(),
-                'code' => $security_check->get_error_code()
-            ), 403);
-        }
-        
-        // Rate limiting check
-        $rate_limit_check = $this->check_rate_limit();
-        if (is_wp_error($rate_limit_check)) {
-            wp_send_json_error(array(
-                'message' => $rate_limit_check->get_error_message(),
-                'code' => 'rate_limit_exceeded'
-            ), 429);
-        }
-        
-        // Sanitize and validate input
-        $request_data = $this->sanitize_filter_request($_POST);
-        $validation_result = $this->validate_filter_request($request_data);
-        
-        if (is_wp_error($validation_result)) {
-            wp_send_json_error(array(
-                'message' => $validation_result->get_error_message(),
-                'code' => 'validation_error'
-            ), 400);
-        }
-        
-        try {
+            if (is_wp_error($security_check)) {
+                wp_send_json_error(array(
+                    'message' => $security_check->get_error_message(),
+                    'code' => $security_check->get_error_code()
+                ), 403);
+            }
+            
+            // Rate limiting check
+            $rate_limit_check = $this->check_rate_limit();
+            if (is_wp_error($rate_limit_check)) {
+                wp_send_json_error(array(
+                    'message' => $rate_limit_check->get_error_message(),
+                    'code' => 'rate_limit_exceeded'
+                ), 429);
+            }
+            
+            // Sanitize and validate input
+            $request_data = $this->sanitize_filter_request($_POST);
+            $validation_result = $this->validate_filter_request($request_data);
+            
+            if (is_wp_error($validation_result)) {
+                wp_send_json_error(array(
+                    'message' => $validation_result->get_error_message(),
+                    'code' => 'validation_error'
+                ), 400);
+            }
+            
             // Execute filtered search
             $results = $this->execute_filtered_search($request_data);
             
