@@ -12,32 +12,32 @@
    ===================================================== */
 
 .wp-plugin-filters-controls {
-    margin: 20px 0;
-    padding: 15px 20px;
+    margin: 10px 0;
+    padding: 8px 12px;
     background: #fff;
     border: 1px solid #c3c4c7;
-    border-radius: 4px;
-    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+    border-radius: 3px;
 }
 
-.wp-plugin-filters-controls .wp-plugin-filters-row {
+.wp-plugin-filters-inline {
     display: flex;
+    align-items: center;
+    gap: 10px;
     flex-wrap: wrap;
-    gap: 15px;
-    align-items: flex-end;
-    margin-bottom: 15px;
 }
 
-.wp-plugin-filters-controls .wp-plugin-filters-row:last-child {
-    margin-bottom: 0;
+.wp-plugin-filters-inline select {
+    min-width: 120px;
+    height: 28px;
+    font-size: 12px;
+    padding: 2px 6px;
 }
 
-.wp-plugin-filters-field {
-    display: flex;
-    flex-direction: column;
-    min-width: 160px;
-    flex: 1;
-    max-width: 220px;
+.wp-plugin-filters-inline .button {
+    height: 28px;
+    padding: 0 10px;
+    font-size: 12px;
+    line-height: 26px;
 }
 
 .wp-plugin-filters-field label {
@@ -166,14 +166,12 @@
     background-color: #d63638;
 }
 
-/* Plugin Icon - WordPress Standard Layout */
+/* Plugin Cards - Match WordPress Native Exactly */
 .plugin-card .plugin-icon {
-    position: absolute;
-    top: 20px;
-    right: 20px;
+    float: right;
+    margin-left: 15px;
     width: 64px;
     height: 64px;
-    z-index: 1;
 }
 
 .plugin-card .plugin-icon img {
@@ -181,28 +179,14 @@
     height: 64px;
     border-radius: 3px;
     border: 1px solid #dcdcde;
-    background: #f6f7f7;
 }
 
-/* Plugin Card Layout - match WordPress exactly */
-.plugin-card .plugin-card-top {
-    position: relative;
-    padding: 20px 90px 20px 20px; /* Room for icon */
-    min-height: 80px;
-}
-
-/* Health Badge Positioning */
-.plugin-health-badge {
-    margin-top: 8px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 12px;
-}
-
-.plugin-health-badge .health-label {
-    font-weight: 600;
-    color: #50575e;
+/* Enhanced metrics - compact inline */
+.wp-filters-enhanced {
+    font-size: 11px;
+    color: #646970;
+    margin-top: 4px;
+    font-weight: normal;
 }
 
 .plugin-card .name {
