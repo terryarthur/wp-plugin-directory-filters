@@ -101,6 +101,121 @@
     border-left: 4px solid #00a32a;
 }
 
+/* Enhanced Plugin Card Layout */
+.wp-plugin-enhanced-metrics {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid #f0f0f1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 12px;
+}
+
+.wp-plugin-enhanced-metrics .usability-rating,
+.wp-plugin-enhanced-metrics .health-score {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.wp-plugin-enhanced-metrics .label {
+    font-weight: 600;
+    color: #50575e;
+    min-width: 60px;
+    font-size: 11px;
+}
+
+.star-rating-small {
+    display: inline-flex;
+    align-items: center;
+}
+
+.star-rating-small .star {
+    width: 12px;
+    height: 12px;
+    margin-right: 1px;
+}
+
+/* Health Score Badges */
+.wp-health-badge {
+    display: inline-block;
+    padding: 3px 7px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #fff;
+    min-width: 24px;
+    text-align: center;
+    line-height: 1;
+}
+
+.wp-health-excellent {
+    background-color: #00a32a;
+}
+
+.wp-health-good {
+    background-color: #72aee6;
+}
+
+.wp-health-fair {
+    background-color: #dba617;
+}
+
+.wp-health-poor {
+    background-color: #d63638;
+}
+
+/* Plugin Icon Improvements */
+.plugin-card .plugin-icon {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 64px;
+    height: 64px;
+}
+
+.plugin-card .plugin-icon img {
+    width: 100%;
+    height: 100%;
+    border-radius: 4px;
+    border: 1px solid #c3c4c7;
+    object-fit: cover;
+}
+
+/* Plugin Card Layout Adjustments */
+.plugin-card .plugin-card-top {
+    position: relative;
+    padding-right: 85px; /* Make room for icon */
+}
+
+.plugin-card .name {
+    margin-bottom: 10px;
+}
+
+.plugin-card .desc {
+    margin-bottom: 15px;
+}
+
+.plugin-card .column-updated,
+.plugin-card .column-downloaded,
+.plugin-card .column-compatibility {
+    font-size: 12px;
+    margin-bottom: 6px;
+    line-height: 1.4;
+}
+
+.plugin-card .column-updated strong,
+.plugin-card .column-compatibility strong {
+    color: #50575e;
+    font-weight: 600;
+}
+
+.plugin-card .install-count {
+    font-weight: 600;
+    color: #0073aa;
+}
+
 .plugin-enhanced-rating {
     display: flex;
     flex-direction: column;

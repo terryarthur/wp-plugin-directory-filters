@@ -440,32 +440,47 @@
             var usabilityStars = this.buildStarRating(plugin.usability_rating || plugin.rating || 0);
             var healthBadge = this.buildHealthBadge(plugin.health_score || 0, plugin.health_color || 'gray');
             var lastUpdatedHuman = plugin.last_updated_human || this.formatRelativeTime(plugin.last_updated);
+            var iconUrl = this.getPluginIcon(plugin);
+            var installCount = this.formatInstallCount(plugin.active_installs || 0);
+            var standardRating = this.buildStarRating(plugin.rating || 0);
             
             return `
-                <div class="plugin-card plugin-card-${plugin.slug}">
+                <div class="plugin-card plugin-card-${plugin.slug}" data-slug="${plugin.slug}">
                     <div class="plugin-card-top">
                         <div class="name column-name">
                             <h3>
-                                <a href="#" class="thickbox open-plugin-details-modal" 
+                                <a href="${this.getPluginDetailsUrl(plugin.slug)}" 
+                                   class="thickbox open-plugin-details-modal" 
+                                   aria-label="${this.escapeHtml(plugin.name)} details"
+                                   data-title="${this.escapeHtml(plugin.name)}"
                                    data-slug="${plugin.slug}">
                                     ${this.escapeHtml(plugin.name)}
-                                    <img src="${plugin.icons && plugin.icons['1x'] ? plugin.icons['1x'] : ''}" 
-                                         class="plugin-icon" alt="">
                                 </a>
                             </h3>
+                        </div>
+                        
+                        <div class="plugin-icon">
+                            <img src="${iconUrl}" alt="${this.escapeHtml(plugin.name)} icon" 
+                                 onerror="this.src='${this.getDefaultIcon()}'">
                         </div>
                         
                         <div class="action-links">
                             <ul class="plugin-action-buttons">
                                 <li>
-                                    <button class="button activate-now" data-slug="${plugin.slug}">
-                                        ${wpPluginFilters.strings.installNow || 'Install Now'}
-                                    </button>
+                                    <a class="install-now button" 
+                                       data-slug="${plugin.slug}" 
+                                       href="${this.getInstallUrl(plugin.slug)}"
+                                       aria-label="Install ${this.escapeHtml(plugin.name)} now">
+                                        Install Now
+                                    </a>
                                 </li>
                                 <li>
-                                    <a href="#" class="thickbox open-plugin-details-modal" 
+                                    <a href="${this.getPluginDetailsUrl(plugin.slug)}" 
+                                       class="thickbox open-plugin-details-modal" 
+                                       aria-label="More information about ${this.escapeHtml(plugin.name)}"
+                                       data-title="${this.escapeHtml(plugin.name)}"
                                        data-slug="${plugin.slug}">
-                                        ${wpPluginFilters.strings.moreDetails || 'More Details'}
+                                        More Details
                                     </a>
                                 </li>
                             </ul>
@@ -474,35 +489,45 @@
                         <div class="desc column-description">
                             <p>${this.escapeHtml(plugin.short_description || '')}</p>
                             <p class="authors">
-                                <cite>${wpPluginFilters.strings.by || 'By'} ${this.escapeHtml(plugin.author || '')}</cite>
+                                <cite>By ${this.escapeHtml(plugin.author || 'Unknown')}</cite>
                             </p>
                         </div>
                     </div>
                     
                     <div class="plugin-card-bottom">
                         <div class="vers column-rating">
-                            <div class="plugin-enhanced-rating">
-                                <div class="star-rating-usability">
-                                    ${usabilityStars}
-                                    <span class="rating-label">${wpPluginFilters.strings.usability || 'Usability'}</span>
+                            <div class="star-rating">
+                                ${standardRating}
+                                <span class="num-ratings" aria-hidden="true">(${plugin.num_ratings || 0})</span>
+                            </div>
+                            
+                            <!-- Enhanced Ratings -->
+                            <div class="wp-plugin-enhanced-metrics">
+                                <div class="usability-rating">
+                                    <span class="label">Usability:</span>
+                                    <div class="star-rating-small">
+                                        ${usabilityStars}
+                                    </div>
                                 </div>
-                                <div class="health-score-badge">
+                                <div class="health-score">
+                                    <span class="label">Health:</span>
                                     ${healthBadge}
                                 </div>
                             </div>
                         </div>
                         
                         <div class="column-updated">
-                            <strong>${lastUpdatedHuman}</strong>
+                            <strong>Last Updated:</strong>
+                            <span>${lastUpdatedHuman}</span>
                         </div>
                         
                         <div class="column-downloaded">
-                            ${this.formatInstallCount(plugin.active_installs || 0)} ${wpPluginFilters.strings.activeInstalls || 'active installations'}
+                            <span class="install-count">${installCount}+ installs</span>
                         </div>
                         
                         <div class="column-compatibility">
                             <span class="compatibility-compatible">
-                                ${wpPluginFilters.strings.compatibleWith || 'Compatible with'} ${plugin.tested || ''}
+                                <strong>Tested up to:</strong> ${plugin.tested || 'Unknown'}
                             </span>
                         </div>
                     </div>
@@ -542,10 +567,31 @@
          * Build health score badge HTML
          */
         buildHealthBadge: function(score, color) {
-            var badgeClass = 'health-badge health-badge-' + color;
-            var badgeText = score + '/100';
+            score = parseInt(score) || 0;
             
-            return `<span class="${badgeClass}" data-score="${score}" title="${wpPluginFilters.strings.healthScore || 'Health Score'}: ${score}/100">${badgeText}</span>`;
+            // Auto-determine color based on score if not provided
+            if (!color || color === 'gray') {
+                if (score >= 85) color = 'excellent';
+                else if (score >= 70) color = 'good';
+                else if (score >= 40) color = 'fair';
+                else color = 'poor';
+            }
+            
+            var badgeClass = 'wp-health-badge wp-health-' + color;
+            var badgeText = score;
+            var badgeLabel = this.getHealthLabel(score);
+            
+            return `<span class="${badgeClass}" data-score="${score}" title="Health Score: ${score}/100 (${badgeLabel})">${badgeText}</span>`;
+        },
+
+        /**
+         * Get health label based on score
+         */
+        getHealthLabel: function(score) {
+            if (score >= 85) return 'Excellent';
+            if (score >= 70) return 'Good';
+            if (score >= 40) return 'Fair';
+            return 'Poor';
         },
 
         /**
@@ -796,6 +842,39 @@
                     });
                 }
             });
+        },
+
+        /**
+         * Get plugin icon URL with fallbacks
+         */
+        getPluginIcon: function(plugin) {
+            if (plugin.icons) {
+                return plugin.icons['2x'] || plugin.icons['1x'] || plugin.icons.default || this.getDefaultIcon();
+            }
+            return this.getDefaultIcon();
+        },
+
+        /**
+         * Get default plugin icon
+         */
+        getDefaultIcon: function() {
+            return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTI4IiBoZWlnaHQ9IjEyOCIgdmlld0JveD0iMCAwIDEyOCAxMjgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMjgiIGhlaWdodD0iMTI4IiBmaWxsPSIjZjZmN2Y3Ii8+CjxwYXRoIGQ9Ik00MCA0MEg4OFY4OEg0MFY0MFoiIGZpbGw9IiNkY2RjZGMiLz4KPC9zdmc+';
+        },
+
+        /**
+         * Get plugin details URL
+         */
+        getPluginDetailsUrl: function(slug) {
+            var adminUrl = (typeof ajaxurl !== 'undefined') ? ajaxurl.replace('admin-ajax.php', '') : '/wp-admin/';
+            return adminUrl + 'plugin-install.php?tab=plugin-information&plugin=' + encodeURIComponent(slug) + '&TB_iframe=true&width=772&height=550';
+        },
+
+        /**
+         * Get plugin install URL
+         */
+        getInstallUrl: function(slug) {
+            var adminUrl = (typeof ajaxurl !== 'undefined') ? ajaxurl.replace('admin-ajax.php', '') : '/wp-admin/';
+            return adminUrl + 'update.php?action=install-plugin&plugin=' + encodeURIComponent(slug);
         },
 
         /**
