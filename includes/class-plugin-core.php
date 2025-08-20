@@ -190,26 +190,10 @@ class WP_Plugin_Directory_Filters {
      * Enhance plugin installer page
      */
     public function enhance_plugin_installer() {
-        // Add enhancement JavaScript and CSS to plugin installer page
-        add_action('admin_footer', array($this, 'inject_enhancement_javascript'));
+        // Add enhancement CSS to plugin installer page
         add_action('admin_head', array($this, 'inject_enhancement_styles'));
     }
     
-    /**
-     * Inject JavaScript enhancements
-     */
-    public function inject_enhancement_javascript() {
-        ?>
-        <script type="text/javascript">
-        jQuery(document).ready(function($) {
-            // Initialize plugin filters enhancement
-            if (typeof WPPluginFilters !== 'undefined') {
-                WPPluginFilters.init();
-            }
-        });
-        </script>
-        <?php
-    }
     
     /**
      * Inject CSS enhancements

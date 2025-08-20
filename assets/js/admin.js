@@ -70,6 +70,12 @@
          * Inject filter controls into the WordPress admin interface
          */
         injectFilterControls: function() {
+            // Prevent double injection
+            if ($('.wp-plugin-filters-controls').length > 0) {
+                console.log('[WP Plugin Filters] Filter controls already exist, skipping injection');
+                return;
+            }
+            
             var filterControlsHTML = this.buildFilterControlsHTML();
             
             // Insert after the search box
