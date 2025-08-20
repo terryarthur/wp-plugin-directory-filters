@@ -723,6 +723,68 @@
         },
 
         /**
+         * Enhance multiple plugin cards with ratings and additional info
+         */
+        enhancePluginCards: function($cards) {
+            var self = this;
+            
+            if (!$cards || $cards.length === 0) {
+                return;
+            }
+            
+            $cards.each(function() {
+                var $card = $(this);
+                var pluginSlug = self.extractPluginSlug($card);
+                
+                if (pluginSlug) {
+                    // Load ratings for this plugin card
+                    self.loadPluginRatings($card);
+                    
+                    // Add enhanced styling
+                    $card.addClass('wp-plugin-enhanced');
+                    
+                    // Add click handler for detailed ratings
+                    $card.find('.plugin-card-top').off('click.wpPluginFilters').on('click.wpPluginFilters', function() {
+                        self.loadPluginRatings($card);
+                    });
+                }
+            });
+        },
+
+        /**
+         * Extract plugin slug from card element
+         */
+        extractPluginSlug: function($card) {
+            // Try multiple methods to get plugin slug
+            var slug = $card.data('slug') || 
+                      $card.attr('data-slug') ||
+                      $card.find('[data-slug]').data('slug');
+            
+            if (!slug) {
+                // Try to extract from class name
+                var classList = $card.attr('class') || '';
+                var match = classList.match(/plugin-card-([^\s]+)/);
+                if (match) {
+                    slug = match[1];
+                }
+            }
+            
+            if (!slug) {
+                // Try to extract from plugin install links
+                var $installLink = $card.find('.install-now');
+                if ($installLink.length) {
+                    var href = $installLink.attr('href') || '';
+                    var urlMatch = href.match(/plugin=([^&]+)/);
+                    if (urlMatch) {
+                        slug = urlMatch[1];
+                    }
+                }
+            }
+            
+            return slug;
+        },
+
+        /**
          * Escape HTML for security
          */
         escapeHtml: function(text) {
