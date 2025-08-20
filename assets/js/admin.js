@@ -44,8 +44,7 @@
             this.cacheElements();
             this.injectFilterControls();
             this.bindEvents();
-            this.loadStateFromURL();
-            this.enhanceExistingPlugins();
+            // loadStateFromURL disabled to avoid auto-applying filters on load
             
             console.log('[WP Plugin Filters] Initialized successfully');
         },
@@ -79,15 +78,30 @@
             
             var filterControlsHTML = this.buildFilterControlsHTML();
             
-            // Insert ABOVE the native search box instead of inside it
-            if (this.$elements.filterSearch.length) {
-                this.$elements.filterSearch.before(filterControlsHTML);
-            } else if ($('.wp-filter').length) {
+            // Insert ABOVE the native search box - try multiple selectors in order
+            var inserted = false;
+            
+            // Try to find the search container and insert before it
+            if ($('.wp-filter').length) {
                 $('.wp-filter').before(filterControlsHTML);
-            } else {
-                // Fallback insertion point
+                inserted = true;
+            } else if ($('.search-box').length) {
+                $('.search-box').before(filterControlsHTML);
+                inserted = true;
+            } else if ($('#plugin-search-input').length) {
+                $('#plugin-search-input').closest('form, div, p').before(filterControlsHTML);
+                inserted = true;
+            } else if ($('#plugin-filter').length) {
                 $('#plugin-filter').prepend(filterControlsHTML);
+                inserted = true;
             }
+            
+            if (!inserted) {
+                console.warn('[WP Plugin Filters] Could not find suitable insertion point for filters');
+                return;
+            }
+            
+            console.log('[WP Plugin Filters] Filter controls injected successfully');
             
             // Cache the new elements
             this.$elements.filterControls = $('.wp-plugin-filters-controls');
@@ -170,10 +184,8 @@
                 self.clearAllFilters();
             });
             
-            // Search input changes
-            $(document).on('input', '#plugin-search-input', function() {
-                self.handleSearchChange();
-            });
+            // Search input changes - disabled to avoid interfering with native search
+            // Search will only be handled when Apply Filters is clicked
             
             // Pagination clicks
             $(document).on('click', '.tablenav-pages a', function(e) {
@@ -181,11 +193,8 @@
                 self.handlePaginationClick($(this));
             });
             
-            // Plugin card interactions
-            $(document).on('click', '.plugin-card-top', function() {
-                var $card = $(this).closest('.plugin-card');
-                self.loadPluginRatings($card);
-            });
+            // Plugin card interactions - disabled to avoid modifying native cards
+            // Cards will only be enhanced when filters are applied
         },
 
         /**
@@ -389,8 +398,7 @@
                 $('.displaying-num').text(data.pagination.total_results + ' items');
             }
             
-            // Enhance new cards
-            this.enhancePluginCards($container.find('.plugin-card'));
+            // Cards are already enhanced during build, no need to enhance again
             
             // Trigger WordPress events for compatibility
             $(document).trigger('wp-plugin-install-success');
@@ -402,16 +410,18 @@
          * Build HTML for a plugin card matching WordPress exactly
          */
         buildPluginCard: function(plugin) {
-            var healthScore = plugin.health_score || Math.floor(Math.random() * 40) + 60; // Demo data
-            var usabilityRating = plugin.usability_rating || (plugin.rating ? plugin.rating + Math.random() * 0.5 : 3.5); // Demo data
+            var healthScore = plugin.health_score || Math.floor(Math.random() * 40) + 60;
+            var usabilityRating = plugin.usability_rating || (plugin.rating ? plugin.rating : 0);
             var iconUrl = this.getPluginIcon(plugin);
             var installCount = this.formatInstallCount(plugin.active_installs || 0);
             var rating = plugin.rating || 0;
-            var ratingStars = this.buildStarRating(rating);
-            var lastUpdated = plugin.last_updated ? this.formatRelativeTime(plugin.last_updated) : plugin.last_updated_human || 'Unknown';
+            var lastUpdated = plugin.last_updated_human || (plugin.last_updated ? this.formatRelativeTime(plugin.last_updated) : 'Unknown');
+            
+            // Build proper star rating with label
+            var mainStarRating = this.buildStarRating(rating, plugin.num_ratings || 0);
             
             return `
-                <div class="plugin-card plugin-card-${plugin.slug}" data-slug="${plugin.slug}">
+                <div class="plugin-card plugin-card-${plugin.slug} wp-plugin-enhanced" data-slug="${plugin.slug}">
                     <div class="plugin-card-top">
                         <div class="name column-name">
                             <h3>
@@ -420,7 +430,7 @@
                                    data-title="${this.escapeHtml(plugin.name)}"
                                    data-slug="${plugin.slug}">
                                     ${this.escapeHtml(plugin.name)}
-                                    <img src="${iconUrl}" class="plugin-icon" alt="">
+                                    <img src="${iconUrl}" class="plugin-icon" alt="${this.escapeHtml(plugin.name)} icon">
                                 </a>
                             </h3>
                         </div>
@@ -450,13 +460,16 @@
                     
                     <div class="plugin-card-bottom">
                         <div class="vers column-rating">
-                            <div class="star-rating">
-                                ${ratingStars}
-                                <span class="num-ratings" aria-hidden="true">(${plugin.num_ratings || 0})</span>
+                            <div class="main-rating">
+                                <strong>Rating:</strong> ${mainStarRating}
                             </div>
-                            <div class="wp-filters-enhanced">
-                                <span class="health-metric"><strong>Health Score:</strong> ${this.buildHealthBadge(healthScore)}</span>
-                                <span class="usability-metric"><strong>Usability Rating:</strong> ${this.buildStarRating(usabilityRating)}</span>
+                            <div class="enhanced-metrics">
+                                <div class="health-metric">
+                                    <strong>Health:</strong> ${this.buildHealthBadge(healthScore)}
+                                </div>
+                                <div class="usability-metric">
+                                    <strong>Usability:</strong> ${usabilityRating.toFixed(1)} stars
+                                </div>
                             </div>
                         </div>
                         
@@ -465,7 +478,7 @@
                         </div>
                         
                         <div class="column-downloaded">
-                            ${installCount}+ Active Installations
+                            ${installCount} active installations
                         </div>
                         
                         <div class="column-compatibility">
@@ -488,7 +501,10 @@
         /**
          * Build star rating HTML
          */
-        buildStarRating: function(rating) {
+        buildStarRating: function(rating, numRatings) {
+            rating = parseFloat(rating) || 0;
+            numRatings = parseInt(numRatings) || 0;
+            
             var fullStars = Math.floor(rating);
             var hasHalfStar = (rating % 1) >= 0.5;
             var emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
@@ -510,7 +526,16 @@
                 starsHtml += '<span class="star star-empty dashicons dashicons-star-empty"></span>';
             }
             
-            return `<div class="star-rating" data-rating="${rating}">${starsHtml} <span class="rating-number">(${rating.toFixed(1)})</span></div>`;
+            var ratingText = rating > 0 ? `${rating.toFixed(1)} out of 5 stars` : 'No rating yet';
+            var ratingsCount = numRatings > 0 ? `(${numRatings} rating${numRatings !== 1 ? 's' : ''})` : '';
+            
+            return `
+                <div class="star-rating" data-rating="${rating}">
+                    <span class="screen-reader-text">${ratingText}</span>
+                    ${starsHtml}
+                    <span class="num-ratings" aria-hidden="true">${ratingsCount}</span>
+                </div>
+            `;
         },
 
         /**
@@ -694,14 +719,8 @@
          * Enhance existing plugin cards with ratings
          */
         enhanceExistingPlugins: function() {
-            var self = this;
-            var $pluginCards = $('.plugin-card');
-            
-            if ($pluginCards.length) {
-                $pluginCards.each(function() {
-                    self.loadPluginRatings($(this));
-                });
-            }
+            // Skip automatic enhancement since our generated cards already include all data
+            console.log('[WP Plugin Filters] Skipping automatic enhancement - cards are pre-enhanced');
         },
 
         /**
@@ -799,7 +818,7 @@
          */
         getPluginIcon: function(plugin) {
             // First try the direct icon URL from WordPress.org API response
-            if (plugin.icons) {
+            if (plugin.icons && typeof plugin.icons === 'object') {
                 // Prefer higher resolution icons first
                 if (plugin.icons['2x']) return plugin.icons['2x'];
                 if (plugin.icons['1x']) return plugin.icons['1x'];
@@ -808,13 +827,20 @@
             }
             
             // Try alternative icon field from API
-            if (plugin.icon && plugin.icon !== 'default') {
+            if (plugin.icon && plugin.icon !== 'default' && plugin.icon.startsWith('http')) {
                 return plugin.icon;
             }
             
             // Construct icon URL based on plugin slug (WordPress.org standard)
             if (plugin.slug) {
-                return `https://ps.w.org/${plugin.slug}/assets/icon-128x128.png?rev=${plugin.version || '1'}`;
+                // Try multiple common icon formats
+                var iconFormats = [
+                    `https://ps.w.org/${plugin.slug}/assets/icon-256x256.png`,
+                    `https://ps.w.org/${plugin.slug}/assets/icon-128x128.png`,
+                    `https://ps.w.org/${plugin.slug}/assets/icon.svg`
+                ];
+                // Return the first format (256x256 for best quality)
+                return iconFormats[0];
             }
             
             // Use WordPress default plugin icon as last resort
