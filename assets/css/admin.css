@@ -194,7 +194,15 @@
 /* Health Badge Positioning */
 .plugin-health-badge {
     margin-top: 8px;
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+}
+
+.plugin-health-badge .health-label {
+    font-weight: 600;
+    color: #50575e;
 }
 
 .plugin-card .name {

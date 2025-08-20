@@ -496,7 +496,7 @@
                                 <span class="num-ratings" aria-hidden="true">(${plugin.num_ratings || 0})</span>
                             </div>
                             <div class="plugin-health-badge">
-                                ${healthBadge}
+                                <span class="health-label">Health:</span> ${healthBadge}
                             </div>
                         </div>
                         
