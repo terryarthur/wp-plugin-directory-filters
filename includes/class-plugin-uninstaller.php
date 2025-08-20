@@ -30,18 +30,30 @@ class WP_Plugin_Filters_Uninstaller {
             exit;
         }
         
-        // Check for multisite and handle accordingly
-        if (is_multisite()) {
-            self::uninstall_multisite();
-        } else {
-            self::uninstall_single_site();
+        try {
+            // Check for multisite and handle accordingly
+            if (is_multisite()) {
+                self::uninstall_multisite();
+            } else {
+                self::uninstall_single_site();
+            }
+            
+            // Final cleanup
+            self::final_cleanup();
+            
+            // Log successful uninstall
+            self::log_uninstall();
+            
+        } catch (Exception $e) {
+            // Log the error
+            error_log('[WP Plugin Filters] Uninstall failed: ' . $e->getMessage());
+            
+            // Attempt emergency cleanup
+            self::emergency_cleanup();
+            
+            // Log emergency cleanup
+            error_log('[WP Plugin Filters] Emergency cleanup completed after failed uninstall');
         }
-        
-        // Final cleanup
-        self::final_cleanup();
-        
-        // Log uninstall
-        self::log_uninstall();
     }
     
     /**
@@ -68,13 +80,14 @@ class WP_Plugin_Filters_Uninstaller {
      * Uninstall for multisite network
      */
     private static function uninstall_multisite() {
-        global $wpdb;
+        // Get all site IDs using WordPress function
+        $site_ids = get_sites(array(
+            'fields' => 'ids',
+            'number' => 0 // Get all sites
+        ));
         
-        // Get all blog IDs
-        $blog_ids = $wpdb->get_col("SELECT blog_id FROM {$wpdb->blogs}");
-        
-        foreach ($blog_ids as $blog_id) {
-            switch_to_blog($blog_id);
+        foreach ($site_ids as $site_id) {
+            switch_to_blog($site_id);
             self::uninstall_single_site();
             restore_current_blog();
         }
@@ -106,12 +119,16 @@ class WP_Plugin_Filters_Uninstaller {
         }
         
         // Remove any remaining plugin options using wildcard
-        $wpdb->query(
+        $result = $wpdb->query(
             $wpdb->prepare(
                 "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
                 'wp_plugin_filters_%'
             )
         );
+        
+        if ($result === false) {
+            error_log('[WP Plugin Filters] Failed to delete plugin options from database');
+        }
     }
     
     /**
@@ -135,11 +152,15 @@ class WP_Plugin_Filters_Uninstaller {
         global $wpdb;
         
         // Remove all plugin-related transients
-        $wpdb->query(
+        $result = $wpdb->query(
             "DELETE FROM {$wpdb->options} 
              WHERE option_name LIKE '_transient_wp_plugin_%' 
              OR option_name LIKE '_transient_timeout_wp_plugin_%'"
         );
+        
+        if ($result === false) {
+            error_log('[WP Plugin Filters] Failed to delete plugin transients from database');
+        }
         
         // Remove specific transients
         $transients_to_remove = array(
@@ -194,19 +215,41 @@ class WP_Plugin_Filters_Uninstaller {
             return;
         }
         
+        // Check if directory is readable
+        if (!is_readable($dir)) {
+            error_log('[WP Plugin Filters] Cannot read directory for deletion: ' . $dir);
+            return;
+        }
+        
         $files = array_diff(scandir($dir), array('.', '..'));
         
         foreach ($files as $file) {
             $path = $dir . DIRECTORY_SEPARATOR . $file;
             
-            if (is_dir($path)) {
-                self::remove_directory_recursive($path);
-            } else {
-                unlink($path);
+            try {
+                if (is_dir($path)) {
+                    self::remove_directory_recursive($path);
+                } else {
+                    if (is_writable($path)) {
+                        unlink($path);
+                    } else {
+                        error_log('[WP Plugin Filters] Cannot delete file: ' . $path);
+                    }
+                }
+            } catch (Exception $e) {
+                error_log('[WP Plugin Filters] Error deleting: ' . $path . ' - ' . $e->getMessage());
             }
         }
         
-        rmdir($dir);
+        try {
+            if (is_writable($dir)) {
+                rmdir($dir);
+            } else {
+                error_log('[WP Plugin Filters] Cannot delete directory: ' . $dir);
+            }
+        } catch (Exception $e) {
+            error_log('[WP Plugin Filters] Error deleting directory: ' . $dir . ' - ' . $e->getMessage());
+        }
     }
     
     /**

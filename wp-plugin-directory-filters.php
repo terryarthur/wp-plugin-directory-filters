@@ -57,18 +57,10 @@ function wp_plugin_filters_deactivate() {
     WP_Plugin_Filters_Deactivator::deactivate();
 }
 
-/**
- * Plugin uninstall hook
- */
-function wp_plugin_filters_uninstall() {
-    require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-plugin-uninstaller.php';
-    WP_Plugin_Filters_Uninstaller::uninstall();
-}
-
 // Register hooks
 register_activation_hook(__FILE__, 'wp_plugin_filters_activate');
 register_deactivation_hook(__FILE__, 'wp_plugin_filters_deactivate');
-register_uninstall_hook(__FILE__, 'wp_plugin_filters_uninstall');
+// Note: Uninstall is handled by uninstall.php file
 
 // Initialize plugin after WordPress is loaded
 add_action('plugins_loaded', 'wp_plugin_filters_init');
