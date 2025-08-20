@@ -282,9 +282,17 @@
         executeAjaxRequest: function(action, data) {
             var self = this;
             
+            // Map action to correct nonce
+            var nonceMap = {
+                'wp_plugin_filter': 'filter_plugins',
+                'wp_plugin_sort': 'sort_plugins', 
+                'wp_plugin_rating': 'calculate_rating',
+                'wp_plugin_clear_cache': 'clear_cache'
+            };
+            
             var requestData = $.extend({}, data, {
                 action: action,
-                nonce: wpPluginFilters.nonces[action.replace('wp_plugin_', '')] || wpPluginFilters.nonces.filter_plugins
+                nonce: wpPluginFilters.nonces[nonceMap[action]] || wpPluginFilters.nonces.filter_plugins
             });
             
             return $.ajax({
@@ -293,12 +301,26 @@
                 data: requestData,
                 dataType: 'json',
                 timeout: 30000
-            }).fail(function() {
+            }).fail(function(xhr, status, error) {
+                console.error('[WP Plugin Filters] AJAX Error:', {
+                    status: xhr.status,
+                    statusText: xhr.statusText,
+                    error: error,
+                    action: action
+                });
+                
+                if (xhr.status === 405) {
+                    self.showError('Method not allowed. Please check plugin configuration.');
+                    return;
+                }
+                
                 if (self.state.retryCount < self.config.maxRetries) {
                     self.state.retryCount++;
                     setTimeout(function() {
                         self.executeAjaxRequest(action, data);
                     }, self.config.retryDelay);
+                } else {
+                    self.showError(wpPluginFilters.strings.error + ' (Status: ' + xhr.status + ')');
                 }
             });
         },

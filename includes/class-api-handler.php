@@ -181,17 +181,19 @@ class WP_Plugin_Filters_API_Handler {
      * @return array|WP_Error API response or error
      */
     private function make_api_request($action, $request_args) {
-        $body = array(
+        // WordPress.org API uses GET with query parameters, not POST
+        $query_args = array(
             'action' => $action,
-            'request' => $request_args
+            'request' => wp_json_encode($request_args)
         );
         
-        $response = wp_remote_post(self::API_BASE_URL, array(
+        $api_url = add_query_arg($query_args, self::API_BASE_URL);
+        
+        $response = wp_remote_get($api_url, array(
             'timeout' => self::API_TIMEOUT,
             'user-agent' => self::USER_AGENT,
-            'body' => $body,
             'headers' => array(
-                'Content-Type' => 'application/x-www-form-urlencoded'
+                'Accept' => 'application/json'
             )
         ));
         
