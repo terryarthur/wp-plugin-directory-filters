@@ -25,7 +25,14 @@
     align-items: center;
     gap: 8px;
     flex-wrap: nowrap;
-    justify-content: flex-start;
+    justify-content: space-between;
+}
+
+.wp-plugin-filters-controls-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
 }
 
 .wp-plugin-filters-inline select {
@@ -44,6 +51,66 @@
     font-size: 11px;
     line-height: 24px;
     margin-left: 4px;
+}
+
+.wppd-filters-branding {
+    display: inline-flex;
+    align-items: center;
+    margin-left: auto;
+    padding: 6px 12px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.wppd-filters-branding .plugin-link {
+    color: #ffffff !important;
+    text-decoration: none !important;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    transition: all 0.2s ease;
+}
+
+.wppd-filters-branding .plugin-link:hover {
+    color: #f0f8ff !important;
+    text-decoration: none !important;
+    transform: translateY(-1px);
+}
+
+.wppd-filters-branding .separator {
+    color: rgba(255, 255, 255, 0.6);
+    margin: 0 6px;
+    font-size: 12px;
+}
+
+.wppd-filters-branding .made-by-text {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 10px;
+    font-weight: 400;
+    margin-right: 4px;
+}
+
+.wppd-filters-branding .author-link {
+    color: rgba(255, 255, 255, 0.85) !important;
+    text-decoration: none !important;
+    font-size: 10px;
+    font-weight: 400;
+    transition: all 0.2s ease;
+}
+
+.wppd-filters-branding .author-link:hover {
+    color: #ffffff !important;
+    text-decoration: none !important;
+    transform: translateY(-1px);
+}
+
+.wppd-filters-branding:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
 }
 
 .wp-plugin-filters-field label {
@@ -1423,4 +1490,98 @@ body.wp-filter-active.wp-filter-results-active .plugin-icon {
     width: 128px !important;
     height: 128px !important;
     margin: 0 !important;
+}
+
+/* =====================================================
+   Update Status Indicators
+   ===================================================== */
+
+.last-updated {
+    display: flex;
+    align-items: center;
+    font-size: 13px !important;
+}
+
+.last-updated span:first-child {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 4px;
+    font-weight: bold;
+    font-size: 16px !important;
+}
+
+/* Update status colors and styling */
+body.wp-filter-active .update-status-recent,
+body.wp-filter-results-active .update-status-recent,
+.plugin-card .update-status-recent,
+.wp-plugin-enhanced .update-status-recent {
+    color: #00a32a !important; /* WordPress green */
+}
+
+body.wp-filter-active .update-status-moderate,
+body.wp-filter-results-active .update-status-moderate,
+.plugin-card .update-status-moderate,
+.wp-plugin-enhanced .update-status-moderate {
+    color: #f56e28 !important; /* WordPress orange */
+}
+
+body.wp-filter-active .update-status-old,
+body.wp-filter-results-active .update-status-old,
+.plugin-card .update-status-old,
+.wp-plugin-enhanced .update-status-old {
+    color: #d63638 !important; /* WordPress red */
+}
+
+/* Hover effects for update status */
+.last-updated:hover {
+    opacity: 0.8;
+}
+
+/* =====================================================
+   WordPress Compatibility Indicators
+   ===================================================== */
+
+.tested-with {
+    display: flex;
+    align-items: center;
+    font-size: 13px !important;
+}
+
+.tested-with span:first-child {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 4px;
+    font-weight: bold;
+    font-size: 16px !important;
+}
+
+/* WordPress compatibility status colors */
+body.wp-filter-active .wp-compat-current,
+body.wp-filter-results-active .wp-compat-current,
+.plugin-card .wp-compat-current,
+.wp-plugin-enhanced .wp-compat-current {
+    color: #00a32a !important; /* WordPress green - tested with current version */
+}
+
+body.wp-filter-active .wp-compat-recent,
+body.wp-filter-results-active .wp-compat-recent,
+.plugin-card .wp-compat-recent,
+.wp-plugin-enhanced .wp-compat-recent {
+    color: #f56e28 !important; /* WordPress orange - tested with recent but not current */
+}
+
+body.wp-filter-active .wp-compat-outdated,
+body.wp-filter-results-active .wp-compat-outdated,
+.plugin-card .wp-compat-outdated,
+.wp-plugin-enhanced .wp-compat-outdated,
+body.wp-filter-active .wp-compat-unknown,
+body.wp-filter-results-active .wp-compat-unknown,
+.plugin-card .wp-compat-unknown,
+.wp-plugin-enhanced .wp-compat-unknown {
+    color: #d63638 !important; /* WordPress red - tested with version before security fixes */
+}
+
+/* Hover effects for compatibility status */
+.tested-with:hover {
+    opacity: 0.8;
 }

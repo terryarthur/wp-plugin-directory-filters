@@ -44,6 +44,8 @@
             this.cacheElements();
             this.injectFilterControls();
             this.bindEvents();
+            this.saveOriginalPlugins();
+            this.enhanceNativePluginCards();
             // loadStateFromURL disabled to avoid auto-applying filters on load
             
             // DO NOT add any body classes on init - only when filters are applied
@@ -60,11 +62,29 @@
                 pluginBrowser: $('#plugin-filter'),
                 pluginGrid: $('.wp-list-table.plugins'),
                 spinner: $('.wp-filter-search .spinner'),
-                searchInput: $('#plugin-search-input'),
+                searchInput: $('#plugin-search-input, .wp-filter-search input[type="search"], input[name="s"]').first(),
                 resultsContainer: $('.plugin-browser .plugin-list-table-body, .plugin-browser .wp-list-table tbody, #the-list'),
                 pluginCards: $('.plugin-browser .plugin-card'),
                 paginationLinks: $('.tablenav-pages')
             };
+        },
+
+        /**
+         * Save original plugins from page load
+         */
+        saveOriginalPlugins: function() {
+            console.log('[WP Plugin Filters] Attempting to save original plugins...');
+            
+            // Try to capture original plugin data from the page
+            var originalCards = $('.plugin-card, .plugin-list-item, #the-list > tr');
+            console.log('[WP Plugin Filters] Found', originalCards.length, 'original plugin cards');
+            
+            // For now, we'll save the HTML content - in a future version we could 
+            // extract actual plugin data, but this preserves the original layout
+            if (originalCards.length > 0) {
+                this.state.originalContent = originalCards.parent().html();
+                console.log('[WP Plugin Filters] Saved original plugin content');
+            }
         },
 
         /**
@@ -170,55 +190,63 @@
                 <div class="wp-plugin-filters-controls" style="position: relative; z-index: 1000;">
                     <form onsubmit="return false;" style="margin: 0; padding: 0;">
                         <div class="wp-plugin-filters-inline">
-                            <select id="wp-plugin-filter-installations">
-                                <option value="all">All Installs</option>
-                                <option value="1m-plus">1M+</option>
-                                <option value="100k-1m">100K+</option>
-                                <option value="10k-100k">10K+</option>
-                                <option value="1k-10k">1K+</option>
-                            </select>
-                            
-                            <select id="wp-plugin-filter-updates">
-                                <option value="all">Any Update</option>
-                                <option value="last_month">Last Month</option>
-                                <option value="last_3months">Last 3 Months</option>
-                                <option value="last_year">Last Year</option>
-                            </select>
-                            
-                            <select id="wp-plugin-filter-usability">
-                                <option value="0">Any Usability</option>
-                                <option value="4">4+ stars</option>
-                                <option value="3">3+ stars</option>
-                                <option value="2">2+ stars</option>
-                            </select>
-                            
-                            <select id="wp-plugin-filter-health">
-                                <option value="0">Any Health</option>
-                                <option value="85">Excellent (85+)</option>
-                                <option value="70">Good (70+)</option>
-                                <option value="40">Fair (40+)</option>
-                            </select>
-                            
-                            <select id="wp-plugin-filter-rating">
-                                <option value="0">Any Rating</option>
-                                <option value="4">4+ Stars</option>
-                                <option value="3">3+ Stars</option>
-                                <option value="2">2+ Stars</option>
-                                <option value="1">1+ Stars</option>
-                            </select>
-                            
-                            <select id="wp-plugin-filter-sort">
-                                <option value="">Sort Order</option>
-                                <option value="relevance">Relevance</option>
-                                <option value="installations">Installs</option>
-                                <option value="rating">Rating</option>
-                                <option value="updated">Updated</option>
-                                <option value="usability_rating">Usability</option>
-                                <option value="health_score">Health</option>
-                            </select>
-                            
-                            <button type="button" id="wp-plugin-apply-filters" class="button button-primary">Apply Filters</button>
-                            <button type="button" id="wp-plugin-clear-filters" class="button">Clear</button>
+                            <div class="wp-plugin-filters-controls-left">
+                                <select id="wp-plugin-filter-installations">
+                                    <option value="all">All Installs</option>
+                                    <option value="1m-plus">1M+</option>
+                                    <option value="100k-1m">100K+</option>
+                                    <option value="10k-100k">10K+</option>
+                                    <option value="1k-10k">1K+</option>
+                                </select>
+                                
+                                <select id="wp-plugin-filter-updates">
+                                    <option value="all">Any Update</option>
+                                    <option value="last_month">Last Month</option>
+                                    <option value="last_3months">Last 3 Months</option>
+                                    <option value="last_year">Last Year</option>
+                                </select>
+                                
+                                <select id="wp-plugin-filter-usability">
+                                    <option value="0">Any Usability</option>
+                                    <option value="4">4+ stars</option>
+                                    <option value="3">3+ stars</option>
+                                    <option value="2">2+ stars</option>
+                                </select>
+                                
+                                <select id="wp-plugin-filter-health">
+                                    <option value="0">Any Health</option>
+                                    <option value="85">Excellent (85+)</option>
+                                    <option value="70">Good (70+)</option>
+                                    <option value="40">Fair (40+)</option>
+                                </select>
+                                
+                                <select id="wp-plugin-filter-rating">
+                                    <option value="0">Any Rating</option>
+                                    <option value="4">4+ Stars</option>
+                                    <option value="3">3+ Stars</option>
+                                    <option value="2">2+ Stars</option>
+                                    <option value="1">1+ Stars</option>
+                                </select>
+                                
+                                <select id="wp-plugin-filter-sort">
+                                    <option value="">Sort Order</option>
+                                    <option value="relevance">Relevance</option>
+                                    <option value="installations">Installs</option>
+                                    <option value="rating">Rating</option>
+                                    <option value="updated">Updated</option>
+                                    <option value="usability_rating">Usability</option>
+                                    <option value="health_score">Health</option>
+                                </select>
+                                
+                                <button type="button" id="wp-plugin-apply-filters" class="button button-primary">Apply Filters</button>
+                                <button type="button" id="wp-plugin-clear-filters" class="button">Clear</button>
+                            </div>
+                            <div class="wppd-filters-branding">
+                                <a href="https://wppd-filters.terryarthur.com/index.html" target="_blank" rel="noopener" class="plugin-link">WPPD Filters</a>
+                                <span class="separator">•</span>
+                                <span class="made-by-text">Made by:</span>
+                                <a href="https://terryarthur.com" target="_blank" rel="noopener" class="author-link">Terry Arthur</a>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -305,6 +333,8 @@
             var self = this;
             searchTerm = searchTerm || '';
             
+            console.log('[WP Plugin Filters] fetchPluginDataFromAPI called with search term:', searchTerm);
+            
             var apiUrl = 'https://api.wordpress.org/plugins/info/1.2/?action=query_plugins' +
                 '&request[search]=' + encodeURIComponent(searchTerm) +
                 '&request[per_page]=100' +
@@ -389,7 +419,7 @@
         applyClientSideFilters: function(plugins, filterData) {
             var self = this;
             
-            return plugins.filter(function(plugin) {
+            var filtered = plugins.filter(function(plugin) {
                 // Installation range filter
                 if (filterData.installation_range && filterData.installation_range !== 'all') {
                     var installs = plugin.active_installs || 0;
@@ -503,8 +533,11 @@
          * Get current filter data from form
          */
         getCurrentFilterData: function() {
+            var searchTerm = this.$elements.searchInput.val() || '';
+            console.log('[WP Plugin Filters] Search term captured:', searchTerm);
+            console.log('[WP Plugin Filters] Search input element:', this.$elements.searchInput.length, this.$elements.searchInput.attr('id'));
             return {
-                search_term: this.$elements.searchInput.val() || '',
+                search_term: searchTerm,
                 installation_range: this.$elements.installationRange.val() || 'all',
                 update_timeframe: this.$elements.updateTimeframe.val() || 'all',
                 usability_rating: parseFloat(this.$elements.usabilityRating.val()) || 0,
@@ -688,6 +721,60 @@
         },
 
         /**
+         * Update plugin grid with clean results (no filter styling)
+         */
+        updatePluginGridClean: function(data) {
+            var self = this;
+            
+            console.log('[WP Plugin Filters] updatePluginGridClean called with:', data);
+            
+            if (!data.plugins || !Array.isArray(data.plugins)) {
+                console.error('[WP Plugin Filters] No plugins array in clean data:', data);
+                this.showNoResults();
+                return;
+            }
+            
+            console.log('[WP Plugin Filters] Found', data.plugins.length, 'plugins to display cleanly');
+            
+            var containerSelectors = [
+                '#the-list',
+                '.plugin-browser .plugin-list',
+                '.wp-list-table tbody',
+                '.plugin-browser'
+            ];
+            
+            var $container = null;
+            for (var i = 0; i < containerSelectors.length; i++) {
+                $container = $(containerSelectors[i]).first();
+                if ($container.length) {
+                    break;
+                }
+            }
+            
+            if (!$container || !$container.length) {
+                console.error('[WP Plugin Filters] Could not find results container for clean update');
+                return;
+            }
+            
+            var pluginCards = data.plugins.map(function(plugin) {
+                return self.buildPluginCard(plugin);
+            }).join('');
+            
+            // DO NOT add filter classes for clean results
+            // This maintains the native WordPress layout
+            
+            // Replace the content
+            $container.html(pluginCards);
+            
+            // Update results count if available
+            if (data.pagination && data.pagination.total_results) {
+                $('.displaying-num').text(data.pagination.total_results + ' items');
+            }
+            
+            console.log('[WP Plugin Filters] Clean grid update completed - native layout preserved');
+        },
+
+        /**
          * Build HTML for a plugin card matching WordPress ADMIN structure
          */
         buildPluginCard: function(plugin) {
@@ -699,9 +786,16 @@
             var usability = this.calculateUsability(plugin.ratings || {}, plugin.num_ratings || 0);
             var usabilityColor = this.getUsabilityColor(usability.score);
             
-            // Parse date and calculate time ago
-            var lastUpdated = this.parseWordPressDate(plugin.last_updated);
-            var timeAgo = this.getTimeAgo(lastUpdated);
+            // Get update status with color-coded indicator
+            var updateStatus = this.getUpdateStatus(plugin.last_updated);
+            console.log('[WP Plugin Filters] Update status for', plugin.slug, ':', updateStatus);
+            
+            // Get WordPress compatibility status
+            var wpCompatStatus = this.getWPCompatibilityStatus(plugin.tested);
+            console.log('[WP Plugin Filters] WP compat status for', plugin.slug, ':', wpCompatStatus);
+            
+            // Debug: Check if icons are being generated correctly
+            console.log('[WP Plugin Filters] Icon debug - Update icon:', '"' + updateStatus.icon + '"', 'WP compat icon:', '"' + wpCompatStatus.icon + '"');
             
             return `
                 <li class="wp-block-post post-${plugin.slug} plugin type-plugin status-publish hentry">
@@ -732,19 +826,19 @@
                         <footer>
                             <span class="plugin-author">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M15.5 9.5a1 1 0 100-2 1 1 0 000 2zm0 1.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5zm-2.25 6v-2a2.75 2.75 0 00-2.75-2.75h-4A2.75 2.75 0 003.75 15v2h1.5v-2c0-.69.56-1.25 1.25-1.25h4c.69 0 1.25.56 1.25 1.25v2h1.5zm7-2v2h-1.5v-2c0-.69-.56-1.25-1.25-1.25H15v-1.5h2.5A2.75 2.75 0 0120.25 15zM9.5 8.5a1 1 0 11-2 0 1 1 0 012 0zm1.5 0a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" fill-rule="evenodd"></path></svg>
-                                ${plugin.author_profile ? `<a href="${this.escapeHtml(plugin.author_profile)}" target="_blank" rel="noopener">${this.escapeHtml(plugin.author || 'Unknown')}</a>` : `<span>${this.escapeHtml(plugin.author || 'Unknown')}</span>`}
+                                ${plugin.author || 'Unknown'}
                             </span>
                             <span class="active-installs">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path fill-rule="evenodd" d="M11.25 5h1.5v15h-1.5V5zM6 10h1.5v10H6V10zm12 4h-1.5v6H18v-6z" clip-rule="evenodd"></path></svg>
                                 <span>${this.formatInstallCount(installs)} active installations</span>
                             </span>
-                            <span class="tested-with">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M20 10c0-5.51-4.49-10-10-10C4.48 0 0 4.49 0 10c0 5.52 4.48 10 10 10 5.51 0 10-4.48 10-10zM7.78 15.37L4.37 6.22c.55-.02 1.17-.08 1.17-.08.5-.06.44-1.13-.06-1.11 0 0-1.45.11-2.37.11-.18 0-.37 0-.58-.01C4.12 2.69 6.87 1.11 10 1.11c2.33 0 4.45.87 6.05 2.34-.68-.11-1.65.39-1.65 1.58 0 .74.45 1.36.9 2.1.35.61.55 1.36.55 2.46 0 1.49-1.4 5-1.4 5l-3.03-8.37c.54-.02.82-.17.82-.17.5-.05.44-1.25-.06-1.22 0 0-1.44.12-2.38.12-.87 0-2.33-.12-2.33-.12-.5-.03-.56 1.2-.06 1.22l.92.08 1.26 3.41zM17.41 10c.24-.64.74-1.87.43-4.25.7 1.29 1.05 2.71 1.05 4.25 0 3.29-1.73 6.24-4.4 7.78.97-2.59 1.94-5.2 2.92-7.78zM6.1 18.09C3.12 16.65 1.11 13.53 1.11 10c0-1.3.23-2.48.72-3.59C3.25 10.3 4.67 14.2 6.1 18.09zm4.03-6.63l2.58 6.98c-.86.29-1.76.45-2.71.45-.79 0-1.57-.11-2.29-.33.81-2.38 1.62-4.74 2.42-7.10z"></path></svg>
-                                <span>Tested with ${plugin.tested || 'unknown'}</span>
+                            <span class="tested-with ${wpCompatStatus.cssClass}">
+                                <span style="display: inline-flex; align-items: center; margin-right: 6px;">${wpCompatStatus.icon}</span>
+                                <span>${wpCompatStatus.text}</span>
                             </span>
-                            <span class="last-updated">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"></path></svg>
-                                <span>Updated ${timeAgo}</span>
+                            <span class="last-updated ${updateStatus.cssClass}">
+                                <span style="display: inline-flex; align-items: center; margin-right: 6px;">${updateStatus.icon}</span>
+                                <span>${updateStatus.text}</span>
                             </span>
                             <span class="usability-score usability-${usabilityColor}">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path></svg>
@@ -764,7 +858,74 @@
          * Get current WordPress version for compatibility
          */
         getWPVersion: function() {
-            return (typeof window.wp !== 'undefined' && window.wp.version) ? window.wp.version : '6.4.2';
+            return (typeof window.wp !== 'undefined' && window.wp.version) ? window.wp.version : '6.7.1';
+        },
+
+        /**
+         * Get WordPress compatibility status based on tested version
+         */
+        getWPCompatibilityStatus: function(testedVersion) {
+            // Current WordPress versions and security info (as of January 2025)
+            var currentVersion = '6.7.1';
+            var lastCriticalSecurityVersion = '6.4.4'; // Last version before critical security fixes
+            
+            if (!testedVersion) {
+                return {
+                    color: 'red',
+                    icon: '<svg width="16" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-top: -1px;"><circle cx="12" cy="12" r="10" fill="#d63638"/><path d="m8.5 8.5 7 7m0-7-7 7" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>',
+                    cssClass: 'wp-compat-unknown',
+                    text: 'WordPress compatibility unknown'
+                };
+            }
+            
+            // Clean version string (remove any extra text)
+            var cleanTested = testedVersion.replace(/[^\d.]/g, '');
+            
+            // Compare versions
+            if (this.compareVersions(cleanTested, currentVersion) >= 0) {
+                // Tested with current or newer version
+                return {
+                    color: 'green',
+                    icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#00a32a"/><path d="m9 12 2 2 4-4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+                    cssClass: 'wp-compat-current',
+                    text: 'Tested with WordPress ' + testedVersion
+                };
+            } else if (this.compareVersions(cleanTested, lastCriticalSecurityVersion) >= 0) {
+                // Tested with recent version but not current - show yellow for any non-current version
+                return {
+                    color: 'yellow',
+                    icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 22h20L12 2z" fill="#f56e28"/><path d="M12 8v4M12 16h.01" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+                    cssClass: 'wp-compat-recent',
+                    text: 'Tested with WordPress ' + testedVersion + ' (not current)'
+                };
+            } else {
+                // Tested with version before critical security updates
+                return {
+                    color: 'red',
+                    icon: '<svg width="16" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-top: -1px;"><circle cx="12" cy="12" r="10" fill="#d63638"/><path d="m8.5 8.5 7 7m0-7-7 7" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>',
+                    cssClass: 'wp-compat-outdated',
+                    text: 'Tested with WordPress ' + testedVersion + ' (security risk)'
+                };
+            }
+        },
+
+        /**
+         * Compare semantic version strings (returns: -1, 0, or 1)
+         */
+        compareVersions: function(version1, version2) {
+            var v1parts = version1.split('.').map(Number);
+            var v2parts = version2.split('.').map(Number);
+            var maxLength = Math.max(v1parts.length, v2parts.length);
+            
+            // Pad arrays to same length
+            while (v1parts.length < maxLength) v1parts.push(0);
+            while (v2parts.length < maxLength) v2parts.push(0);
+            
+            for (var i = 0; i < maxLength; i++) {
+                if (v1parts[i] > v2parts[i]) return 1;
+                if (v1parts[i] < v2parts[i]) return -1;
+            }
+            return 0;
         },
 
         /**
@@ -981,6 +1142,34 @@
         },
 
         /**
+         * Get update status info (color, icon, text) based on last updated date
+         */
+        getUpdateStatus: function(lastUpdated) {
+            var parsedDate = this.parseWordPressDate(lastUpdated);
+            var daysSinceUpdate = Math.floor((new Date() - parsedDate) / (1000 * 60 * 60 * 24));
+            var monthsSinceUpdate = Math.floor(daysSinceUpdate / 30);
+            
+            var status = {
+                color: 'red',
+                icon: '<svg width="16" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-top: -1px;"><circle cx="12" cy="12" r="10" fill="#d63638"/><path d="m8.5 8.5 7 7m0-7-7 7" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>',
+                cssClass: 'update-status-old',
+                text: 'Updated ' + this.getTimeAgo(parsedDate)
+            };
+            
+            if (daysSinceUpdate <= 90) { // 3 months
+                status.color = 'green';
+                status.icon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#00a32a"/><path d="m9 12 2 2 4-4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+                status.cssClass = 'update-status-recent';
+            } else if (daysSinceUpdate <= 270) { // 9 months
+                status.color = 'yellow';
+                status.icon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 22h20L12 2z" fill="#f56e28"/><path d="M12 8v4M12 16h.01" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+                status.cssClass = 'update-status-moderate';
+            }
+            
+            return status;
+        },
+
+        /**
          * Get health power meter emoji based on score
          */
         getHealthPowerMeter: function(score) {
@@ -1168,15 +1357,56 @@
             this.$elements.sortBy.val('');
             this.$elements.sortDirection.val('desc');
             
+            // Clear search input to fully reset
+            this.$elements.searchInput.val('');
+            
             // Remove filtered styling classes to restore native WordPress layout
             $('body').removeClass('wp-filter-active');
             $('body').removeClass('wp-filter-results-active');
             
-            console.log('[WP Plugin Filters] Removed filter classes - native layout restored');
+            console.log('[WP Plugin Filters] Cleared all filters - restoring original content');
             
-            // Let WordPress handle the native layout - don't force any styling
+            // Restore original WordPress plugin content if we have it saved
+            if (this.state.originalContent) {
+                console.log('[WP Plugin Filters] Restoring saved original HTML content');
+                var $container = this.$elements.resultsContainer;
+                if (!$container.length) {
+                    $container = $('#the-list, .wp-list-table tbody').first();
+                }
+                if ($container.length) {
+                    $container.parent().html(this.state.originalContent);
+                    console.log('[WP Plugin Filters] Original content restored successfully');
+                } else {
+                    console.warn('[WP Plugin Filters] Could not find container to restore original content');
+                    this.fallbackToBrowseAll();
+                }
+            } else {
+                console.log('[WP Plugin Filters] No saved original content - using fallback');
+                this.fallbackToBrowseAll();
+            }
+        },
+
+        /**
+         * Fallback method to browse all plugins when original content unavailable
+         */
+        fallbackToBrowseAll: function() {
+            console.log('[WP Plugin Filters] Using fallback to browse all plugins');
             
-            this.applyFilters();
+            // Make clean API call with no search term to get popular plugins
+            this.fetchPluginDataFromAPI('')
+                .then((response) => {
+                    // Don't apply filter classes for clean results
+                    this.updatePluginGridClean(response);
+                })
+                .catch((error) => {
+                    console.error('[WP Plugin Filters] Fallback failed:', error);
+                    // As a last resort, try to trigger WordPress native search
+                    var $searchForm = $('.wp-filter-search form, form.search-form');
+                    if ($searchForm.length) {
+                        console.log('[WP Plugin Filters] Triggering native search form');
+                        $searchForm.trigger('submit');
+                    }
+                });
         },
 
         /**
