@@ -25,10 +25,10 @@ class WP_Plugin_Filters_Activator {
             deactivate_plugins(WP_PLUGIN_FILTERS_BASENAME);
             wp_die(
                 sprintf(
-                    __('Plugin Directory Filters requires WordPress %s or higher. Please update WordPress.', 'wp-plugin-filters'),
+                    __('Plugin Directory Filters requires WordPress %s or higher. Please update WordPress.', 'wp-plugin-directory-filters'),
                     '5.8'
                 ),
-                __('Plugin Activation Error', 'wp-plugin-filters'),
+                __('Plugin Activation Error', 'wp-plugin-directory-filters'),
                 array('back_link' => true)
             );
         }
@@ -38,11 +38,11 @@ class WP_Plugin_Filters_Activator {
             deactivate_plugins(WP_PLUGIN_FILTERS_BASENAME);
             wp_die(
                 sprintf(
-                    __('Plugin Directory Filters requires PHP %s or higher. Your current version is %s.', 'wp-plugin-filters'),
+                    __('Plugin Directory Filters requires PHP %s or higher. Your current version is %s.', 'wp-plugin-directory-filters'),
                     '7.4',
                     PHP_VERSION
                 ),
-                __('Plugin Activation Error', 'wp-plugin-filters'),
+                __('Plugin Activation Error', 'wp-plugin-directory-filters'),
                 array('back_link' => true)
             );
         }
@@ -51,8 +51,8 @@ class WP_Plugin_Filters_Activator {
         if (!self::check_required_functions()) {
             deactivate_plugins(WP_PLUGIN_FILTERS_BASENAME);
             wp_die(
-                __('Plugin Directory Filters requires functions that are not available in your hosting environment.', 'wp-plugin-filters'),
-                __('Plugin Activation Error', 'wp-plugin-filters'),
+                __('Plugin Directory Filters requires functions that are not available in your hosting environment.', 'wp-plugin-directory-filters'),
+                __('Plugin Activation Error', 'wp-plugin-directory-filters'),
                 array('back_link' => true)
             );
         }
@@ -183,7 +183,7 @@ class WP_Plugin_Filters_Activator {
      */
     private static function setup_cache_directories() {
         $upload_dir = wp_upload_dir();
-        $cache_dir = $upload_dir['basedir'] . '/wp-plugin-filters-cache';
+        $cache_dir = $upload_dir['basedir'] . '/wp-plugin-directory-filters-cache';
         
         // Create cache directory if it doesn't exist
         if (!file_exists($cache_dir)) {
@@ -307,11 +307,11 @@ class WP_Plugin_Filters_Activator {
         $notice = array(
             'type' => 'success',
             'message' => sprintf(
-                __('WordPress Plugin Directory Filters has been activated! Visit the %s to configure filtering algorithms.', 'wp-plugin-filters'),
+                __('WordPress Plugin Directory Filters has been activated! Visit the %s to configure filtering algorithms.', 'wp-plugin-directory-filters'),
                 sprintf(
                     '<a href="%s">%s</a>',
-                    admin_url('options-general.php?page=wp-plugin-filters'),
-                    __('settings page', 'wp-plugin-filters')
+                    admin_url('options-general.php?page=wp-plugin-directory-filters'),
+                    __('settings page', 'wp-plugin-directory-filters')
                 )
             ),
             'dismissible' => true
@@ -331,9 +331,9 @@ class WP_Plugin_Filters_Activator {
         
         // List of plugins that might conflict
         $conflict_plugins = array(
-            'plugin-installer-speedup/plugin-installer-speedup.php' => __('Plugin Installer Speedup', 'wp-plugin-filters'),
-            'advanced-plugin-search/advanced-plugin-search.php' => __('Advanced Plugin Search', 'wp-plugin-filters'),
-            'plugin-organizer/plugin-organizer.php' => __('Plugin Organizer', 'wp-plugin-filters')
+            'plugin-installer-speedup/plugin-installer-speedup.php' => __('Plugin Installer Speedup', 'wp-plugin-directory-filters'),
+            'advanced-plugin-search/advanced-plugin-search.php' => __('Advanced Plugin Search', 'wp-plugin-directory-filters'),
+            'plugin-organizer/plugin-organizer.php' => __('Plugin Organizer', 'wp-plugin-directory-filters')
         );
         
         foreach ($conflict_plugins as $plugin_file => $plugin_name) {

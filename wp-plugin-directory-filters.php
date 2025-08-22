@@ -1,17 +1,17 @@
 <?php
 /**
  * Plugin Name: WordPress Plugin Directory Filters
- * Plugin URI: https://wordpress.org/plugins/wp-plugin-directory-filters
- * Description: Enhances the WordPress admin plugin installer with advanced filtering, sorting, and rating capabilities while maintaining seamless integration with the existing interface.
+ * Plugin URI: https://wppd-filters.terryarthur.com/
+ * Description: Enhances the WordPress admin plugin installer with advanced filtering, sorting, and rating capabilities. Features colored status indicators, WordPress compatibility checking, and modern UI improvements.
  * Version: 1.0.0
- * Author: WordPress Community
- * Author URI: https://wordpress.org
+ * Author: Terry Arthur
+ * Author URI: https://terryarthur.com
  * License: GPL-2.0-or-later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain: wp-plugin-filters
+ * Text Domain: wp-plugin-directory-filters
  * Domain Path: /languages
  * Requires at least: 5.8
- * Tested up to: 6.4
+ * Tested up to: 6.7.1
  * Requires PHP: 7.4
  * Network: true
  */
@@ -32,7 +32,7 @@ define('WP_PLUGIN_FILTERS_BASENAME', plugin_basename(__FILE__));
  */
 function wp_plugin_filters_init() {
     // Load text domain for internationalization
-    load_plugin_textdomain('wp-plugin-filters', false, dirname(plugin_basename(__FILE__)) . '/languages');
+    load_plugin_textdomain('wp-plugin-directory-filters', false, dirname(plugin_basename(__FILE__)) . '/languages');
     
     // Require core plugin class
     require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-plugin-core.php';

@@ -49,7 +49,7 @@
             // loadStateFromURL disabled to avoid auto-applying filters on load
             
             // DO NOT add any body classes on init - only when filters are applied
-            console.log('[WP Plugin Filters] Initialized successfully - native layout preserved');
+            // Plugin initialized successfully
         },
 
         /**
@@ -73,17 +73,13 @@
          * Save original plugins from page load
          */
         saveOriginalPlugins: function() {
-            console.log('[WP Plugin Filters] Attempting to save original plugins...');
-            
             // Try to capture original plugin data from the page
             var originalCards = $('.plugin-card, .plugin-list-item, #the-list > tr');
-            console.log('[WP Plugin Filters] Found', originalCards.length, 'original plugin cards');
             
             // For now, we'll save the HTML content - in a future version we could 
             // extract actual plugin data, but this preserves the original layout
             if (originalCards.length > 0) {
                 this.state.originalContent = originalCards.parent().html();
-                console.log('[WP Plugin Filters] Saved original plugin content');
             }
         },
 
@@ -788,14 +784,9 @@
             
             // Get update status with color-coded indicator
             var updateStatus = this.getUpdateStatus(plugin.last_updated);
-            console.log('[WP Plugin Filters] Update status for', plugin.slug, ':', updateStatus);
             
             // Get WordPress compatibility status
             var wpCompatStatus = this.getWPCompatibilityStatus(plugin.tested);
-            console.log('[WP Plugin Filters] WP compat status for', plugin.slug, ':', wpCompatStatus);
-            
-            // Debug: Check if icons are being generated correctly
-            console.log('[WP Plugin Filters] Icon debug - Update icon:', '"' + updateStatus.icon + '"', 'WP compat icon:', '"' + wpCompatStatus.icon + '"');
             
             return `
                 <li class="wp-block-post post-${plugin.slug} plugin type-plugin status-publish hentry">
