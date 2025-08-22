@@ -46,7 +46,8 @@
             this.bindEvents();
             // loadStateFromURL disabled to avoid auto-applying filters on load
             
-            console.log('[WP Plugin Filters] Initialized successfully');
+            // DO NOT add any body classes on init - only when filters are applied
+            console.log('[WP Plugin Filters] Initialized successfully - native layout preserved');
         },
 
         /**
@@ -70,6 +71,8 @@
          * Inject filter controls into the WordPress admin interface
          */
         injectFilterControls: function() {
+            console.log('[WP Plugin Filters] Starting filter controls injection...');
+            
             // Prevent double injection
             if ($('.wp-plugin-filters-controls').length > 0) {
                 console.log('[WP Plugin Filters] Filter controls already exist, skipping injection');
@@ -77,28 +80,66 @@
             }
             
             var filterControlsHTML = this.buildFilterControlsHTML();
+            console.log('[WP Plugin Filters] Built filter controls HTML');
+            
+            // Debug: Check what elements are available
+            console.log('[WP Plugin Filters] Available elements:', {
+                'wp-filter': $('.wp-filter').length,
+                'search-box': $('.search-box').length,
+                'plugin-search-input': $('#plugin-search-input').length,
+                'plugin-filter': $('#plugin-filter').length,
+                'plugin-browser': $('.plugin-browser').length,
+                'wp-list-table': $('.wp-list-table').length
+            });
             
             // Insert ABOVE the native search box - try multiple selectors in order
             var inserted = false;
             
             // Try to find the search container and insert before it
             if ($('.wp-filter').length) {
+                console.log('[WP Plugin Filters] Inserting before .wp-filter');
                 $('.wp-filter').before(filterControlsHTML);
                 inserted = true;
             } else if ($('.search-box').length) {
+                console.log('[WP Plugin Filters] Inserting before .search-box');
                 $('.search-box').before(filterControlsHTML);
                 inserted = true;
             } else if ($('#plugin-search-input').length) {
+                console.log('[WP Plugin Filters] Inserting before plugin-search-input container');
                 $('#plugin-search-input').closest('form, div, p').before(filterControlsHTML);
                 inserted = true;
             } else if ($('#plugin-filter').length) {
+                console.log('[WP Plugin Filters] Prepending to #plugin-filter');
                 $('#plugin-filter').prepend(filterControlsHTML);
+                inserted = true;
+            } else if ($('.plugin-browser').length) {
+                console.log('[WP Plugin Filters] Prepending to .plugin-browser');
+                $('.plugin-browser').prepend(filterControlsHTML);
+                inserted = true;
+            } else if ($('.wrap').length) {
+                console.log('[WP Plugin Filters] Inserting after .wrap h1');
+                $('.wrap h1').first().after(filterControlsHTML);
+                inserted = true;
+            } else if ($('#wpbody-content').length) {
+                console.log('[WP Plugin Filters] Prepending to #wpbody-content');
+                $('#wpbody-content').prepend(filterControlsHTML);
                 inserted = true;
             }
             
             if (!inserted) {
                 console.warn('[WP Plugin Filters] Could not find suitable insertion point for filters');
-                return;
+                console.log('[WP Plugin Filters] Available elements for debugging:', {
+                    'body': $('body').length,
+                    'wrap': $('.wrap').length,
+                    'wpbody-content': $('#wpbody-content').length,
+                    'wpbody': $('#wpbody').length
+                });
+                console.log('[WP Plugin Filters] DOM structure sample:', $('body').html().substring(0, 1000));
+                
+                // Last resort - insert at the beginning of body
+                $('body').prepend('<div style="background: #f9f9f9; padding: 10px; margin: 10px; border: 1px solid #ddd;">' + filterControlsHTML + '</div>');
+                inserted = true;
+                console.log('[WP Plugin Filters] Inserted as last resort at beginning of body');
             }
             
             console.log('[WP Plugin Filters] Filter controls injected successfully');
@@ -109,9 +150,16 @@
             this.$elements.updateTimeframe = $('#wp-plugin-filter-updates');
             this.$elements.usabilityRating = $('#wp-plugin-filter-usability');
             this.$elements.healthScore = $('#wp-plugin-filter-health');
+            this.$elements.rating = $('#wp-plugin-filter-rating');
             this.$elements.sortBy = $('#wp-plugin-filter-sort');
             this.$elements.sortDirection = $('#wp-plugin-filter-direction');
             this.$elements.clearFilters = $('#wp-plugin-clear-filters');
+            
+            console.log('[WP Plugin Filters] Cached filter elements:', {
+                filterControls: this.$elements.filterControls.length,
+                installationRange: this.$elements.installationRange.length,
+                sortBy: this.$elements.sortBy.length
+            });
         },
 
         /**
@@ -119,49 +167,60 @@
          */
         buildFilterControlsHTML: function() {
             return `
-                <div class="wp-plugin-filters-controls">
-                    <div class="wp-plugin-filters-inline">
-                        <select id="wp-plugin-filter-installations">
-                            <option value="all">All Installs</option>
-                            <option value="1m-plus">1M+</option>
-                            <option value="100k-1m">100K+</option>
-                            <option value="10k-100k">10K+</option>
-                            <option value="1k-10k">1K+</option>
-                        </select>
-                        
-                        <select id="wp-plugin-filter-updates">
-                            <option value="all">Any Update</option>
-                            <option value="last_month">Last Month</option>
-                            <option value="last_3months">Last 3 Months</option>
-                            <option value="last_year">Last Year</option>
-                        </select>
-                        
-                        <select id="wp-plugin-filter-usability">
-                            <option value="0">Any Usability</option>
-                            <option value="4">4+ stars</option>
-                            <option value="3">3+ stars</option>
-                            <option value="2">2+ stars</option>
-                        </select>
-                        
-                        <select id="wp-plugin-filter-health">
-                            <option value="0">Any Health</option>
-                            <option value="85">Excellent (85+)</option>
-                            <option value="70">Good (70+)</option>
-                            <option value="40">Fair (40+)</option>
-                        </select>
-                        
-                        <select id="wp-plugin-filter-sort">
-                            <option value="relevance">Relevance</option>
-                            <option value="installations">Installs</option>
-                            <option value="rating">Rating</option>
-                            <option value="updated">Updated</option>
-                            <option value="usability_rating">Usability</option>
-                            <option value="health_score">Health</option>
-                        </select>
-                        
-                        <button type="button" id="wp-plugin-apply-filters" class="button button-primary">Apply Filters</button>
-                        <button type="button" id="wp-plugin-clear-filters" class="button">Clear</button>
-                    </div>
+                <div class="wp-plugin-filters-controls" style="position: relative; z-index: 1000;">
+                    <form onsubmit="return false;" style="margin: 0; padding: 0;">
+                        <div class="wp-plugin-filters-inline">
+                            <select id="wp-plugin-filter-installations">
+                                <option value="all">All Installs</option>
+                                <option value="1m-plus">1M+</option>
+                                <option value="100k-1m">100K+</option>
+                                <option value="10k-100k">10K+</option>
+                                <option value="1k-10k">1K+</option>
+                            </select>
+                            
+                            <select id="wp-plugin-filter-updates">
+                                <option value="all">Any Update</option>
+                                <option value="last_month">Last Month</option>
+                                <option value="last_3months">Last 3 Months</option>
+                                <option value="last_year">Last Year</option>
+                            </select>
+                            
+                            <select id="wp-plugin-filter-usability">
+                                <option value="0">Any Usability</option>
+                                <option value="4">4+ stars</option>
+                                <option value="3">3+ stars</option>
+                                <option value="2">2+ stars</option>
+                            </select>
+                            
+                            <select id="wp-plugin-filter-health">
+                                <option value="0">Any Health</option>
+                                <option value="85">Excellent (85+)</option>
+                                <option value="70">Good (70+)</option>
+                                <option value="40">Fair (40+)</option>
+                            </select>
+                            
+                            <select id="wp-plugin-filter-rating">
+                                <option value="0">Any Rating</option>
+                                <option value="4">4+ Stars</option>
+                                <option value="3">3+ Stars</option>
+                                <option value="2">2+ Stars</option>
+                                <option value="1">1+ Stars</option>
+                            </select>
+                            
+                            <select id="wp-plugin-filter-sort">
+                                <option value="">Sort Order</option>
+                                <option value="relevance">Relevance</option>
+                                <option value="installations">Installs</option>
+                                <option value="rating">Rating</option>
+                                <option value="updated">Updated</option>
+                                <option value="usability_rating">Usability</option>
+                                <option value="health_score">Health</option>
+                            </select>
+                            
+                            <button type="button" id="wp-plugin-apply-filters" class="button button-primary">Apply Filters</button>
+                            <button type="button" id="wp-plugin-clear-filters" class="button">Clear</button>
+                        </div>
+                    </form>
                 </div>
             `;
         },
@@ -175,7 +234,10 @@
             // Apply filters button - only apply when clicked
             $(document).on('click', '#wp-plugin-apply-filters', function(e) {
                 e.preventDefault();
+                e.stopPropagation();
+                console.log('[WP Plugin Filters] Apply filters button clicked');
                 self.applyFilters();
+                return false;
             });
             
             // Clear filters button
@@ -218,7 +280,7 @@
         },
 
         /**
-         * Apply current filters via AJAX
+         * Apply current filters - Direct API call like working Chrome extension
          */
         applyFilters: function() {
             if (this.state.isLoading) {
@@ -229,9 +291,212 @@
             this.state.currentFilters = filterData;
             
             this.showLoadingState();
-            this.executeAjaxRequest('wp_plugin_filter', filterData)
-                .done(this.handleFilterSuccess.bind(this))
-                .fail(this.handleFilterError.bind(this));
+            
+            // Use working extension approach - direct API call
+            this.fetchPluginDataFromAPI(filterData.search_term)
+                .then(this.handleDirectAPISuccess.bind(this))
+                .catch(this.handleDirectAPIError.bind(this));
+        },
+
+        /**
+         * Fetch plugin data from WordPress.org API directly (like Chrome extension)
+         */
+        fetchPluginDataFromAPI: function(searchTerm) {
+            var self = this;
+            searchTerm = searchTerm || '';
+            
+            var apiUrl = 'https://api.wordpress.org/plugins/info/1.2/?action=query_plugins' +
+                '&request[search]=' + encodeURIComponent(searchTerm) +
+                '&request[per_page]=100' +
+                '&request[page]=1' +
+                '&request[fields][short_description]=true' +
+                '&request[fields][rating]=true' +
+                '&request[fields][ratings]=true' +
+                '&request[fields][active_installs]=true' +
+                '&request[fields][last_updated]=true' +
+                '&request[fields][icons]=true' +
+                '&request[fields][num_ratings]=true';
+            
+            console.log('[WP Plugin Filters] Calling WordPress.org API directly:', apiUrl);
+            
+            return fetch(apiUrl, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            })
+            .then(function(response) {
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status + ': ' + response.statusText);
+                }
+                return response.json();
+            })
+            .then(function(data) {
+                console.log('[WP Plugin Filters] Direct API response:', data);
+                if (data && data.plugins && Array.isArray(data.plugins)) {
+                    return {
+                        plugins: data.plugins,
+                        pagination: {
+                            page: data.info?.page || 1,
+                            pages: data.info?.pages || 1,
+                            total_results: data.info?.results || data.plugins.length
+                        }
+                    };
+                } else {
+                    throw new Error('Invalid API response structure');
+                }
+            });
+        },
+
+        /**
+         * Handle successful direct API response
+         */
+        handleDirectAPISuccess: function(response) {
+            console.log('[WP Plugin Filters] Direct API Success:', response);
+            this.hideLoadingState();
+            this.state.retryCount = 0;
+            
+            if (response && response.plugins) {
+                // Apply client-side filters
+                var filteredPlugins = this.applyClientSideFilters(response.plugins, this.state.currentFilters);
+                
+                var processedResponse = {
+                    plugins: filteredPlugins,
+                    pagination: response.pagination
+                };
+                
+                console.log('[WP Plugin Filters] Updating grid with direct API data:', processedResponse);
+                this.updatePluginGrid(processedResponse);
+                this.updatePagination(processedResponse.pagination);
+            } else {
+                console.error('[WP Plugin Filters] Invalid direct API response structure:', response);
+                this.showError('Invalid API response structure');
+            }
+        },
+
+        /**
+         * Handle direct API errors
+         */
+        handleDirectAPIError: function(error) {
+            console.error('[WP Plugin Filters] Direct API Error:', error);
+            this.hideLoadingState();
+            this.showError('Failed to fetch plugins: ' + error.message);
+        },
+
+        /**
+         * Apply filters client-side (like Chrome extension)
+         */
+        applyClientSideFilters: function(plugins, filterData) {
+            var self = this;
+            
+            return plugins.filter(function(plugin) {
+                // Installation range filter
+                if (filterData.installation_range && filterData.installation_range !== 'all') {
+                    var installs = plugin.active_installs || 0;
+                    var rangeMap = {
+                        '1m-plus': 1000000,
+                        '100k-1m': 100000,
+                        '10k-100k': 10000,
+                        '1k-10k': 1000
+                    };
+                    var minInstalls = rangeMap[filterData.installation_range];
+                    if (minInstalls && installs < minInstalls) {
+                        return false;
+                    }
+                }
+                
+                // Update timeframe filter
+                if (filterData.update_timeframe && filterData.update_timeframe !== 'all') {
+                    var lastUpdated = self.parseWordPressDate(plugin.last_updated);
+                    var daysSinceUpdate = Math.floor((new Date() - lastUpdated) / (1000 * 60 * 60 * 24));
+                    var maxDaysMap = {
+                        'last_month': 30,
+                        'last_3months': 90,
+                        'last_year': 365
+                    };
+                    var maxDays = maxDaysMap[filterData.update_timeframe];
+                    if (maxDays && daysSinceUpdate > maxDays) {
+                        return false;
+                    }
+                }
+                
+                // Usability rating filter
+                if (filterData.usability_rating && parseFloat(filterData.usability_rating) > 0) {
+                    var usability = self.calculateUsability(plugin.ratings || {}, plugin.num_ratings || 0);
+                    if (usability.score < parseFloat(filterData.usability_rating)) {
+                        return false;
+                    }
+                }
+                
+                // Health score filter  
+                if (filterData.health_score && parseInt(filterData.health_score) > 0) {
+                    var healthScore = self.calculateHealthProxy(plugin);
+                    if (healthScore < parseInt(filterData.health_score)) {
+                        return false;
+                    }
+                }
+                
+                // Rating filter
+                if (filterData.rating && parseFloat(filterData.rating) > 0) {
+                    var pluginRating = plugin.rating || 0;
+                    if (pluginRating < parseFloat(filterData.rating)) {
+                        return false;
+                    }
+                }
+                
+                return true;
+            });
+
+            // Only sort if a specific sort order is selected
+            if (filterData.sort_by && filterData.sort_by !== '') {
+                filtered.sort(function(a, b) {
+                    // Sort by selected criteria
+                    var sortBy = filterData.sort_by;
+                    switch (sortBy) {
+                        case 'relevance':
+                            return 0; // Keep original order for relevance
+                        case 'installations':
+                            return (b.active_installs || 0) - (a.active_installs || 0);
+                        case 'rating':
+                            return (b.rating || 0) - (a.rating || 0);
+                        case 'updated':
+                            var dateA = self.parseWordPressDate(a.last_updated);
+                            var dateB = self.parseWordPressDate(b.last_updated);
+                            return dateB - dateA;
+                        case 'usability_rating':
+                            var usabilityA = self.calculateUsability(a.ratings || {}, a.num_ratings || 0);
+                            var usabilityB = self.calculateUsability(b.ratings || {}, b.num_ratings || 0);
+                            return usabilityB.score - usabilityA.score;
+                        case 'health_score':
+                            return self.calculateHealthProxy(b) - self.calculateHealthProxy(a);
+                        default:
+                            return 0;
+                    }
+                });
+            }
+
+            return filtered;
+        },
+
+        /**
+         * Get icon URL from plugin data (handles WordPress.org API format)
+         */
+        getIconUrl: function(plugin) {
+            if (!plugin || !plugin.icons || typeof plugin.icons !== 'object') {
+                return ''; // Return empty string for broken images to hide via onerror
+            }
+            
+            var icons = plugin.icons;
+            console.log('Getting icon URL for', plugin.slug, '- available icons:', JSON.stringify(icons));
+            
+            // Priority order: svg, 2x, 1x, default
+            if (icons.svg) return icons.svg;
+            if (icons['2x']) return icons['2x'];  
+            if (icons['1x']) return icons['1x'];
+            if (icons.default) return icons.default;
+            
+            // No valid icons found
+            return '';
         },
 
         /**
@@ -244,7 +509,8 @@
                 update_timeframe: this.$elements.updateTimeframe.val() || 'all',
                 usability_rating: parseFloat(this.$elements.usabilityRating.val()) || 0,
                 health_score: parseInt(this.$elements.healthScore.val()) || 0,
-                sort_by: this.$elements.sortBy.val() || 'relevance',
+                rating: parseFloat(this.$elements.rating.val()) || 0,
+                sort_by: this.$elements.sortBy.val() || '',
                 sort_direction: this.$elements.sortDirection.val() || 'desc',
                 page: 1, // Reset to first page when filters change
                 per_page: 24 // WordPress default
@@ -301,23 +567,11 @@
         },
 
         /**
-         * Handle successful filter response
+         * Handle successful filter response (UNUSED - using direct API now)
          */
         handleFilterSuccess: function(response) {
-            console.log('[WP Plugin Filters] AJAX Success:', response);
-            this.hideLoadingState();
-            this.state.retryCount = 0;
-            
-            if (response.success && response.data) {
-                console.log('[WP Plugin Filters] Updating grid with data:', response.data);
-                this.updatePluginGrid(response.data);
-                this.updateURL(this.state.currentFilters);
-                this.updatePagination(response.data.pagination);
-                this.showFilterSummary(response.data.filters_applied);
-            } else {
-                console.error('[WP Plugin Filters] Invalid response structure:', response);
-                this.showError(response.data && response.data.message ? response.data.message : wpPluginFilters.strings.error);
-            }
+            // This function is no longer used - we call WordPress.org API directly
+            console.log('[WP Plugin Filters] handleFilterSuccess called but should not be - using direct API');
         },
 
         /**
@@ -339,7 +593,7 @@
         },
 
         /**
-         * Update plugin grid with filtered results
+         * Update plugin grid with filtered results - Match Chrome extension approach
          */
         updatePluginGrid: function(data) {
             var self = this;
@@ -354,15 +608,29 @@
             
             console.log('[WP Plugin Filters] Found', data.plugins.length, 'plugins to display');
             
-            // Try multiple selectors to find the results container
+            // Debug: Log first plugin data to see what we're getting from direct API
+            if (data.plugins.length > 0) {
+                console.log('[WP Plugin Filters] Sample plugin data from DIRECT API:', {
+                    name: data.plugins[0].name,
+                    slug: data.plugins[0].slug,
+                    icons: data.plugins[0].icons,
+                    hasIconsProperty: data.plugins[0].hasOwnProperty('icons'),
+                    iconType: typeof data.plugins[0].icons,
+                    iconKeys: data.plugins[0].icons ? Object.keys(data.plugins[0].icons) : 'no icons',
+                    icon1x: data.plugins[0].icons?.['1x'],
+                    icon2x: data.plugins[0].icons?.['2x'],
+                    iconSvg: data.plugins[0].icons?.svg,
+                    iconDefault: data.plugins[0].icons?.default,
+                    fullPlugin: data.plugins[0]
+                });
+            }
+            
+            // WordPress admin plugin installer containers
             var containerSelectors = [
+                '#the-list',
                 '.plugin-browser .plugin-list',
                 '.wp-list-table tbody',
-                '#the-list',
-                '.plugin-browser',
-                '#plugin-filter',
-                '.plugin-install-tab-featured .plugin-list',
-                '.plugin-install-tab-popular .plugin-list'
+                '.plugin-browser'
             ];
             
             var $container = null;
@@ -376,6 +644,8 @@
             
             if (!$container || !$container.length) {
                 console.error('[WP Plugin Filters] Could not find results container. Available elements:', {
+                    blockPostTemplate: $('.wp-block-post-template').length,
+                    pluginCards: $('.plugin-cards').length,
                     pluginBrowser: $('.plugin-browser').length,
                     pluginList: $('.plugin-list').length,
                     wpListTable: $('.wp-list-table').length,
@@ -390,8 +660,19 @@
             
             console.log('[WP Plugin Filters] Generated', pluginCards.length, 'characters of HTML');
             
+            // Add classes to apply filtered styling ONLY when filters are actually applied
+            $('body').addClass('wp-filter-active');
+            $('body').addClass('wp-filter-results-active');
+            
+            console.log('[WP Plugin Filters] Applied filter classes - custom layout now active');
+            
+            // Only apply grid layout via CSS classes - don't force inline styles
+            // This allows CSS to control the layout properly
+            
             // Replace the content
             $container.html(pluginCards);
+            
+            // Icons will use browser's native error handling - no custom error handling needed
             
             // Update results count if available
             if (data.pagination && data.pagination.total_results) {
@@ -407,87 +688,75 @@
         },
 
         /**
-         * Build HTML for a plugin card matching WordPress exactly
+         * Build HTML for a plugin card matching WordPress ADMIN structure
          */
         buildPluginCard: function(plugin) {
-            var healthScore = plugin.health_score || Math.floor(Math.random() * 40) + 60;
-            var usabilityRating = plugin.usability_rating || (plugin.rating ? plugin.rating : 0);
-            var iconUrl = this.getPluginIcon(plugin);
-            var installCount = this.formatInstallCount(plugin.active_installs || 0);
-            var rating = plugin.rating || 0;
-            var lastUpdated = plugin.last_updated_human || (plugin.last_updated ? this.formatRelativeTime(plugin.last_updated) : 'Unknown');
+            var rating = plugin.rating ? (plugin.rating / 20) : 0; // Convert 0-100 to 0-5
+            var installs = plugin.active_installs || 0;
+            var healthScore = plugin.health_score || this.calculateHealthProxy(plugin);
             
-            // Build proper star rating with label
-            var mainStarRating = this.buildStarRating(rating, plugin.num_ratings || 0);
+            // Calculate usability score from ratings breakdown
+            var usability = this.calculateUsability(plugin.ratings || {}, plugin.num_ratings || 0);
+            var usabilityColor = this.getUsabilityColor(usability.score);
+            
+            // Parse date and calculate time ago
+            var lastUpdated = this.parseWordPressDate(plugin.last_updated);
+            var timeAgo = this.getTimeAgo(lastUpdated);
             
             return `
-                <div class="plugin-card plugin-card-${plugin.slug} wp-plugin-enhanced" data-slug="${plugin.slug}">
-                    <div class="plugin-card-top">
-                        <div class="name column-name">
-                            <h3>
-                                <a href="${this.getPluginDetailsUrl(plugin.slug)}" 
-                                   class="thickbox open-plugin-details-modal" 
-                                   data-title="${this.escapeHtml(plugin.name)}"
-                                   data-slug="${plugin.slug}">
-                                    ${this.escapeHtml(plugin.name)}
-                                    <img src="${iconUrl}" class="plugin-icon" alt="${this.escapeHtml(plugin.name)} icon">
-                                </a>
-                            </h3>
-                        </div>
-                        
-                        <div class="action-links">
-                            <ul class="plugin-action-buttons">
-                                <li>
-                                    <a class="install-now button" data-slug="${plugin.slug}" href="${this.getInstallUrl(plugin.slug)}">
-                                        Install Now
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="${this.getPluginDetailsUrl(plugin.slug)}" class="thickbox open-plugin-details-modal" data-title="${this.escapeHtml(plugin.name)}" data-slug="${plugin.slug}">
-                                        More Details
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                        
-                        <div class="desc column-description">
-                            <p>${this.escapeHtml(plugin.short_description || '')}</p>
-                            <p class="authors">
-                                <cite>By ${this.escapeHtml(plugin.author || '')}</cite>
-                            </p>
-                        </div>
-                    </div>
-                    
-                    <div class="plugin-card-bottom">
-                        <div class="vers column-rating">
-                            <div class="main-rating">
-                                <strong>Rating:</strong> ${mainStarRating}
+                <li class="wp-block-post post-${plugin.slug} plugin type-plugin status-publish hentry">
+                    <div class="plugin-card wp-block-wporg-link-wrapper is-style-no-underline wp-plugin-enhanced" data-slug="${plugin.slug}">
+                        <div class="entry">
+                            <header class="entry-header" style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                                <div class="entry-thumbnail" style="flex-shrink: 0;">
+                                    <img class="plugin-icon" 
+                                         src="${this.getIconUrl(plugin)}" 
+                                         alt="${this.escapeHtml(plugin.name)} icon" 
+                                         style="width: 64px; height: 64px; border-radius: 4px; object-fit: cover;"
+                                         onerror="this.style.display='none'">
+                                </div>
+                                <h3 class="entry-title" style="margin: 0; flex: 1;"><a href="https://wordpress.org/plugins/${plugin.slug}/">${this.escapeHtml(plugin.name)}</a></h3>
+                            </header>
+
+                            <div class="plugin-rating">
+                                <div class="wporg-ratings" aria-label="${rating} out of 5 stars" data-title-template="%s out of 5 stars" data-rating="${rating}" style="color:#ffb900">
+                                    ${this.createStarRating(rating)}
+                                </div>
+                                <span class="rating-count">(${plugin.num_ratings || 0}<span class="screen-reader-text"> total ratings</span>)</span>
                             </div>
-                            <div class="enhanced-metrics">
-                                <div class="health-metric">
-                                    <strong>Health:</strong> ${this.buildHealthBadge(healthScore)}
-                                </div>
-                                <div class="usability-metric">
-                                    <strong>Usability:</strong> ${usabilityRating.toFixed(1)} stars
-                                </div>
+                            <div class="entry-excerpt">
+                                <p>${this.escapeHtml(plugin.short_description || '')}</p>
                             </div>
                         </div>
-                        
-                        <div class="column-updated">
-                            <strong>Last Updated:</strong> ${lastUpdated}
-                        </div>
-                        
-                        <div class="column-downloaded">
-                            ${installCount} active installations
-                        </div>
-                        
-                        <div class="column-compatibility">
-                            <span class="compatibility-compatible">
-                                <strong>Tested up to:</strong> ${plugin.tested || this.getWPVersion()}
+
+                        <footer>
+                            <span class="plugin-author">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M15.5 9.5a1 1 0 100-2 1 1 0 000 2zm0 1.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5zm-2.25 6v-2a2.75 2.75 0 00-2.75-2.75h-4A2.75 2.75 0 003.75 15v2h1.5v-2c0-.69.56-1.25 1.25-1.25h4c.69 0 1.25.56 1.25 1.25v2h1.5zm7-2v2h-1.5v-2c0-.69-.56-1.25-1.25-1.25H15v-1.5h2.5A2.75 2.75 0 0120.25 15zM9.5 8.5a1 1 0 11-2 0 1 1 0 012 0zm1.5 0a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" fill-rule="evenodd"></path></svg>
+                                ${plugin.author_profile ? `<a href="${this.escapeHtml(plugin.author_profile)}" target="_blank" rel="noopener">${this.escapeHtml(plugin.author || 'Unknown')}</a>` : `<span>${this.escapeHtml(plugin.author || 'Unknown')}</span>`}
                             </span>
-                        </div>
+                            <span class="active-installs">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path fill-rule="evenodd" d="M11.25 5h1.5v15h-1.5V5zM6 10h1.5v10H6V10zm12 4h-1.5v6H18v-6z" clip-rule="evenodd"></path></svg>
+                                <span>${this.formatInstallCount(installs)} active installations</span>
+                            </span>
+                            <span class="tested-with">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M20 10c0-5.51-4.49-10-10-10C4.48 0 0 4.49 0 10c0 5.52 4.48 10 10 10 5.51 0 10-4.48 10-10zM7.78 15.37L4.37 6.22c.55-.02 1.17-.08 1.17-.08.5-.06.44-1.13-.06-1.11 0 0-1.45.11-2.37.11-.18 0-.37 0-.58-.01C4.12 2.69 6.87 1.11 10 1.11c2.33 0 4.45.87 6.05 2.34-.68-.11-1.65.39-1.65 1.58 0 .74.45 1.36.9 2.1.35.61.55 1.36.55 2.46 0 1.49-1.4 5-1.4 5l-3.03-8.37c.54-.02.82-.17.82-.17.5-.05.44-1.25-.06-1.22 0 0-1.44.12-2.38.12-.87 0-2.33-.12-2.33-.12-.5-.03-.56 1.2-.06 1.22l.92.08 1.26 3.41zM17.41 10c.24-.64.74-1.87.43-4.25.7 1.29 1.05 2.71 1.05 4.25 0 3.29-1.73 6.24-4.4 7.78.97-2.59 1.94-5.2 2.92-7.78zM6.1 18.09C3.12 16.65 1.11 13.53 1.11 10c0-1.3.23-2.48.72-3.59C3.25 10.3 4.67 14.2 6.1 18.09zm4.03-6.63l2.58 6.98c-.86.29-1.76.45-2.71.45-.79 0-1.57-.11-2.29-.33.81-2.38 1.62-4.74 2.42-7.10z"></path></svg>
+                                <span>Tested with ${plugin.tested || 'unknown'}</span>
+                            </span>
+                            <span class="last-updated">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"></path></svg>
+                                <span>Updated ${timeAgo}</span>
+                            </span>
+                            <span class="usability-score usability-${usabilityColor}">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path></svg>
+                                <span>Usability Rating: ${usability.score}/100 (${usability.total} reviews)</span>
+                            </span>
+                            <span class="health-score health-${this.getHealthColor(healthScore)}" data-slug="${plugin.slug}">
+                                <span class="health-meter">${this.getHealthPowerMeter(healthScore)}</span>
+                                <span>Health Score: ${healthScore}/100</span>
+                            </span>
+                        </footer>
                     </div>
-                </div>
+                </li>
             `;
         },
         
@@ -496,6 +765,236 @@
          */
         getWPVersion: function() {
             return (typeof window.wp !== 'undefined' && window.wp.version) ? window.wp.version : '6.4.2';
+        },
+
+        /**
+         * Calculate plugin usability score and return detailed breakdown
+         * @param {Object} ratings - WP.org ratings breakdown {1: x, 2: x, 3: x, 4: x, 5: x}
+         * @param {number} numRatings - total number of ratings
+         * @param {number} globalMean - average rating across all plugins (default ~3.8)
+         * @param {number} C - confidence constant (higher = more pull toward global mean for small samples)
+         * @returns {Object} breakdown { avgStars, adjustedAvg, score, total, distribution }
+         */
+        calculateUsability: function(ratings, numRatings, globalMean, C) {
+            globalMean = globalMean || 3.8;
+            C = C || 100;
+            
+            if (!ratings || numRatings === 0) {
+                return {
+                    avgStars: 0,
+                    adjustedAvg: 0,
+                    score: 0,
+                    total: 0,
+                    distribution: {1:0,2:0,3:0,4:0,5:0}
+                };
+            }
+
+            // Weighted average from distribution
+            var weightedSum = 0;
+            for (var i = 1; i <= 5; i++) {
+                weightedSum += (i * (ratings[i] || 0));
+            }
+            var avgStars = weightedSum / numRatings;
+
+            // Bayesian adjustment
+            var adjustedAvg = ((C * globalMean) + (numRatings * avgStars)) / (C + numRatings);
+
+            // Normalize to 0–100
+            var score = (adjustedAvg / 5) * 100;
+
+            return {
+                avgStars: Math.round(avgStars * 10) / 10,       // plain average
+                adjustedAvg: Math.round(adjustedAvg * 10) / 10, // smoothed average
+                score: Math.round(score * 10) / 10,             // usability score
+                total: numRatings,
+                distribution: ratings
+            };
+        },
+
+        /**
+         * Get traffic light color based on usability score
+         */
+        getUsabilityColor: function(score) {
+            if (score >= 70) {
+                return 'green'; // Good usability
+            } else if (score >= 40) {
+                return 'yellow'; // Medium usability
+            } else {
+                return 'red'; // Poor usability
+            }
+        },
+
+        /**
+         * Parse WordPress date string
+         */
+        parseWordPressDate: function(dateString) {
+            if (!dateString) return new Date(0);
+            
+            try {
+                // Parse WordPress API date format: "2025-08-13 9:37am GMT"
+                var dateStr = dateString.replace(/(\d+):(\d+)(am|pm) GMT/, ' $1:$2:00 $3 GMT');
+                var parsedDate = new Date(dateStr);
+                return !isNaN(parsedDate.getTime()) ? parsedDate : new Date(0);
+            } catch (e) {
+                console.warn('Date parsing failed:', dateString);
+                return new Date(0);
+            }
+        },
+
+        /**
+         * Get time ago string
+         */
+        getTimeAgo: function(date) {
+            var now = new Date();
+            var diffTime = Math.abs(now - date);
+            var diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            var diffHours = Math.floor(diffTime / (1000 * 60 * 60));
+            
+            // Today (within last 24 hours)
+            if (diffHours < 24) {
+                if (diffHours < 1) {
+                    return 'Just now';
+                } else if (diffHours === 1) {
+                    return '1 hour ago';
+                } else {
+                    return diffHours + ' hours ago';
+                }
+            }
+            
+            // Yesterday
+            if (diffDays === 1) {
+                return 'Yesterday';
+            }
+            
+            // This week (2-6 days ago)
+            if (diffDays >= 2 && diffDays <= 6) {
+                var dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                return 'Last ' + dayNames[date.getDay()];
+            }
+            
+            // Last week (7-13 days ago)
+            if (diffDays >= 7 && diffDays <= 13) {
+                return 'Last week';
+            }
+            
+            // This month (2-4 weeks ago)
+            if (diffDays >= 14 && diffDays <= 30) {
+                var weeks = Math.floor(diffDays / 7);
+                return weeks + ' ' + (weeks === 1 ? 'week' : 'weeks') + ' ago';
+            }
+            
+            // Last month to 11 months
+            if (diffDays >= 31 && diffDays <= 365) {
+                var months = Math.floor(diffDays / 30);
+                if (months === 1) {
+                    return 'Last month';
+                } else {
+                    return months + ' months ago';
+                }
+            }
+            
+            // Years
+            var years = Math.floor(diffDays / 365);
+            if (years === 1) {
+                return 'Last year';
+            } else {
+                return years + ' years ago';
+            }
+        },
+
+        /**
+         * Create star rating HTML
+         */
+        createStarRating: function(rating) {
+            var stars = '';
+            for (var i = 1; i <= 5; i++) {
+                if (rating >= i) {
+                    stars += '<span class="dashicons dashicons-star-filled"></span>';
+                } else if (rating >= i - 0.5) {
+                    stars += '<span class="dashicons dashicons-star-half"></span>';
+                } else {
+                    stars += '<span class="dashicons dashicons-star-empty"></span>';
+                }
+            }
+            return stars;
+        },
+
+        /**
+         * Calculate a health proxy score based on available plugin data
+         */
+        calculateHealthProxy: function(plugin) {
+            var healthScore = 0;
+            
+            // Factor 1: How recently updated (40% weight)
+            var lastUpdated = this.parseWordPressDate(plugin.last_updated);
+            var daysSinceUpdate = Math.floor((new Date() - lastUpdated) / (1000 * 60 * 60 * 24));
+            var updateScore = 0;
+            if (daysSinceUpdate <= 30) updateScore = 40;        // Recently updated
+            else if (daysSinceUpdate <= 90) updateScore = 30;   // Updated within 3 months
+            else if (daysSinceUpdate <= 180) updateScore = 20;  // Updated within 6 months
+            else if (daysSinceUpdate <= 365) updateScore = 10;  // Updated within 1 year
+            else updateScore = 0;                               // Over 1 year old
+            
+            // Factor 2: Rating quality (30% weight)
+            var rating = plugin.rating ? (plugin.rating / 20) : 0; // Convert 0-100 to 0-5
+            var numRatings = plugin.num_ratings || 0;
+            var ratingScore = 0;
+            if (rating >= 4.5 && numRatings >= 50) ratingScore = 30;      // Excellent with good sample
+            else if (rating >= 4.0 && numRatings >= 20) ratingScore = 25; // Very good
+            else if (rating >= 3.5 && numRatings >= 10) ratingScore = 20; // Good
+            else if (rating >= 3.0 && numRatings >= 5) ratingScore = 15;  // Decent
+            else if (rating >= 2.0) ratingScore = 10;                    // Poor
+            else ratingScore = 0;                                         // Very poor or no ratings
+            
+            // Factor 3: Active installations (20% weight)
+            var installs = plugin.active_installs || 0;
+            var installScore = 0;
+            if (installs >= 1000000) installScore = 20;      // 1M+ installs
+            else if (installs >= 100000) installScore = 17;  // 100K+ installs
+            else if (installs >= 10000) installScore = 14;   // 10K+ installs
+            else if (installs >= 1000) installScore = 11;    // 1K+ installs
+            else if (installs >= 100) installScore = 8;      // 100+ installs
+            else installScore = 5;                           // Less than 100 installs
+            
+            // Factor 4: WordPress version compatibility (10% weight)
+            var tested = plugin.tested || '';
+            var compatScore = 0;
+            if (tested >= '6.0') compatScore = 10;       // Recent WordPress version
+            else if (tested >= '5.8') compatScore = 8;   // Fairly recent
+            else if (tested >= '5.5') compatScore = 6;   // Somewhat recent
+            else if (tested >= '5.0') compatScore = 4;   // Older but still supported
+            else compatScore = 2;                        // Very old or unknown
+            
+            healthScore = updateScore + ratingScore + installScore + compatScore;
+            
+            // Ensure score is between 0-100
+            return Math.min(100, Math.max(0, healthScore));
+        },
+
+        /**
+         * Get health color based on score
+         */
+        getHealthColor: function(score) {
+            if (score >= 80) return 'green';
+            if (score >= 50) return 'yellow';
+            return 'red';
+        },
+
+        /**
+         * Get health power meter emoji based on score
+         */
+        getHealthPowerMeter: function(score) {
+            if (score >= 80) {
+                return '🔋'; // Full battery for high health (80-100)
+            } else if (score >= 60) {
+                return '🔋'; // High battery for good health (60-79)
+            } else if (score >= 40) {
+                return '🪫'; // Medium battery for fair health (40-59)
+            } else if (score >= 20) {
+                return '🪫'; // Low battery for poor health (20-39)
+            } else {
+                return '🪫'; // Critical battery for very poor health (0-19)
+            }
         },
 
         /**
@@ -570,16 +1069,17 @@
         },
 
         /**
-         * Format installation count for display
+         * Format installation count for display - Match Chrome extension
          */
         formatInstallCount: function(count) {
             if (count >= 1000000) {
-                return Math.floor(count / 100000) / 10 + 'M+';
+                return Math.floor(count / 1000000) + '+ million';
             } else if (count >= 1000) {
-                return Math.floor(count / 100) / 10 + 'K+';
-            } else {
+                return Math.floor(count / 1000) + '+ thousand';
+            } else if (count > 0) {
                 return count + '+';
             }
+            return 'Less than 10';
         },
 
         /**
@@ -664,16 +1164,31 @@
             this.$elements.updateTimeframe.val('all');
             this.$elements.usabilityRating.val('0');
             this.$elements.healthScore.val('0');
-            this.$elements.sortBy.val('relevance');
+            this.$elements.rating.val('0');
+            this.$elements.sortBy.val('');
             this.$elements.sortDirection.val('desc');
+            
+            // Remove filtered styling classes to restore native WordPress layout
+            $('body').removeClass('wp-filter-active');
+            $('body').removeClass('wp-filter-results-active');
+            
+            console.log('[WP Plugin Filters] Removed filter classes - native layout restored');
+            
+            // Let WordPress handle the native layout - don't force any styling
             
             this.applyFilters();
         },
 
         /**
-         * Load state from URL parameters
+         * Load state from URL parameters - DISABLED to prevent access errors
          */
         loadStateFromURL: function() {
+            // Disabled URL state loading to prevent access errors
+            // Filter state is now maintained only in the UI during the session
+            console.log('[WP Plugin Filters] URL state loading disabled to prevent access errors');
+            return;
+            
+            /*
             var urlParams = new URLSearchParams(window.location.search);
             
             if (urlParams.get('installation_range')) {
@@ -694,12 +1209,19 @@
             if (urlParams.get('sort_direction')) {
                 this.$elements.sortDirection.val(urlParams.get('sort_direction'));
             }
+            */
         },
 
         /**
-         * Update URL with current filter state
+         * Update URL with current filter state - DISABLED to prevent access errors on refresh
          */
         updateURL: function(filterData) {
+            // Disabled URL updating to prevent "not allowed to access page" errors on refresh
+            // WordPress admin doesn't handle custom filter parameters well
+            console.log('[WP Plugin Filters] URL update disabled to prevent refresh access errors');
+            return;
+            
+            /*
             var url = new URL(window.location);
             
             // Update URL parameters
@@ -713,6 +1235,7 @@
             
             // Update browser history
             window.history.replaceState({}, '', url);
+            */
         },
 
         /**
@@ -814,37 +1337,35 @@
         },
 
         /**
-         * Get plugin icon URL with fallbacks
+         * Get plugin icon URL with comprehensive fallbacks
          */
         getPluginIcon: function(plugin) {
-            // First try the direct icon URL from WordPress.org API response
-            if (plugin.icons && typeof plugin.icons === 'object') {
-                // Prefer higher resolution icons first
-                if (plugin.icons['2x']) return plugin.icons['2x'];
-                if (plugin.icons['1x']) return plugin.icons['1x'];
-                if (plugin.icons.default) return plugin.icons.default;
-                if (plugin.icons.svg) return plugin.icons.svg;
+            if (!plugin || !plugin.slug) {
+                console.log('No plugin or slug provided, using empty string');
+                return '';
             }
             
-            // Try alternative icon field from API
-            if (plugin.icon && plugin.icon !== 'default' && plugin.icon.startsWith('http')) {
-                return plugin.icon;
+            console.log('Getting icon for plugin:', plugin.name, 'slug:', plugin.slug, 'icons:', plugin.icons);
+            console.log('Icon object details:', {
+                hasIcons: !!plugin.icons,
+                iconsType: typeof plugin.icons,
+                isObject: typeof plugin.icons === 'object' && plugin.icons !== null,
+                iconKeys: plugin.icons ? Object.keys(plugin.icons) : 'no icons'
+            });
+            
+            // Check if we have icons from the API like the Chrome extension does
+            if (plugin.icons && typeof plugin.icons === 'object' && Object.keys(plugin.icons).length > 0) {
+                // Return the best available icon (Chrome extension uses 2x or default)
+                var iconUrl = plugin.icons['2x'] || plugin.icons.default || plugin.icons['1x'] || plugin.icons.svg;
+                if (iconUrl) {
+                    console.log('Using API icon:', iconUrl);
+                    return iconUrl;
+                }
             }
             
-            // Construct icon URL based on plugin slug (WordPress.org standard)
-            if (plugin.slug) {
-                // Try multiple common icon formats
-                var iconFormats = [
-                    `https://ps.w.org/${plugin.slug}/assets/icon-256x256.png`,
-                    `https://ps.w.org/${plugin.slug}/assets/icon-128x128.png`,
-                    `https://ps.w.org/${plugin.slug}/assets/icon.svg`
-                ];
-                // Return the first format (256x256 for best quality)
-                return iconFormats[0];
-            }
-            
-            // Use WordPress default plugin icon as last resort
-            return this.getDefaultIcon();
+            // No API icon data available - return empty string so template can handle it
+            console.log('No API icon data available for plugin:', plugin.slug);
+            return '';
         },
 
         /**
@@ -853,6 +1374,68 @@
         getDefaultIcon: function() {
             // Use the WordPress.org plugin directory default icon
             return 'https://s.w.org/plugins/geopattern-icon/plugin_ffffff.svg';
+        },
+
+        /**
+         * Handle plugin icon loading errors with better fallback system
+         */
+        handleIconError: function(img, plugin) {
+            var $img = $(img);
+            var slug = plugin && plugin.slug ? plugin.slug : ($img.data('plugin-slug') || 'unknown');
+            
+            // Get current fallback attempt count
+            var attempts = $img.data('fallback-attempts') || 0;
+            attempts++;
+            $img.data('fallback-attempts', attempts);
+            
+            console.log('Icon error for ' + slug + ', attempt ' + attempts + ', current src:', img.src);
+            
+            // Prevent infinite loops - max 5 attempts
+            if (attempts > 5 || !slug || slug === 'unknown') {
+                console.log('All icon fallbacks failed for ' + slug + ', using default');
+                this.setDefaultIcon($img);
+                return;
+            }
+            
+            // Try fallback URLs in order based on attempt number
+            var fallbacks = [
+                'https://ps.w.org/' + slug + '/assets/icon-128x128.png',
+                'https://ps.w.org/' + slug + '/assets/icon-128x128.jpg',
+                'https://ps.w.org/' + slug + '/assets/icon.svg',
+                'https://s.w.org/plugins/geopattern-icon/' + slug + '_ffffff.svg',
+                'https://s.w.org/plugins/geopattern-icon/plugin_ffffff.svg'
+            ];
+            
+            var nextFallback = fallbacks[attempts - 1];
+            
+            if (nextFallback) {
+                console.log('Trying fallback ' + attempts + ' for ' + slug + ':', nextFallback);
+                // Set up error handler for next attempt
+                $img.off('error.wpPluginFilters').on('error.wpPluginFilters', function() {
+                    WPPluginFilters.handleIconError(this, {slug: slug});
+                });
+                img.src = nextFallback;
+            } else {
+                this.setDefaultIcon($img);
+            }
+        },
+        
+        /**
+         * Set default icon styling when all fallbacks fail
+         */
+        setDefaultIcon: function($img) {
+            // Better default plugin icon as base64 SVG
+            var defaultIconSvg = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iNCIgZmlsbD0iI2Y2ZjdmNyIvPgo8cGF0aCBkPSJNNDggMjR2OGgtNFYyNGgtMTBWMTZoMTBjMi4yIDAgNCAMS44IDQgNHpNMjAgMjR2OGgtNFYyNGMwLTIuMiAxLjgtNCA0LTRoMTB2NGgtMTB6TTU2IDMyVjI0YzAtNC40LTMuNi04LTgtOEgyMGMtNC40IDAtOCAzLjYtOCA4djhjLTIuMiAwLTQgMS44LTQgNHMxLjggNCA0IDR2OGMwIDQuNCAzLjYgOCA4IDhoMjRjNC40IDAgOC0zLjYgOC04di04YzIuMiAwIDQtMS44IDQtNHMtMS44LTQtNC00eiIgZmlsbD0iIzY0Njk3MCIvPgo8L3N2Zz4K';
+            
+            console.log('Setting default icon for failed image');
+            $img.attr('src', defaultIconSvg);
+            $img.css({
+                'background': '#f6f7f7',
+                'border': '1px solid #dcdcde',
+                'opacity': '0.9',
+                'object-fit': 'contain',
+                'padding': '4px'
+            });
         },
 
         /**
@@ -905,13 +1488,29 @@
         },
 
         /**
-         * Escape HTML for security
+         * Decode HTML entities and escape for security
          */
         escapeHtml: function(text) {
             if (!text) return '';
-            return text.replace(/[&<>"']/g, function(match) {
+            
+            // First decode common HTML entities
+            var decoded = text
+                .replace(/&amp;/g, '&')
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>')
+                .replace(/&quot;/g, '"')
+                .replace(/&#39;/g, "'")
+                .replace(/&#8211;/g, '\u2013')  // en dash
+                .replace(/&#8212;/g, '\u2014')  // em dash
+                .replace(/&#8216;/g, '\u2018')  // left single quote
+                .replace(/&#8217;/g, '\u2019')  // right single quote
+                .replace(/&#8220;/g, '"')  // left double quote
+                .replace(/&#8221;/g, '"')  // right double quote
+                .replace(/&#8230;/g, '\u2026'); // ellipsis
+            
+            // Then escape dangerous characters for HTML output
+            return decoded.replace(/[<>"']/g, function(match) {
                 var escapeMap = {
-                    '&': '&amp;',
                     '<': '&lt;',
                     '>': '&gt;',
                     '"': '&quot;',
@@ -958,11 +1557,27 @@
         }
     };
 
-    // Initialize when DOM is ready
+    // Initialize when DOM is ready with retry mechanism
     $(document).ready(function() {
+        console.log('[WP Plugin Filters] DOM ready, checking for plugin installer page...');
+        console.log('[WP Plugin Filters] Body classes:', $('body').attr('class'));
+        console.log('[WP Plugin Filters] Plugin filter element:', $('#plugin-filter').length);
+        
         // Only initialize on plugin installer pages
         if ($('body').hasClass('plugin-install-php') || $('#plugin-filter').length) {
+            console.log('[WP Plugin Filters] Plugin installer page detected, initializing...');
             WPPluginFilters.init();
+        } else {
+            console.log('[WP Plugin Filters] Not a plugin installer page, trying again in 1 second...');
+            // Try again after a short delay in case elements load slowly
+            setTimeout(function() {
+                if ($('body').hasClass('plugin-install-php') || $('#plugin-filter').length || $('.plugin-browser').length) {
+                    console.log('[WP Plugin Filters] Plugin installer elements found on retry, initializing...');
+                    WPPluginFilters.init();
+                } else {
+                    console.log('[WP Plugin Filters] Still no plugin installer elements found, skipping initialization');
+                }
+            }, 1000);
         }
     });
 

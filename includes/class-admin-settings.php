@@ -56,19 +56,6 @@ class WP_Plugin_Filters_Admin_Settings {
         );
         
         // Add settings sections
-        add_settings_section(
-            'usability_rating_section',
-            __('Usability Rating Algorithm', 'wp-plugin-filters'),
-            array($this, 'render_usability_section_description'),
-            self::SETTINGS_PAGE_SLUG
-        );
-        
-        add_settings_section(
-            'health_score_section',
-            __('Health Score Algorithm', 'wp-plugin-filters'),
-            array($this, 'render_health_section_description'),
-            self::SETTINGS_PAGE_SLUG
-        );
         
         add_settings_section(
             'cache_section',
@@ -77,44 +64,6 @@ class WP_Plugin_Filters_Admin_Settings {
             self::SETTINGS_PAGE_SLUG
         );
         
-        // Add usability rating fields
-        $usability_fields = array(
-            'user_rating' => __('User Rating Weight (%)', 'wp-plugin-filters'),
-            'rating_count' => __('Rating Count Weight (%)', 'wp-plugin-filters'),
-            'installation_count' => __('Installation Count Weight (%)', 'wp-plugin-filters'),
-            'support_responsiveness' => __('Support Responsiveness Weight (%)', 'wp-plugin-filters')
-        );
-        
-        foreach ($usability_fields as $field => $label) {
-            add_settings_field(
-                "usability_weight_{$field}",
-                $label,
-                array($this, 'render_usability_weight_field'),
-                self::SETTINGS_PAGE_SLUG,
-                'usability_rating_section',
-                array('field' => $field, 'label' => $label)
-            );
-        }
-        
-        // Add health score fields
-        $health_fields = array(
-            'update_frequency' => __('Update Frequency Weight (%)', 'wp-plugin-filters'),
-            'wp_compatibility' => __('WordPress Compatibility Weight (%)', 'wp-plugin-filters'),
-            'support_response' => __('Support Response Weight (%)', 'wp-plugin-filters'),
-            'time_since_update' => __('Update Recency Weight (%)', 'wp-plugin-filters'),
-            'reported_issues' => __('Reported Issues Weight (%)', 'wp-plugin-filters')
-        );
-        
-        foreach ($health_fields as $field => $label) {
-            add_settings_field(
-                "health_weight_{$field}",
-                $label,
-                array($this, 'render_health_weight_field'),
-                self::SETTINGS_PAGE_SLUG,
-                'health_score_section',
-                array('field' => $field, 'label' => $label)
-            );
-        }
         
         // Add cache settings fields
         $cache_fields = array(
@@ -229,31 +178,16 @@ class WP_Plugin_Filters_Admin_Settings {
                 <h2><?php esc_html_e('Algorithm Information', 'wp-plugin-filters'); ?></h2>
                 
                 <div class="algorithm-explanations">
+                    <p><?php esc_html_e('The plugin directory filters provide enhanced usability ratings and health scores to help you make better plugin choices. These metrics are calculated automatically based on WordPress.org data and are not user-configurable.', 'wp-plugin-filters'); ?></p>
+                    
                     <div class="algorithm-explanation">
                         <h3><?php esc_html_e('Usability Rating', 'wp-plugin-filters'); ?></h3>
-                        <p><?php esc_html_e('The usability rating combines multiple factors to provide an overall assessment of plugin usability and quality. The rating is calculated on a scale of 1.0 to 5.0 stars.', 'wp-plugin-filters'); ?></p>
-                        
-                        <h4><?php esc_html_e('Components:', 'wp-plugin-filters'); ?></h4>
-                        <ul>
-                            <li><strong><?php esc_html_e('User Rating:', 'wp-plugin-filters'); ?></strong> <?php esc_html_e('Average rating given by users on WordPress.org', 'wp-plugin-filters'); ?></li>
-                            <li><strong><?php esc_html_e('Rating Count:', 'wp-plugin-filters'); ?></strong> <?php esc_html_e('Number of ratings (more ratings = higher credibility)', 'wp-plugin-filters'); ?></li>
-                            <li><strong><?php esc_html_e('Installation Count:', 'wp-plugin-filters'); ?></strong> <?php esc_html_e('Number of active installations (popularity indicator)', 'wp-plugin-filters'); ?></li>
-                            <li><strong><?php esc_html_e('Support Responsiveness:', 'wp-plugin-filters'); ?></strong> <?php esc_html_e('Percentage of resolved support threads', 'wp-plugin-filters'); ?></li>
-                        </ul>
+                        <p><?php esc_html_e('Combines user ratings, rating count, installation count, and support responsiveness to provide an overall assessment of plugin usability and quality.', 'wp-plugin-filters'); ?></p>
                     </div>
                     
                     <div class="algorithm-explanation">
                         <h3><?php esc_html_e('Health Score', 'wp-plugin-filters'); ?></h3>
-                        <p><?php esc_html_e('The health score evaluates plugin maintenance quality and reliability indicators. The score ranges from 0 to 100, with higher scores indicating better maintenance.', 'wp-plugin-filters'); ?></p>
-                        
-                        <h4><?php esc_html_e('Components:', 'wp-plugin-filters'); ?></h4>
-                        <ul>
-                            <li><strong><?php esc_html_e('Update Frequency:', 'wp-plugin-filters'); ?></strong> <?php esc_html_e('How regularly the plugin is updated and maintained', 'wp-plugin-filters'); ?></li>
-                            <li><strong><?php esc_html_e('WordPress Compatibility:', 'wp-plugin-filters'); ?></strong> <?php esc_html_e('Compatibility with current WordPress versions', 'wp-plugin-filters'); ?></li>
-                            <li><strong><?php esc_html_e('Support Response:', 'wp-plugin-filters'); ?></strong> <?php esc_html_e('Developer responsiveness to support requests', 'wp-plugin-filters'); ?></li>
-                            <li><strong><?php esc_html_e('Update Recency:', 'wp-plugin-filters'); ?></strong> <?php esc_html_e('How recently the plugin was last updated', 'wp-plugin-filters'); ?></li>
-                            <li><strong><?php esc_html_e('Reported Issues:', 'wp-plugin-filters'); ?></strong> <?php esc_html_e('Indicators of potential issues from user feedback', 'wp-plugin-filters'); ?></li>
-                        </ul>
+                        <p><?php esc_html_e('Evaluates plugin maintenance quality based on update frequency, WordPress compatibility, support response, and other reliability indicators.', 'wp-plugin-filters'); ?></p>
                         
                         <h4><?php esc_html_e('Color Coding:', 'wp-plugin-filters'); ?></h4>
                         <ul>
@@ -317,21 +251,6 @@ class WP_Plugin_Filters_Admin_Settings {
         <?php
     }
     
-    /**
-     * Render usability section description
-     */
-    public function render_usability_section_description() {
-        echo '<p>' . esc_html__('Configure the weights for the usability rating algorithm. All weights must sum to 100%.', 'wp-plugin-filters') . '</p>';
-        echo '<div id="usability-weight-total" class="weight-total-display"></div>';
-    }
-    
-    /**
-     * Render health section description
-     */
-    public function render_health_section_description() {
-        echo '<p>' . esc_html__('Configure the weights for the health score algorithm. All weights must sum to 100%.', 'wp-plugin-filters') . '</p>';
-        echo '<div id="health-weight-total" class="weight-total-display"></div>';
-    }
     
     /**
      * Render cache section description
@@ -355,39 +274,6 @@ class WP_Plugin_Filters_Admin_Settings {
         }
     }
     
-    /**
-     * Render usability weight field
-     */
-    public function render_usability_weight_field($args) {
-        $settings = get_option(self::SETTINGS_OPTION, $this->get_default_settings());
-        $field = $args['field'];
-        $value = $settings['usability_weights'][$field] ?? 0;
-        
-        printf(
-            '<input type="number" id="usability_weight_%s" name="%s[usability_weights][%s]" value="%d" min="0" max="100" class="small-text usability-weight-input" /> %%',
-            esc_attr($field),
-            esc_attr(self::SETTINGS_OPTION),
-            esc_attr($field),
-            intval($value)
-        );
-    }
-    
-    /**
-     * Render health weight field
-     */
-    public function render_health_weight_field($args) {
-        $settings = get_option(self::SETTINGS_OPTION, $this->get_default_settings());
-        $field = $args['field'];
-        $value = $settings['health_weights'][$field] ?? 0;
-        
-        printf(
-            '<input type="number" id="health_weight_%s" name="%s[health_weights][%s]" value="%d" min="0" max="100" class="small-text health-weight-input" /> %%',
-            esc_attr($field),
-            esc_attr(self::SETTINGS_OPTION),
-            esc_attr($field),
-            intval($value)
-        );
-    }
     
     /**
      * Render cache duration field
@@ -459,51 +345,6 @@ class WP_Plugin_Filters_Admin_Settings {
     public function sanitize_settings($input) {
         $sanitized = $this->get_default_settings();
         
-        // Sanitize usability weights
-        if (isset($input['usability_weights']) && is_array($input['usability_weights'])) {
-            foreach ($sanitized['usability_weights'] as $key => $default_value) {
-                if (isset($input['usability_weights'][$key])) {
-                    $sanitized['usability_weights'][$key] = max(0, min(100, intval($input['usability_weights'][$key])));
-                }
-            }
-            
-            // Validate that weights sum to 100
-            $total_usability = array_sum($sanitized['usability_weights']);
-            if (abs($total_usability - 100) > 1) {
-                add_settings_error(
-                    self::SETTINGS_OPTION,
-                    'usability_weights_error',
-                    __('Usability rating weights must sum to 100%.', 'wp-plugin-filters'),
-                    'error'
-                );
-                // Reset to defaults
-                $defaults = $this->get_default_settings();
-                $sanitized['usability_weights'] = $defaults['usability_weights'];
-            }
-        }
-        
-        // Sanitize health weights
-        if (isset($input['health_weights']) && is_array($input['health_weights'])) {
-            foreach ($sanitized['health_weights'] as $key => $default_value) {
-                if (isset($input['health_weights'][$key])) {
-                    $sanitized['health_weights'][$key] = max(0, min(100, intval($input['health_weights'][$key])));
-                }
-            }
-            
-            // Validate that weights sum to 100
-            $total_health = array_sum($sanitized['health_weights']);
-            if (abs($total_health - 100) > 1) {
-                add_settings_error(
-                    self::SETTINGS_OPTION,
-                    'health_weights_error',
-                    __('Health score weights must sum to 100%.', 'wp-plugin-filters'),
-                    'error'
-                );
-                // Reset to defaults
-                $defaults = $this->get_default_settings();
-                $sanitized['health_weights'] = $defaults['health_weights'];
-            }
-        }
         
         // Sanitize cache durations
         if (isset($input['cache_durations']) && is_array($input['cache_durations'])) {
@@ -522,19 +363,6 @@ class WP_Plugin_Filters_Admin_Settings {
      */
     private function get_default_settings() {
         return array(
-            'usability_weights' => array(
-                'user_rating' => 40,
-                'rating_count' => 20,
-                'installation_count' => 25,
-                'support_responsiveness' => 15
-            ),
-            'health_weights' => array(
-                'update_frequency' => 30,
-                'wp_compatibility' => 25,
-                'support_response' => 20,
-                'time_since_update' => 15,
-                'reported_issues' => 10
-            ),
             'cache_durations' => array(
                 'plugin_metadata' => 86400,    // 24 hours
                 'calculated_ratings' => 21600, // 6 hours

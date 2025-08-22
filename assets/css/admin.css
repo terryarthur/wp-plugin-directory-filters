@@ -81,8 +81,45 @@
 }
 
 /* =====================================================
-   Loading States
+   Loading States and Animations
    ===================================================== */
+
+/* Loading spinner animation */
+.loading-spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Loading dots animation */
+.loading-dots .dot {
+    animation: blink 1.4s infinite both;
+}
+
+.loading-dots .dot:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.loading-dots .dot:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes blink {
+    0%, 80%, 100% {
+        opacity: 0;
+    }
+    40% {
+        opacity: 1;
+    }
+}
+
+/* Health score loading spinner */
+.health-score.health-pending .health-meter {
+    animation: spin 2s linear infinite;
+}
 
 .wp-plugin-filters-loading .wp-plugin-filters-controls {
     opacity: 0.6;
@@ -99,12 +136,390 @@
     margin: 0 5px 0 0;
 }
 
+/* Hide pagination only when showing filtered results */
+body.wp-filter-results-active .wp-block-query-pagination,
+body.wp-filter-results-active .pagination,
+body.wp-filter-results-active .wp-pagenavi {
+    display: none;
+}
+
+/* Ensure filter UI is always visible */
+.wp-block-post-template #wp-filter-ui,
+.plugin-cards + #wp-filter-ui,
+#wp-filter-ui {
+    display: block;
+    visibility: visible;
+    opacity: 1;
+    position: relative;
+    z-index: 1000;
+}
+
+/* Force grid layout with stronger selectors */
+body.wp-filter-active .plugin-browser .plugin-list,
+body.wp-filter-active .wp-list-table tbody,
+body.wp-filter-active #the-list {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)) !important;
+    gap: 20px !important;
+    list-style: none !important;
+    padding: 20px !important;
+    margin: 0 !important;
+    background: transparent !important;
+    border: none !important;
+}
+
+/* Override any table styling when in grid mode */
+body.wp-filter-active .wp-list-table {
+    border: none !important;
+    box-shadow: none !important;
+}
+
+body.wp-filter-active .wp-list-table thead,
+body.wp-filter-active .wp-list-table tfoot {
+    display: none !important;
+}
+
 /* =====================================================
-   Enhanced Plugin Cards
+   Enhanced Plugin Cards - Match WordPress.org exactly
    ===================================================== */
 
+/* ONLY apply custom layout when filters are actively applied - not on page load */
+body.wp-filter-active.wp-filter-results-active .plugin-cards,
+body.wp-filter-active.wp-filter-results-active .wp-block-post-template,
+body.wp-filter-active.wp-filter-results-active .plugin-browser .plugin-list,
+body.wp-filter-active.wp-filter-results-active .wp-list-table tbody,
+body.wp-filter-active.wp-filter-results-active #the-list {
+    display: grid !important;
+    visibility: visible;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)) !important;
+    gap: 20px !important;
+    list-style: none !important;
+    list-style-type: none !important;
+    align-items: stretch;
+    padding: 20px !important;
+    margin: 0 !important;
+}
+
+/* ONLY apply list styling when filters are actively applied */
+body.wp-filter-active.wp-filter-results-active .wp-block-post-template li,
+body.wp-filter-active.wp-filter-results-active .is-layout-flow > .wp-block-post,
+body.wp-filter-active.wp-filter-results-active .plugin-browser .plugin-list li,
+body.wp-filter-active.wp-filter-results-active .wp-list-table tbody tr,
+body.wp-filter-active.wp-filter-results-active #the-list li {
+    list-style: none !important;
+    list-style-type: none !important;
+    margin: 0 !important;
+    margin-block-start: 0 !important;
+    margin-block-end: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+}
+
+/* Remove any pseudo-elements that might show bullets - ONLY when filtered */
+body.wp-filter-active.wp-filter-results-active .wp-block-post-template li::before,
+body.wp-filter-active.wp-filter-results-active .plugin-browser .plugin-list li::before,
+body.wp-filter-active.wp-filter-results-active #the-list li::before {
+    content: none !important;
+    display: none !important;
+}
+
+body.wp-filter-active.wp-filter-results-active .wp-block-post-template li::after,
+body.wp-filter-active.wp-filter-results-active .plugin-browser .plugin-list li::after,
+body.wp-filter-active.wp-filter-results-active #the-list li::after {
+    content: none !important;
+    display: none !important;
+}
+
+/* ONLY apply WordPress.org plugin card styling when filters are applied */
+body.wp-filter-active.wp-filter-results-active .wp-block-post-template li .plugin-card,
+body.wp-filter-active.wp-filter-results-active .plugin-cards .plugin-card,
+body.wp-filter-active.wp-filter-results-active .plugin-browser .plugin-list li .plugin-card,
+body.wp-filter-active.wp-filter-results-active .wp-list-table tbody tr .plugin-card,
+body.wp-filter-active.wp-filter-results-active #the-list li .plugin-card {
+    display: flex !important;
+    flex-direction: column;
+    height: 100%;
+    justify-content: space-between;
+    background: #fff !important;
+    border: 1px solid #c3c4c7 !important;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    padding: 20px !important;
+    margin: 0 !important;
+    border-left: 4px solid #00a32a !important;
+    min-height: 250px;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* Enhanced cards that are specifically marked */
 .plugin-card.wp-plugin-enhanced {
     border-left: 4px solid #00a32a;
+}
+
+/* Ensure li elements containing plugin cards take full grid cell - ONLY when filtered */
+body.wp-filter-active.wp-filter-results-active .wp-block-post-template li,
+body.wp-filter-active.wp-filter-results-active .plugin-browser .plugin-list li,
+body.wp-filter-active.wp-filter-results-active #the-list li {
+    width: 100% !important;
+    min-height: auto !important;
+    display: block !important;
+}
+
+/* Entry styling - thumbnail and title on same line - ONLY when filtered */
+body.wp-filter-active.wp-filter-results-active .plugin-card .entry {
+    display: block;
+    width: 100%;
+}
+
+/* Entry header with thumbnail left and title right - ONLY when filtered */
+body.wp-filter-active.wp-filter-results-active .entry-header {
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 16px !important;
+    margin-bottom: 16px !important;
+    width: 100% !important;
+}
+
+body.wp-filter-active.wp-filter-results-active .entry-thumbnail {
+    flex-shrink: 0 !important;
+    margin: 0 !important;
+    width: 64px !important;
+    height: 64px !important;
+}
+
+body.wp-filter-active.wp-filter-results-active .entry-title {
+    flex: 1 !important;
+    margin: 0 !important;
+    min-width: 0 !important;
+}
+
+/* Override any WordPress theme styles that might interfere - ONLY when filtered */
+body.wp-filter-active.wp-filter-results-active .entry-header h3 {
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 1.3 !important;
+    word-wrap: break-word !important;
+}
+
+/* Styles for enhanced cards (manually marked) */
+.plugin-card.wp-plugin-enhanced .entry {
+    display: block;
+    width: 100%;
+}
+
+.plugin-card.wp-plugin-enhanced .entry-header {
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 16px !important;
+    margin-bottom: 16px !important;
+    width: 100% !important;
+}
+
+.plugin-card.wp-plugin-enhanced .entry-thumbnail {
+    flex-shrink: 0 !important;
+    margin: 0 !important;
+    width: 64px !important;
+    height: 64px !important;
+}
+
+.plugin-card.wp-plugin-enhanced .entry-title {
+    flex: 1 !important;
+    margin: 0 !important;
+    min-width: 0 !important;
+}
+
+.plugin-card.wp-plugin-enhanced .entry-header h3 {
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 1.3 !important;
+    word-wrap: break-word !important;
+}
+
+/* Entry title styling */
+body.wp-filter-active .entry-title,
+body.wp-filter-active .entry-title h3,
+.plugin-card.wp-plugin-enhanced .entry-title,
+.plugin-card.wp-plugin-enhanced .entry-title h3 {
+    display: block;
+    font-size: 1.25rem;
+    font-weight: 500;
+    line-height: 1.3;
+    margin-bottom: 8px;
+    max-height: 2.6em;
+    overflow: hidden;
+}
+
+/* Entry excerpt styling */
+body.wp-filter-active .entry-excerpt,
+.plugin-card.wp-plugin-enhanced .entry-excerpt {
+    clear: both;
+    font-size: 0.875rem;
+    margin-bottom: 12px;
+}
+
+/* Entry thumbnail styling */
+body.wp-filter-active .entry-thumbnail,
+.plugin-card.wp-plugin-enhanced .entry-thumbnail {
+    display: block;
+    flex-shrink: 0;
+    margin: 0;
+    text-align: left;
+}
+
+body.wp-filter-active .entry-thumbnail img,
+/* Plugin icon styling ONLY for enhanced cards */
+.plugin-card.wp-plugin-enhanced .entry-thumbnail img,
+.plugin-card.wp-plugin-enhanced .plugin-icon {
+    width: 64px !important;
+    height: 64px !important;
+    border-radius: 4px;
+    border: 1px solid #dcdcde;
+    background: #f6f7f7;
+    object-fit: cover;
+    display: block;
+    flex-shrink: 0;
+    vertical-align: middle;
+    max-width: 64px;
+    max-height: 64px;
+    min-width: 64px;
+    min-height: 64px;
+}
+
+/* Fallback for missing icons - ONLY enhanced cards */
+.plugin-card.wp-plugin-enhanced .plugin-icon[src*="geopattern"],
+.plugin-card.wp-plugin-enhanced .plugin-icon[src=""],
+.plugin-card.wp-plugin-enhanced .plugin-icon:not([src]) {
+    background: #f0f0f1 url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%23646970" d="M18 9v3h-2V9h-5V7h5c1.1 0 2 .9 2 2zM8 9v3H6V9c0-1.1.9-2 2-2h5v2H8zM20 12v-2c0-2.2-1.8-4-4-4H8c-2.2 0-4 1.8-4 4v2c-1.1 0-2 .9-2 2s.9 2 2 2v2c0 2.2 1.8 4 4 4h8c2.2 0 4-1.8 4-4v-2c1.1 0 2-.9 2-2s-.9-2-2-2z"/></svg>') center/32px no-repeat;
+}
+
+/* Footer styling to match WordPress.org - ONLY when filtered */
+body.wp-filter-active.wp-filter-results-active .plugin-card footer {
+    margin-top: auto;
+    padding-top: 15px;
+    border-top: 1px solid #dcdcde;
+    font-size: 13px;
+    color: #646970;
+    line-height: 1.5;
+}
+
+/* Footer styling for enhanced cards */
+.plugin-card.wp-plugin-enhanced footer {
+    margin-top: auto;
+    padding-top: 15px;
+    border-top: 1px solid #dcdcde;
+    font-size: 13px;
+    color: #646970;
+    line-height: 1.5;
+}
+
+body.wp-filter-active.wp-filter-results-active .plugin-card footer span {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-size: 13px;
+}
+
+.plugin-card.wp-plugin-enhanced footer span {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-size: 13px;
+}
+
+body.wp-filter-active.wp-filter-results-active .plugin-card footer span:last-child {
+    margin-bottom: 0;
+}
+
+.plugin-card.wp-plugin-enhanced footer span:last-child {
+    margin-bottom: 0;
+}
+
+/* Style the SVG icons - ONLY when filtered */
+body.wp-filter-active.wp-filter-results-active .plugin-card footer span svg {
+    width: 18px;
+    height: 18px;
+    fill: #646970;
+    flex-shrink: 0;
+}
+
+.plugin-card.wp-plugin-enhanced footer span svg {
+    width: 18px;
+    height: 18px;
+    fill: #646970;
+    flex-shrink: 0;
+}
+
+/* Health Score Power Meter Styling - ONLY when filtered */
+body.wp-filter-active.wp-filter-results-active .plugin-card footer .health-score .health-meter {
+    font-size: 16px;
+    display: inline-block;
+    margin-right: 8px;
+    vertical-align: middle;
+    line-height: 1;
+}
+
+.plugin-card.wp-plugin-enhanced footer .health-score .health-meter {
+    font-size: 16px;
+    display: inline-block;
+    margin-right: 8px;
+    vertical-align: middle;
+    line-height: 1;
+}
+
+/* Power meter colors based on health score - ONLY when filtered */
+body.wp-filter-active.wp-filter-results-active .plugin-card footer .health-score.health-green .health-meter {
+    filter: hue-rotate(120deg) brightness(1.2) !important;
+}
+
+.plugin-card.wp-plugin-enhanced footer .health-score.health-green .health-meter {
+    filter: hue-rotate(120deg) brightness(1.2) !important;
+}
+
+body.wp-filter-active.wp-filter-results-active .plugin-card footer .health-score.health-yellow .health-meter {
+    filter: hue-rotate(45deg) brightness(1.1) !important;
+}
+
+.plugin-card.wp-plugin-enhanced footer .health-score.health-yellow .health-meter {
+    filter: hue-rotate(45deg) brightness(1.1) !important;
+}
+
+body.wp-filter-active.wp-filter-results-active .plugin-card footer .health-score.health-red .health-meter {
+    filter: hue-rotate(-30deg) brightness(1.1) !important;
+}
+
+.plugin-card.wp-plugin-enhanced footer .health-score.health-red .health-meter {
+    filter: hue-rotate(-30deg) brightness(1.1) !important;
+}
+
+/* Traffic light colors for usability score - ONLY when filtered */
+body.wp-filter-active.wp-filter-results-active .plugin-card footer .usability-score.usability-green svg path {
+    fill: #00a32a !important;
+}
+
+.plugin-card.wp-plugin-enhanced footer .usability-score.usability-green svg path {
+    fill: #00a32a !important;
+}
+
+body.wp-filter-active.wp-filter-results-active .plugin-card footer .usability-score.usability-yellow svg path {
+    fill: #dba617 !important;
+}
+
+.plugin-card.wp-plugin-enhanced footer .usability-score.usability-yellow svg path {
+    fill: #dba617 !important;
+}
+
+body.wp-filter-active.wp-filter-results-active .plugin-card footer .usability-score.usability-red svg path {
+    fill: #d63638 !important;
+}
+
+.plugin-card.wp-plugin-enhanced footer .usability-score.usability-red svg path {
+    fill: #d63638 !important;
 }
 
 /* Enhanced Plugin Card Layout */
@@ -277,6 +692,67 @@
     font-weight: 500;
 }
 
+/* Star rating styles for enhanced cards ONLY */
+.plugin-card.wp-plugin-enhanced .star-rating {
+    position: relative;
+    width: 100px;
+    height: 20px;
+    background: #e1e1e1;
+    display: inline-block;
+    border-radius: 2px;
+}
+
+.plugin-card.wp-plugin-enhanced .star-rating .star {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: #ffb900;
+    border-radius: 2px;
+}
+
+.plugin-card.wp-plugin-enhanced .star-rating .star-full {
+    background: #ffb900;
+}
+
+/* Plugin rating display for enhanced cards ONLY */
+.plugin-card.wp-plugin-enhanced .plugin-rating {
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.plugin-card.wp-plugin-enhanced .wporg-ratings {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.plugin-card.wp-plugin-enhanced .wporg-ratings .dashicons {
+    font-size: 16px;
+    line-height: 1;
+    width: 16px;
+    height: 16px;
+}
+
+.plugin-card.wp-plugin-enhanced .wporg-ratings .dashicons-star-filled {
+    color: #ffb900;
+}
+
+.plugin-card.wp-plugin-enhanced .wporg-ratings .dashicons-star-half {
+    color: #ffb900;
+}
+
+.plugin-card.wp-plugin-enhanced .wporg-ratings .dashicons-star-empty {
+    color: #dcdcde;
+}
+
+.plugin-card.wp-plugin-enhanced .rating-count {
+    font-size: 13px;
+    color: #646970;
+}
+
 .rating-label {
     font-size: 11px;
     color: #646970;
@@ -384,6 +860,15 @@
         min-width: 140px;
         max-width: 180px;
     }
+    
+    /* Adjust grid for medium screens */
+    body.wp-filter-active .plugin-cards,
+    body.wp-filter-active .wp-block-post-template,
+    body.wp-filter-active .plugin-browser .plugin-list,
+    body.wp-filter-active .wp-list-table tbody,
+    body.wp-filter-active #the-list {
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)) !important;
+    }
 }
 
 @media screen and (max-width: 960px) {
@@ -402,6 +887,26 @@
     #wp-plugin-clear-filters {
         margin-top: 10px;
         align-self: flex-start;
+    }
+}
+
+@media (max-width: 768px) {
+    #wp-filter-ui > div:first-child {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    #wp-filter-ui label {
+        margin-bottom: 10px;
+    }
+    
+    /* Single column on mobile like WordPress.org */
+    body.wp-filter-active .plugin-cards,
+    body.wp-filter-active .wp-block-post-template,
+    body.wp-filter-active .plugin-browser .plugin-list,
+    body.wp-filter-active .wp-list-table tbody,
+    body.wp-filter-active #the-list {
+        grid-template-columns: 1fr !important;
     }
 }
 
@@ -837,4 +1342,85 @@
 .rtl .plugin-card .name img.plugin-icon {
     float: left;
     margin: 0 15px 0 0;
+}
+
+/* =====================================================
+   Enhanced Plugin Icon Styling
+   ===================================================== */
+
+/* Better icon handling for filtered results ONLY */
+body.wp-filter-active.wp-filter-results-active .plugin-icon {
+    width: 64px !important;
+    height: 64px !important;
+    border-radius: 4px !important;
+    border: 1px solid #dcdcde !important;
+    background: #f6f7f7 !important;
+    object-fit: cover !important;
+    display: block !important;
+    flex-shrink: 0 !important;
+    vertical-align: top !important;
+}
+
+/* Ensure icons display properly in filtered results */
+body.wp-filter-active.wp-filter-results-active .entry-thumbnail {
+    width: 64px !important;
+    height: 64px !important;
+    flex-shrink: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: block !important;
+    overflow: hidden !important;
+    background: #f6f7f7 !important;
+    border-radius: 4px !important;
+}
+
+/* Default icon styling for enhanced cards */
+.plugin-card.wp-plugin-enhanced .plugin-icon {
+    width: 64px !important;
+    height: 64px !important;
+    border-radius: 4px !important;
+    border: 1px solid #dcdcde !important;
+    background: #f6f7f7 !important;
+    object-fit: cover !important;
+    display: block !important;
+    flex-shrink: 0 !important;
+}
+
+/* Handle data URI and SVG icons - scoped to enhanced cards only */
+.plugin-card.wp-plugin-enhanced .plugin-icon[src*="data:image"],
+body.wp-filter-active.wp-filter-results-active .plugin-icon[src*="data:image"] {
+    object-fit: contain !important;
+    padding: 8px !important;
+    background: #f6f7f7 !important;
+}
+
+/* Geopattern fallback icons - scoped to enhanced cards only */
+.plugin-card.wp-plugin-enhanced .plugin-icon[src*="geopattern"],
+body.wp-filter-active.wp-filter-results-active .plugin-icon[src*="geopattern"] {
+    object-fit: contain !important;
+    background: #f6f7f7 !important;
+}
+
+/* Ensure thumbnail containers are properly sized */
+body.wp-filter-active.wp-filter-results-active .entry-thumbnail,
+.plugin-card.wp-plugin-enhanced .entry-thumbnail {
+    width: 64px !important;
+    height: 64px !important;
+    flex-shrink: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: block !important;
+    overflow: hidden !important;
+}
+/*  fix for icons all stacking one on top of the other at the top left of filter bar, */
+/* that Claude spent an entire 5 hour block, with me telling him where to look, */
+/* but could not fix fuck you openai, I even created  a custom rules.md for Claude */
+/* hooked him up to Serena MCP and he is still dumb as dirt    */
+body.wp-filter-active.wp-filter-results-active .plugin-icon {
+    position: relative !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 128px !important;
+    height: 128px !important;
+    margin: 0 !important;
 }
