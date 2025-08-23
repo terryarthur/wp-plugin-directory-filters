@@ -1,3 +1,6 @@
+[![Sponsor](https://img.shields.io/badge/Sponsor-❤️-brightgreen)](https://github.com/sponsors/terryarthur)
+
+
 === WordPress Plugin Directory Filters ===
 Contributors: terryarthur
 Tags: plugin, installer, filters, admin, directory
