@@ -222,18 +222,13 @@ class WP_Plugin_Filters_Cache_Manager {
 		$results = wp_cache_get( $cache_key, 'wp_plugin_filters_bulk' );
 		
 		if ( false === $results ) {
-			// Use WordPress transient API instead of direct database query
-			$results = array();
-			foreach ( $transient_keys as $original_key => $transient_key ) {
-				$transient_name = substr( $transient_key, 11 ); // Remove '_transient_' prefix
-				$value = get_transient( $transient_name );
-				if ( false !== $value ) {
-					$results[] = array(
-						'option_name' => $transient_key,
-						'option_value' => maybe_serialize( $value )
-					);
-				}
-			}
+			// Single query to get all transients
+			$query = "SELECT option_name, option_value FROM {$wpdb->options} WHERE option_name IN ($placeholder_string) AND option_name NOT LIKE %s";
+			$query_args = array_merge( array_values( $transient_keys ), array( '%\\_transient\\_timeout\\_%' ) );
+			$results = $wpdb->get_results(
+				$wpdb->prepare( $query, $query_args ),
+				ARRAY_A
+			);
 			// Cache for 1 minute
 			wp_cache_set( $cache_key, $results, 'wp_plugin_filters_bulk', 60 );
 		}
@@ -264,17 +259,11 @@ class WP_Plugin_Filters_Cache_Manager {
 			$timeout_results = wp_cache_get( $timeout_cache_key, 'wp_plugin_filters_timeout' );
 			
 			if ( false === $timeout_results ) {
-				// Use WordPress options API instead of direct database query
-				$timeout_results = array();
-				foreach ( $timeout_keys as $timeout_key ) {
-					$timeout_value = get_option( $timeout_key, false );
-					if ( false !== $timeout_value ) {
-						$timeout_results[] = array(
-							'option_name' => $timeout_key,
-							'option_value' => $timeout_value
-						);
-					}
-				}
+				$timeout_query = "SELECT option_name, option_value FROM {$wpdb->options} WHERE option_name IN ($timeout_placeholder_string)";
+				$timeout_results = $wpdb->get_results(
+					$wpdb->prepare( $timeout_query, $timeout_keys ),
+					ARRAY_A
+				);
 				// Cache for 30 seconds
 				wp_cache_set( $timeout_cache_key, $timeout_results, 'wp_plugin_filters_timeout', 30 );
 			}
@@ -386,20 +375,23 @@ class WP_Plugin_Filters_Cache_Manager {
 			return 0;
 		}
 
-		// Prepare for cleanup using WordPress APIs
-
-		// Delete using WordPress APIs instead of direct database query
-		$deleted_count = 0;
-		
-		// Delete expired transient timeouts and their corresponding transients
+		// Build corresponding transient names
+		$transient_names = array();
 		foreach ( $expired_transients as $timeout_name ) {
-			$transient_name = substr( $timeout_name, 19 ); // Remove '_transient_timeout_' prefix
-			
-			// Delete the transient using WordPress API
-			if ( delete_transient( $transient_name ) ) {
-				$deleted_count += 2; // Count both timeout and transient deletion
-			}
+			$transient_name    = '_transient_' . substr( $timeout_name, 19 ); // Remove '_transient_timeout_' prefix
+			$transient_names[] = $transient_name;
 		}
+
+		// Delete in batch
+		$all_names          = array_merge( $expired_transients, $transient_names );
+		$placeholders       = array_fill( 0, count( $all_names ), '%s' );
+		$placeholder_string = implode( ',', $placeholders );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Direct query needed for bulk transient deletion
+		$delete_query = "DELETE FROM {$wpdb->options} WHERE option_name IN ($placeholder_string)";
+		$deleted_count = $wpdb->query(
+			$wpdb->prepare( $delete_query, $all_names )
+		);
 
 		// Clear object cache for deleted transients
 		if ( wp_using_ext_object_cache() ) {

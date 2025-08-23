@@ -264,11 +264,9 @@ class WP_Plugin_Filters_Uninstaller {
 					self::remove_directory_recursive( $path );
 				} else {
 					require_once ABSPATH . 'wp-admin/includes/file.php';
-					if ( WP_Filesystem() ) {
-						global $wp_filesystem;
-						if ( $wp_filesystem->is_writable( $path ) ) {
-							wp_delete_file( $path );
-						}
+					$wp_filesystem = WP_Filesystem();
+					if ( $wp_filesystem && $wp_filesystem->is_writable( $path ) ) {
+						wp_delete_file( $path );
 					} else {
 						if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
 						// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
@@ -286,11 +284,9 @@ class WP_Plugin_Filters_Uninstaller {
 
 		try {
 			require_once ABSPATH . 'wp-admin/includes/file.php';
-			if ( WP_Filesystem() ) {
-				global $wp_filesystem;
-				if ( $wp_filesystem->is_writable( $dir ) ) {
-					$wp_filesystem->rmdir( $dir );
-				}
+			$wp_filesystem = WP_Filesystem();
+			if ( $wp_filesystem && $wp_filesystem->is_writable( $dir ) ) {
+				$wp_filesystem->rmdir( $dir );
 			} else {
 				if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log

@@ -210,8 +210,8 @@ function _get_mock_plugins_data() {
             'rating' => 4.5,
             'num_ratings' => 150,
             'active_installs' => 50000,
-            'last_updated' => date('Y-m-d', strtotime('-7 days')),
-            'added' => date('Y-m-d', strtotime('-1 year')),
+            'last_updated' => gmdate('Y-m-d', strtotime('-7 days')),
+            'added' => gmdate('Y-m-d', strtotime('-1 year')),
             'tested' => '6.4',
             'requires' => '5.8',
             'short_description' => 'A test plugin for unit testing',
@@ -232,8 +232,8 @@ function _get_mock_plugins_data() {
             'rating' => 3.8,
             'num_ratings' => 75,
             'active_installs' => 1000000,
-            'last_updated' => date('Y-m-d', strtotime('-30 days')),
-            'added' => date('Y-m-d', strtotime('-2 years')),
+            'last_updated' => gmdate('Y-m-d', strtotime('-30 days')),
+            'added' => gmdate('Y-m-d', strtotime('-2 years')),
             'tested' => '6.4',
             'requires' => '5.6',
             'short_description' => 'Another test plugin for comprehensive testing',
@@ -254,8 +254,8 @@ function _get_mock_plugins_data() {
             'rating' => 2.1,
             'num_ratings' => 10,
             'active_installs' => 500,
-            'last_updated' => date('Y-m-d', strtotime('-180 days')),
-            'added' => date('Y-m-d', strtotime('-6 months')),
+            'last_updated' => gmdate('Y-m-d', strtotime('-180 days')),
+            'added' => gmdate('Y-m-d', strtotime('-6 months')),
             'tested' => '6.2',
             'requires' => '5.8',
             'short_description' => 'A beta test plugin with lower ratings',
@@ -285,7 +285,7 @@ function _cleanup_test_environment() {
     $test_files = glob(WP_PLUGIN_FILTERS_TEST_LOGS_DIR . '*');
     foreach ($test_files as $file) {
         if (is_file($file)) {
-            unlink($file);
+            wp_delete_file($file);
         }
     }
 }

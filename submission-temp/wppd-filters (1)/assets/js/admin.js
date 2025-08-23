@@ -45,6 +45,7 @@
             this.injectFilterControls();
             this.bindEvents();
             this.saveOriginalPlugins();
+            this.enhanceNativePluginCards();
             // loadStateFromURL disabled to avoid auto-applying filters on load
             
             // DO NOT add any body classes on init - only when filters are applied
@@ -72,34 +73,14 @@
          * Save original plugins from page load
          */
         saveOriginalPlugins: function() {
-            // Wait a moment for page to fully load before capturing
-            var self = this;
-            setTimeout(function() {
-                // Try to capture original plugin data from multiple possible containers
-                var containerSelectors = [
-                    '#the-list',
-                    '.plugin-browser .plugin-list',
-                    '.wp-list-table tbody',
-                    '.plugin-browser'
-                ];
-                
-                var $container = null;
-                for (var i = 0; i < containerSelectors.length; i++) {
-                    $container = $(containerSelectors[i]).first();
-                    if ($container.length && $container.children().length > 0) {
-                        console.log('[WP Plugin Filters] Found original content container:', containerSelectors[i]);
-                        break;
-                    }
-                }
-                
-                if ($container && $container.length && $container.children().length > 0) {
-                    // Save the parent's HTML to capture the full structure
-                    self.state.originalContent = $container.parent().html();
-                    console.log('[WP Plugin Filters] Saved original content (' + $container.children().length + ' items)');
-                } else {
-                    console.warn('[WP Plugin Filters] Could not find original plugin content to save');
-                }
-            }, 500); // Wait 500ms for content to load
+            // Try to capture original plugin data from the page
+            var originalCards = $('.plugin-card, .plugin-list-item, #the-list > tr');
+            
+            // For now, we'll save the HTML content - in a future version we could 
+            // extract actual plugin data, but this preserves the original layout
+            if (originalCards.length > 0) {
+                this.state.originalContent = originalCards.parent().html();
+            }
         },
 
         /**
@@ -107,16 +88,6 @@
          */
         injectFilterControls: function() {
             console.log('[WP Plugin Filters] Starting filter controls injection...');
-            
-            // Don't inject in modal contexts
-            if ($('#plugin-information-modal').length > 0 || 
-                $('.thickbox').length > 0 || 
-                $('[role="dialog"]').length > 0 ||
-                $('.ui-dialog').length > 0 ||
-                window.location.href.indexOf('tab=plugin-information') !== -1) {
-                console.log('[WP Plugin Filters] Modal context detected, skipping injection');
-                return;
-            }
             
             // Prevent double injection
             if ($('.wp-plugin-filters-controls').length > 0) {
@@ -269,7 +240,7 @@
                             <div class="wppd-filters-branding">
                                 <a href="https://wppd-filters.terryarthur.com/index.html" target="_blank" rel="noopener" class="plugin-link">WPPD Filters</a>
                                 <span class="separator">•</span>
-                                <span class="made-by-text">by</span>
+                                <span class="made-by-text">Made by:</span>
                                 <a href="https://terryarthur.com" target="_blank" rel="noopener" class="author-link">Terry Arthur</a>
                             </div>
                         </div>
@@ -1369,7 +1340,6 @@
          * Clear all filters
          */
         clearAllFilters: function() {
-            // Reset all filter values
             this.$elements.installationRange.val('all');
             this.$elements.updateTimeframe.val('all');
             this.$elements.usabilityRating.val('0');
@@ -1381,47 +1351,30 @@
             // Clear search input to fully reset
             this.$elements.searchInput.val('');
             
-            // IMPORTANT: Remove ALL filter-related classes to restore native WordPress layout
-            $('body').removeClass('wp-filter-active wp-filter-results-active');
+            // Remove filtered styling classes to restore native WordPress layout
+            $('body').removeClass('wp-filter-active');
+            $('body').removeClass('wp-filter-results-active');
             
             console.log('[WP Plugin Filters] Cleared all filters - restoring original content');
             
-            // Try to restore original content first
+            // Restore original WordPress plugin content if we have it saved
             if (this.state.originalContent) {
                 console.log('[WP Plugin Filters] Restoring saved original HTML content');
-                var containerSelectors = [
-                    '#the-list',
-                    '.plugin-browser .plugin-list',
-                    '.wp-list-table tbody',
-                    '.plugin-browser'
-                ];
-                
-                var $container = null;
-                for (var i = 0; i < containerSelectors.length; i++) {
-                    $container = $(containerSelectors[i]).first();
-                    if ($container.length) {
-                        break;
-                    }
+                var $container = this.$elements.resultsContainer;
+                if (!$container.length) {
+                    $container = $('#the-list, .wp-list-table tbody').first();
                 }
-                
-                if ($container && $container.length) {
-                    // Restore original content and remove our custom classes
+                if ($container.length) {
                     $container.parent().html(this.state.originalContent);
-                    
-                    // Ensure no residual filter classes remain anywhere
-                    $('.plugin-card, .wp-block-post, .plugin-list-item').removeClass('wp-plugin-enhanced');
-                    
                     console.log('[WP Plugin Filters] Original content restored successfully');
-                    return;
+                } else {
+                    console.warn('[WP Plugin Filters] Could not find container to restore original content');
+                    this.fallbackToBrowseAll();
                 }
+            } else {
+                console.log('[WP Plugin Filters] No saved original content - using fallback');
+                this.fallbackToBrowseAll();
             }
-            
-            // Fallback: Load default WordPress plugin list without filters
-            console.log('[WP Plugin Filters] No saved original content - reloading page to restore WordPress defaults');
-            
-            // Remove any URL parameters and reload to get clean WordPress state
-            var cleanUrl = window.location.pathname + '?page=plugin-install&tab=search';
-            window.location.href = cleanUrl;
         },
 
         /**

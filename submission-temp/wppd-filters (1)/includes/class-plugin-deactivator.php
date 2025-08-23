@@ -186,15 +186,7 @@ class WP_Plugin_Filters_Deactivator {
 	 * @return bool Network deactivation
 	 */
 	private static function is_network_deactivation() {
-		// Verify nonce for plugin deactivation
-		if ( ! isset( $_GET['_wpnonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), 'deactivate-plugin_' . WP_PLUGIN_FILTERS_BASENAME ) ) {
-			// If nonce verification fails, fall back to checking for bulk-plugins action
-			if ( ! isset( $_GET['_wpnonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), 'bulk-plugins' ) ) {
-				return false;
-			}
-		}
-		
-		return is_multisite() && isset( $_GET['networkwide'] ) && '1' === sanitize_text_field( wp_unslash( $_GET['networkwide'] ) );
+		return is_multisite() && isset( $_GET['networkwide'] ) && '1' === $_GET['networkwide'];
 	}
 
 	/**
@@ -243,11 +235,9 @@ class WP_Plugin_Filters_Deactivator {
 				// Remove directory if empty
 				if ( count( glob( $cache_dir . '/*' ) ) === 0 ) {
 					require_once ABSPATH . 'wp-admin/includes/file.php';
-					if ( WP_Filesystem() ) {
-						global $wp_filesystem;
-						if ( $wp_filesystem->is_dir( $cache_dir ) && $wp_filesystem->is_empty( $cache_dir ) ) {
-							$wp_filesystem->rmdir( $cache_dir );
-						}
+					$wp_filesystem = WP_Filesystem();
+					if ( $wp_filesystem && $wp_filesystem->is_dir( $cache_dir ) && $wp_filesystem->is_empty( $cache_dir ) ) {
+						$wp_filesystem->rmdir( $cache_dir );
 					}
 				}
 			} else {
