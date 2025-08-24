@@ -18,7 +18,7 @@ if ( ! defined( 'WP_PLUGIN_FILTERS_PLUGIN_DIR' ) ) {
 }
 
 // Load uninstaller class.
-require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-plugin-uninstaller.php';
+require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-wp-plugin-filters-uninstaller.php';
 
 // Execute uninstall.
 WP_Plugin_Filters_Uninstaller::uninstall();

@@ -93,13 +93,13 @@ class WP_Plugin_Directory_Filters {
 	 */
 	private function load_dependencies() {
 		// Core classes.
-		require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-api-handler.php';
-		require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-rating-calculator.php';
+		require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-wp-plugin-filters-api-handler.php';
+		require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-wp-plugin-filters-rating-calculator.php';
 		require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-wp-plugin-filters-health-calculator.php';
 		require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-wp-plugin-filters-cache-manager.php';
-		require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-ajax-handler.php';
+		require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-wp-plugin-filters-ajax-handler.php';
 		require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-wp-plugin-filters-admin-settings.php';
-		require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-security-handler.php';
+		require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-wp-plugin-filters-security-handler.php';
 	}
 
 	/**

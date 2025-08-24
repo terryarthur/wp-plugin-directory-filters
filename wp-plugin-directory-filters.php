@@ -46,7 +46,7 @@ function wp_plugin_filters_init() {
  * Plugin activation hook
  */
 function wp_plugin_filters_activate() {
-	require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-plugin-activator.php';
+	require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-wp-plugin-filters-activator.php';
 	WP_Plugin_Filters_Activator::activate();
 }
 
@@ -54,7 +54,7 @@ function wp_plugin_filters_activate() {
  * Plugin deactivation hook
  */
 function wp_plugin_filters_deactivate() {
-	require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-plugin-deactivator.php';
+	require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-wp-plugin-filters-deactivator.php';
 	WP_Plugin_Filters_Deactivator::deactivate();
 }
 

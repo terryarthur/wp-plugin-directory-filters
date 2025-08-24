@@ -225,6 +225,7 @@ class WP_Plugin_Filters_Cache_Manager {
 			// Single query to get all transients.
 			$query      = "SELECT option_name, option_value FROM {$wpdb->options} WHERE option_name IN ($placeholder_string) AND option_name NOT LIKE %s";
 			$query_args = array_merge( array_values( $transient_keys ), array( '%\\_transient\\_timeout\\_%' ) );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Direct query needed for bulk transient retrieval performance optimization
 			$results    = $wpdb->get_results(
 				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Query is properly prepared above.
 				$wpdb->prepare( $query, $query_args ),
@@ -263,6 +264,7 @@ class WP_Plugin_Filters_Cache_Manager {
 
 			if ( false === $timeout_results ) {
 				$timeout_query   = "SELECT option_name, option_value FROM {$wpdb->options} WHERE option_name IN ($timeout_placeholder_string)";
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Direct query needed for bulk timeout check performance optimization
 				$timeout_results = $wpdb->get_results(
 					// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Query is properly prepared above.
 					$wpdb->prepare( $timeout_query, $timeout_keys ),
@@ -393,8 +395,8 @@ class WP_Plugin_Filters_Cache_Manager {
 		$placeholders       = array_fill( 0, count( $all_names ), '%s' );
 		$placeholder_string = implode( ',', $placeholders );
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Direct query needed for bulk transient deletion
 		$delete_query  = "DELETE FROM {$wpdb->options} WHERE option_name IN ($placeholder_string)";
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Direct query needed for bulk transient deletion performance optimization
 		$deleted_count = $wpdb->query(
 			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Query is properly prepared above.
 			$wpdb->prepare( $delete_query, $all_names )

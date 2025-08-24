@@ -1,7 +1,4 @@
-[![Sponsor](https://img.shields.io/badge/Sponsor-❤️-brightgreen)](https://github.com/sponsors/terryarthur)
-
-
-=== WordPress Plugin Directory Filters ===
+=== WPPD Filters ===
 Contributors: terryarthur
 Tags: installer, filters, admin, directory
 Requires at least: 5.8

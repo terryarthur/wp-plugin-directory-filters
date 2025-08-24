@@ -186,6 +186,7 @@ class WP_Plugin_Filters_Deactivator {
 	 * @return bool Network deactivation
 	 */
 	private static function is_network_deactivation() {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- WordPress core handles nonce verification for plugin deactivation
 		return is_multisite() && isset( $_GET['networkwide'] ) && '1' === $_GET['networkwide'];
 	}
 
