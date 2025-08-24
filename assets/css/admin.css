@@ -37,19 +37,19 @@
 
 .wp-plugin-filters-inline select {
     min-width: 100px;
-    height: 30px;
+    height: 26px;
     font-size: 13px;
-    padding: 4px 8px;
+    padding: 2px 5px;
     border: 1px solid #ddd;
     border-radius: 2px;
     background: #fff;
 }
 
 .wp-plugin-filters-inline .button {
-    height: 30px;
-    padding: 0 12px;
+    height: 26px;
+    padding: 0 8px;
     font-size: 13px;
-    line-height: 28px;
+    line-height: 24px;
     margin-left: 4px;
 }
 
@@ -57,11 +57,11 @@
     display: inline-flex;
     align-items: center;
     margin-left: auto;
-    padding: 8px 14px;
+    padding: 6px 12px;
     background: #2271b1;
-    border-radius: 3px;
+    border-radius: 6px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    font-size: 13px;
+    font-size: 11px;
     font-weight: 500;
     white-space: nowrap;
     flex-shrink: 0;
@@ -89,7 +89,7 @@
 
 .wppd-filters-branding .made-by-text {
     color: rgba(255, 255, 255, 0.7);
-    font-size: 12px;
+    font-size: 10px;
     font-weight: 400;
     margin-right: 4px;
 }
@@ -97,7 +97,7 @@
 .wppd-filters-branding .author-link {
     color: rgba(255, 255, 255, 0.85) !important;
     text-decoration: none !important;
-    font-size: 12px;
+    font-size: 10px;
     font-weight: 400;
     transition: all 0.2s ease;
 }
@@ -1409,21 +1409,6 @@ body.wp-filter-active.wp-filter-results-active .plugin-card footer .usability-sc
 .rtl .plugin-card .name img.plugin-icon {
     float: left;
     margin: 0 15px 0 0;
-}
-
-/* =====================================================
-   Modal and Overlay Fixes
-   ===================================================== */
-
-/* Hide filter controls in plugin detail modals and overlays */
-#plugin-information-modal .wp-plugin-filters-controls,
-.thickbox .wp-plugin-filters-controls,
-.wp-pointer .wp-plugin-filters-controls,
-.media-modal .wp-plugin-filters-controls,
-[role="dialog"] .wp-plugin-filters-controls,
-.ui-dialog .wp-plugin-filters-controls,
-.overlay .wp-plugin-filters-controls {
-    display: none !important;
 }
 
 /* =====================================================

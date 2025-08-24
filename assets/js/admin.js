@@ -41,10 +41,18 @@
          * Initialize the plugin filters
          */
         init: function() {
+            // Final check before initialization
+            if (this.isModalContext()) {
+                console.log('[WP Plugin Filters] Modal context detected during init, aborting');
+                return;
+            }
+
             this.cacheElements();
             this.injectFilterControls();
             this.bindEvents();
             this.saveOriginalPlugins();
+            this.enhanceNativePluginCards();
+            this.monitorForModals();
             // loadStateFromURL disabled to avoid auto-applying filters on load
             
             // DO NOT add any body classes on init - only when filters are applied
@@ -69,37 +77,103 @@
         },
 
         /**
+         * Simple detection of modal/popup contexts - KEEP IT SIMPLE
+         */
+        isModalContext: function() {
+            // Only check for the most specific modal contexts
+            var url = window.location.href;
+            
+            // Check URL parameters for plugin information modal
+            if (url.indexOf('tab=plugin-information') !== -1 && 
+                url.indexOf('TB_iframe=true') !== -1) {
+                return true;
+            }
+
+            // Check if we're in a thickbox iframe showing plugin details
+            if (window !== window.top && 
+                (url.indexOf('TB_iframe=true') !== -1 || url.indexOf('plugin-information') !== -1)) {
+                return true;
+            }
+
+            return false;
+        },
+
+        /**
+         * Monitor for dynamically loaded modals and remove filters if detected
+         */
+        monitorForModals: function() {
+            var self = this;
+            
+            // Use MutationObserver to watch for modal elements being added
+            if (typeof MutationObserver !== 'undefined') {
+                var observer = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(mutation) {
+                        if (mutation.type === 'childList') {
+                            // Check if any modal elements were added
+                            var modalSelectors = [
+                                '#plugin-information-modal',
+                                '.thickbox',
+                                '#TB_window',
+                                '#TB_overlay',
+                                '[role="dialog"]',
+                                '.ui-dialog',
+                                '#plugin-information-content',
+                                '.plugin-information',
+                                '.plugin-details-modal'
+                            ];
+                            
+                            for (var i = 0; i < modalSelectors.length; i++) {
+                                if ($(modalSelectors[i]).length > 0) {
+                                    console.log('[WP Plugin Filters] Modal detected after initialization, removing filter controls');
+                                    self.removeFilterControls();
+                                    return;
+                                }
+                            }
+                        }
+                    });
+                });
+                
+                // Start observing
+                observer.observe(document.body, {
+                    childList: true,
+                    subtree: true
+                });
+            }
+
+            // Also listen for WordPress events that might indicate modal opening
+            $(document).on('tb:iframe:loaded', function() {
+                console.log('[WP Plugin Filters] ThickBox iframe loaded, removing filter controls');
+                self.removeFilterControls();
+            });
+
+            $(document).on('wp-plugin-install-modal-open', function() {
+                console.log('[WP Plugin Filters] Plugin install modal opened, removing filter controls');
+                self.removeFilterControls();
+            });
+        },
+
+        /**
+         * Remove filter controls from the page
+         */
+        removeFilterControls: function() {
+            $('.wp-plugin-filters-controls').remove();
+            $('.wp-plugin-filters-summary').remove();
+            $('.wp-plugin-filters-error').remove();
+            console.log('[WP Plugin Filters] Filter controls removed');
+        },
+
+        /**
          * Save original plugins from page load
          */
         saveOriginalPlugins: function() {
-            // Wait a moment for page to fully load before capturing
-            var self = this;
-            setTimeout(function() {
-                // Try to capture original plugin data from multiple possible containers
-                var containerSelectors = [
-                    '#the-list',
-                    '.plugin-browser .plugin-list',
-                    '.wp-list-table tbody',
-                    '.plugin-browser'
-                ];
-                
-                var $container = null;
-                for (var i = 0; i < containerSelectors.length; i++) {
-                    $container = $(containerSelectors[i]).first();
-                    if ($container.length && $container.children().length > 0) {
-                        console.log('[WP Plugin Filters] Found original content container:', containerSelectors[i]);
-                        break;
-                    }
-                }
-                
-                if ($container && $container.length && $container.children().length > 0) {
-                    // Save the parent's HTML to capture the full structure
-                    self.state.originalContent = $container.parent().html();
-                    console.log('[WP Plugin Filters] Saved original content (' + $container.children().length + ' items)');
-                } else {
-                    console.warn('[WP Plugin Filters] Could not find original plugin content to save');
-                }
-            }, 500); // Wait 500ms for content to load
+            // Try to capture original plugin data from the page
+            var originalCards = $('.plugin-card, .plugin-list-item, #the-list > tr');
+            
+            // For now, we'll save the HTML content - in a future version we could 
+            // extract actual plugin data, but this preserves the original layout
+            if (originalCards.length > 0) {
+                this.state.originalContent = originalCards.parent().html();
+            }
         },
 
         /**
@@ -108,12 +182,8 @@
         injectFilterControls: function() {
             console.log('[WP Plugin Filters] Starting filter controls injection...');
             
-            // Don't inject in modal contexts
-            if ($('#plugin-information-modal').length > 0 || 
-                $('.thickbox').length > 0 || 
-                $('[role="dialog"]').length > 0 ||
-                $('.ui-dialog').length > 0 ||
-                window.location.href.indexOf('tab=plugin-information') !== -1) {
+            // Enhanced modal detection - Don't inject in any modal/popup contexts
+            if (this.isModalContext()) {
                 console.log('[WP Plugin Filters] Modal context detected, skipping injection');
                 return;
             }
@@ -854,15 +924,15 @@
                             </span>
                             <span class="tested-with ${wpCompatStatus.cssClass}">
                                 <span style="display: inline-flex; align-items: center; margin-right: 6px;">${wpCompatStatus.icon}</span>
-                                <span>${wpCompatStatus.text}</span>
+                                <span>${wpCompatStatus.text}${wpCompatStatus.label ? ' (' + wpCompatStatus.label + ')' : ''}</span>
                             </span>
                             <span class="last-updated ${updateStatus.cssClass}">
                                 <span style="display: inline-flex; align-items: center; margin-right: 6px;">${updateStatus.icon}</span>
-                                <span>${updateStatus.text}</span>
+                                <span>${updateStatus.text}${updateStatus.label ? ' (' + updateStatus.label + ')' : ''}</span>
                             </span>
                             <span class="usability-score usability-${usabilityColor}">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path></svg>
-                                <span>Usability Rating: ${usability.score}/100 (${usability.total} reviews)</span>
+                                <span>Usability Rating: ${usability.score}/100</span>
                             </span>
                             <span class="health-score health-${this.getHealthColor(healthScore)}" data-slug="${plugin.slug}">
                                 <span class="health-meter">${this.getHealthPowerMeter(healthScore)}</span>
@@ -894,7 +964,8 @@
                     color: 'red',
                     icon: '<svg width="16" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-top: -1px;"><circle cx="12" cy="12" r="10" fill="#d63638"/><path d="m8.5 8.5 7 7m0-7-7 7" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>',
                     cssClass: 'wp-compat-unknown',
-                    text: 'WordPress compatibility unknown'
+                    text: 'WordPress compatibility unknown',
+                    label: 'Security Risk'
                 };
             }
             
@@ -908,7 +979,8 @@
                     color: 'green',
                     icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#00a32a"/><path d="m9 12 2 2 4-4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
                     cssClass: 'wp-compat-current',
-                    text: 'Tested with WordPress ' + testedVersion
+                    text: 'Tested with WordPress ' + testedVersion,
+                    label: 'Up To Date'
                 };
             } else if (this.compareVersions(cleanTested, lastCriticalSecurityVersion) >= 0) {
                 // Tested with recent version but not current - show yellow for any non-current version
@@ -916,7 +988,8 @@
                     color: 'yellow',
                     icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 22h20L12 2z" fill="#f56e28"/><path d="M12 8v4M12 16h.01" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
                     cssClass: 'wp-compat-recent',
-                    text: 'Tested with WordPress ' + testedVersion + ' (not current)'
+                    text: 'Tested with WordPress ' + testedVersion,
+                    label: 'Outdated'
                 };
             } else {
                 // Tested with version before critical security updates
@@ -924,7 +997,8 @@
                     color: 'red',
                     icon: '<svg width="16" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-top: -1px;"><circle cx="12" cy="12" r="10" fill="#d63638"/><path d="m8.5 8.5 7 7m0-7-7 7" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>',
                     cssClass: 'wp-compat-outdated',
-                    text: 'Tested with WordPress ' + testedVersion + ' (security risk)'
+                    text: 'Tested with WordPress ' + testedVersion,
+                    label: 'Security Risk'
                 };
             }
         },
@@ -1173,17 +1247,20 @@
                 color: 'red',
                 icon: '<svg width="16" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-top: -1px;"><circle cx="12" cy="12" r="10" fill="#d63638"/><path d="m8.5 8.5 7 7m0-7-7 7" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>',
                 cssClass: 'update-status-old',
-                text: 'Updated ' + this.getTimeAgo(parsedDate)
+                text: 'Updated ' + this.getTimeAgo(parsedDate),
+                label: 'Security Risk'
             };
             
             if (daysSinceUpdate <= 90) { // 3 months
                 status.color = 'green';
                 status.icon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#00a32a"/><path d="m9 12 2 2 4-4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
                 status.cssClass = 'update-status-recent';
+                status.label = 'Up To Date';
             } else if (daysSinceUpdate <= 270) { // 9 months
                 status.color = 'yellow';
                 status.icon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 22h20L12 2z" fill="#f56e28"/><path d="M12 8v4M12 16h.01" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
                 status.cssClass = 'update-status-moderate';
+                status.label = 'Outdated';
             }
             
             return status;
@@ -1366,10 +1443,10 @@
         },
 
         /**
-         * Clear all filters
+         * Clear all filters and revert to native WordPress layout
          */
         clearAllFilters: function() {
-            // Reset all filter values
+            // Reset all filter form values
             this.$elements.installationRange.val('all');
             this.$elements.updateTimeframe.val('all');
             this.$elements.usabilityRating.val('0');
@@ -1381,47 +1458,32 @@
             // Clear search input to fully reset
             this.$elements.searchInput.val('');
             
-            // IMPORTANT: Remove ALL filter-related classes to restore native WordPress layout
-            $('body').removeClass('wp-filter-active wp-filter-results-active');
+            // Remove ALL filter-related classes to restore native WordPress layout
+            $('body').removeClass('wp-filter-active wp-filter-results-active wp-plugin-filters-loading');
             
-            console.log('[WP Plugin Filters] Cleared all filters - restoring original content');
+            // Remove any enhanced classes from plugin cards
+            $('.plugin-card').removeClass('wp-plugin-enhanced');
             
-            // Try to restore original content first
+            console.log('[WP Plugin Filters] Cleared all filters - restoring native layout');
+            
+            // Restore original WordPress plugin content if we have it saved
             if (this.state.originalContent) {
                 console.log('[WP Plugin Filters] Restoring saved original HTML content');
-                var containerSelectors = [
-                    '#the-list',
-                    '.plugin-browser .plugin-list',
-                    '.wp-list-table tbody',
-                    '.plugin-browser'
-                ];
-                
-                var $container = null;
-                for (var i = 0; i < containerSelectors.length; i++) {
-                    $container = $(containerSelectors[i]).first();
-                    if ($container.length) {
-                        break;
-                    }
+                var $container = this.$elements.resultsContainer;
+                if (!$container.length) {
+                    $container = $('#the-list, .wp-list-table tbody').first();
                 }
-                
-                if ($container && $container.length) {
-                    // Restore original content and remove our custom classes
+                if ($container.length) {
                     $container.parent().html(this.state.originalContent);
-                    
-                    // Ensure no residual filter classes remain anywhere
-                    $('.plugin-card, .wp-block-post, .plugin-list-item').removeClass('wp-plugin-enhanced');
-                    
                     console.log('[WP Plugin Filters] Original content restored successfully');
-                    return;
+                } else {
+                    console.warn('[WP Plugin Filters] Could not find container to restore original content');
+                    this.fallbackToBrowseAll();
                 }
+            } else {
+                console.log('[WP Plugin Filters] No saved original content - using fallback');
+                this.fallbackToBrowseAll();
             }
-            
-            // Fallback: Load default WordPress plugin list without filters
-            console.log('[WP Plugin Filters] No saved original content - reloading page to restore WordPress defaults');
-            
-            // Remove any URL parameters and reload to get clean WordPress state
-            var cleanUrl = window.location.pathname + '?page=plugin-install&tab=search';
-            window.location.href = cleanUrl;
         },
 
         /**
@@ -1830,6 +1892,12 @@
         console.log('[WP Plugin Filters] DOM ready, checking for plugin installer page...');
         console.log('[WP Plugin Filters] Body classes:', $('body').attr('class'));
         console.log('[WP Plugin Filters] Plugin filter element:', $('#plugin-filter').length);
+        
+        // Don't initialize in modal contexts (plugin detail popups)
+        if (WPPluginFilters.isModalContext()) {
+            console.log('[WP Plugin Filters] Modal context detected during initialization, skipping');
+            return;
+        }
         
         // Only initialize on plugin installer pages
         if ($('body').hasClass('plugin-install-php') || $('#plugin-filter').length) {

@@ -266,14 +266,25 @@ class WP_Plugin_Filters_Uninstaller {
 					require_once ABSPATH . 'wp-admin/includes/file.php';
 					if ( WP_Filesystem() ) {
 						global $wp_filesystem;
-						if ( $wp_filesystem->is_writable( $path ) ) {
+						if ( $wp_filesystem && method_exists( $wp_filesystem, 'is_writable' ) && $wp_filesystem->is_writable( $path ) ) {
 							wp_delete_file( $path );
+						} else {
+							// Fallback to PHP's unlink if WP_Filesystem fails or file isn't writable through it
+							if ( is_writable( $path ) && unlink( $path ) ) {
+								// File deleted successfully with PHP unlink
+							} elseif ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
+								// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+								error_log( '[WP Plugin Filters] Cannot delete file: ' . $path );
+							}
 						}
 					} else {
-						if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
-						// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-						error_log( '[WP Plugin Filters] Cannot delete file: ' . $path );
-					}
+						// WP_Filesystem failed, try PHP's unlink as fallback
+						if ( is_writable( $path ) && unlink( $path ) ) {
+							// File deleted successfully with PHP unlink
+						} elseif ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
+							// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+							error_log( '[WP Plugin Filters] WP_Filesystem initialization failed and PHP unlink failed for file: ' . $path );
+						}
 					}
 				}
 			} catch ( Exception $e ) {
@@ -288,14 +299,25 @@ class WP_Plugin_Filters_Uninstaller {
 			require_once ABSPATH . 'wp-admin/includes/file.php';
 			if ( WP_Filesystem() ) {
 				global $wp_filesystem;
-				if ( $wp_filesystem->is_writable( $dir ) ) {
+				if ( $wp_filesystem && method_exists( $wp_filesystem, 'is_writable' ) && method_exists( $wp_filesystem, 'rmdir' ) && $wp_filesystem->is_writable( $dir ) ) {
 					$wp_filesystem->rmdir( $dir );
+				} else {
+					// Fallback to PHP's rmdir if WP_Filesystem fails or directory isn't writable through it
+					if ( is_writable( $dir ) && rmdir( $dir ) ) {
+						// Directory deleted successfully with PHP rmdir
+					} elseif ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
+						// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+						error_log( '[WP Plugin Filters] Cannot delete directory: ' . $dir );
+					}
 				}
 			} else {
-				if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
-				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-				error_log( '[WP Plugin Filters] Cannot delete directory: ' . $dir );
-			}
+				// WP_Filesystem failed, try PHP's rmdir as fallback
+				if ( is_writable( $dir ) && rmdir( $dir ) ) {
+					// Directory deleted successfully with PHP rmdir
+				} elseif ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
+					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+					error_log( '[WP Plugin Filters] WP_Filesystem initialization failed and PHP rmdir failed for directory: ' . $dir );
+				}
 			}
 		} catch ( Exception $e ) {
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
