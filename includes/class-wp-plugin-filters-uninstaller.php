@@ -20,41 +20,41 @@ class WP_Plugin_Filters_Uninstaller {
 	 * This method is called when the plugin is uninstalled
 	 */
 	public static function uninstall() {
-		// Check if uninstall is called from WordPress
+		// Check if uninstall is called from WordPress.
 		if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 			exit;
 		}
 
-		// Verify user permissions
+		// Verify user permissions.
 		if ( ! current_user_can( 'delete_plugins' ) ) {
 			exit;
 		}
 
 		try {
-			// Check for multisite and handle accordingly
+			// Check for multisite and handle accordingly.
 			if ( is_multisite() ) {
 				self::uninstall_multisite();
 			} else {
 				self::uninstall_single_site();
 			}
 
-			// Final cleanup
+			// Final cleanup.
 			self::final_cleanup();
 
-			// Log successful uninstall
+			// Log successful uninstall.
 			self::log_uninstall();
 
 		} catch ( Exception $e ) {
-			// Log the error
+			// Log the error.
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 				error_log( '[WP Plugin Filters] Uninstall failed: ' . $e->getMessage() );
 			}
 
-			// Attempt emergency cleanup
+			// Attempt emergency cleanup.
 			self::emergency_cleanup();
 
-			// Log emergency cleanup
+			// Log emergency cleanup.
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 				error_log( '[WP Plugin Filters] Emergency cleanup completed after failed uninstall' );
@@ -66,19 +66,19 @@ class WP_Plugin_Filters_Uninstaller {
 	 * Uninstall for single site
 	 */
 	private static function uninstall_single_site() {
-		// Remove all plugin options
+		// Remove all plugin options.
 		self::remove_options();
 
-		// Remove all plugin transients
+		// Remove all plugin transients.
 		self::remove_transients();
 
-		// Clear scheduled cron events
+		// Clear scheduled cron events.
 		self::clear_cron_events();
 
-		// Remove cache directories
+		// Remove cache directories.
 		self::remove_cache_directories();
 
-		// Clear object cache
+		// Clear object cache.
 		self::clear_object_cache();
 	}
 
@@ -86,11 +86,11 @@ class WP_Plugin_Filters_Uninstaller {
 	 * Uninstall for multisite network
 	 */
 	private static function uninstall_multisite() {
-		// Get all site IDs using WordPress function
+		// Get all site IDs using WordPress function.
 		$site_ids = get_sites(
 			array(
 				'fields' => 'ids',
-				'number' => 0, // Get all sites
+				'number' => 0, // Get all sites.
 			)
 		);
 
@@ -100,7 +100,7 @@ class WP_Plugin_Filters_Uninstaller {
 			restore_current_blog();
 		}
 
-		// Remove network-wide options
+		// Remove network-wide options.
 		self::remove_network_options();
 	}
 
@@ -110,7 +110,7 @@ class WP_Plugin_Filters_Uninstaller {
 	private static function remove_options() {
 		global $wpdb;
 
-		// Remove plugin-specific options
+		// Remove plugin-specific options.
 		$options_to_remove = array(
 			'wp_plugin_filters_settings',
 			'wp_plugin_filters_version',
@@ -126,7 +126,7 @@ class WP_Plugin_Filters_Uninstaller {
 			delete_option( $option );
 		}
 
-		// Remove any remaining plugin options using WordPress functions
+		// Remove any remaining plugin options using WordPress functions.
 		$known_options = array(
 			'wp_plugin_filters_cache_duration',
 			'wp_plugin_filters_api_timeout',
@@ -141,7 +141,7 @@ class WP_Plugin_Filters_Uninstaller {
 			}
 		}
 
-		// Clear any cached data
+		// Clear any cached data.
 		wp_cache_delete_multiple( $known_options, 'options' );
 	}
 
@@ -163,7 +163,7 @@ class WP_Plugin_Filters_Uninstaller {
 	 * Remove all plugin transients
 	 */
 	private static function remove_transients() {
-		// Remove known plugin-related transients using WordPress functions
+		// Remove known plugin-related transients using WordPress functions.
 		$known_transients = array(
 			'wp_plugin_search_cache',
 			'wp_plugin_details_cache',
@@ -180,19 +180,19 @@ class WP_Plugin_Filters_Uninstaller {
 			}
 		}
 
-		// Clear object cache
+		// Clear object cache.
 		foreach ( $known_transients as $transient ) {
 			wp_cache_delete( $transient, 'wppd-filters' );
 		}
 
-		if ( $deleted_count === 0 ) {
+		if ( 0 === $deleted_count ) {
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 				error_log( '[WP Plugin Filters] No transients found to delete' );
 			}
 		}
 
-		// Remove specific transients
+		// Remove specific transients.
 		$transients_to_remove = array(
 			'wp_plugin_filters_activated',
 			'wp_plugin_filters_deactivated',
@@ -238,14 +238,14 @@ class WP_Plugin_Filters_Uninstaller {
 	/**
 	 * Recursively remove directory and its contents
 	 *
-	 * @param string $dir Directory path
+	 * @param string $dir Directory path.
 	 */
 	private static function remove_directory_recursive( $dir ) {
 		if ( ! is_dir( $dir ) ) {
 			return;
 		}
 
-		// Check if directory is readable
+		// Check if directory is readable.
 		if ( ! is_readable( $dir ) ) {
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
@@ -269,18 +269,20 @@ class WP_Plugin_Filters_Uninstaller {
 						if ( $wp_filesystem && method_exists( $wp_filesystem, 'is_writable' ) && $wp_filesystem->is_writable( $path ) ) {
 							wp_delete_file( $path );
 						} else {
-							// Fallback to PHP's unlink if WP_Filesystem fails or file isn't writable through it
+							// Fallback to PHP's unlink if WP_Filesystem fails or file isn't writable through it.
+							// phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedIf
 							if ( is_writable( $path ) && unlink( $path ) ) {
-								// File deleted successfully with PHP unlink
+								// File deleted successfully with PHP unlink.
 							} elseif ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
 								// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 								error_log( '[WP Plugin Filters] Cannot delete file: ' . $path );
 							}
 						}
 					} else {
-						// WP_Filesystem failed, try PHP's unlink as fallback
+						// WP_Filesystem failed, try PHP's unlink as fallback.
+						// phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedIf
 						if ( is_writable( $path ) && unlink( $path ) ) {
-							// File deleted successfully with PHP unlink
+							// File deleted successfully with PHP unlink.
 						} elseif ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
 							// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 							error_log( '[WP Plugin Filters] WP_Filesystem initialization failed and PHP unlink failed for file: ' . $path );
@@ -302,18 +304,20 @@ class WP_Plugin_Filters_Uninstaller {
 				if ( $wp_filesystem && method_exists( $wp_filesystem, 'is_writable' ) && method_exists( $wp_filesystem, 'rmdir' ) && $wp_filesystem->is_writable( $dir ) ) {
 					$wp_filesystem->rmdir( $dir );
 				} else {
-					// Fallback to PHP's rmdir if WP_Filesystem fails or directory isn't writable through it
+					// Fallback to PHP's rmdir if WP_Filesystem fails or directory isn't writable through it.
+					// phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedIf
 					if ( is_writable( $dir ) && rmdir( $dir ) ) {
-						// Directory deleted successfully with PHP rmdir
+						// Directory deleted successfully with PHP rmdir.
 					} elseif ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
 						// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 						error_log( '[WP Plugin Filters] Cannot delete directory: ' . $dir );
 					}
 				}
 			} else {
-				// WP_Filesystem failed, try PHP's rmdir as fallback
+				// WP_Filesystem failed, try PHP's rmdir as fallback.
+				// phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedIf
 				if ( is_writable( $dir ) && rmdir( $dir ) ) {
-					// Directory deleted successfully with PHP rmdir
+					// Directory deleted successfully with PHP rmdir.
 				} elseif ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
 					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 					error_log( '[WP Plugin Filters] WP_Filesystem initialization failed and PHP rmdir failed for directory: ' . $dir );
@@ -343,7 +347,7 @@ class WP_Plugin_Filters_Uninstaller {
 				wp_cache_flush_group( $group );
 			}
 
-			// Full cache flush as final step
+			// Full cache flush as final step.
 			wp_cache_flush();
 		}
 	}
@@ -352,12 +356,12 @@ class WP_Plugin_Filters_Uninstaller {
 	 * Final cleanup operations
 	 */
 	private static function final_cleanup() {
-		// Force garbage collection
+		// Force garbage collection.
 		if ( function_exists( 'gc_collect_cycles' ) ) {
 			gc_collect_cycles();
 		}
 
-		// Remove any remaining temporary files
+		// Remove any remaining temporary files.
 		$temp_dir   = sys_get_temp_dir();
 		$temp_files = glob( $temp_dir . '/wp-plugin-directory-filters-*' );
 
@@ -399,7 +403,7 @@ class WP_Plugin_Filters_Uninstaller {
 	private static function get_uninstall_summary() {
 		global $wpdb;
 
-		// Check remaining plugin data using WordPress functions
+		// Check remaining plugin data using WordPress functions.
 		$known_options = array(
 			'wp_plugin_filters_cache_duration',
 			'wp_plugin_filters_api_timeout',
@@ -445,7 +449,7 @@ class WP_Plugin_Filters_Uninstaller {
 	public static function verify_uninstall() {
 		global $wpdb;
 
-		// Check if any plugin data remains using WordPress functions
+		// Check if any plugin data remains using WordPress functions.
 		$known_options = array(
 			'wp_plugin_filters_cache_duration',
 			'wp_plugin_filters_api_timeout',
@@ -474,10 +478,10 @@ class WP_Plugin_Filters_Uninstaller {
 			}
 		}
 
-		// Check if cron events were cleared
+		// Check if cron events were cleared.
 		$remaining_crons = wp_next_scheduled( 'wp_plugin_filters_cleanup' ) ? 1 : 0;
 
-		return ( $remaining_options == 0 && $remaining_transients == 0 && $remaining_crons == 0 );
+		return ( 0 === $remaining_options && 0 === $remaining_transients && 0 === $remaining_crons );
 	}
 
 	/**
@@ -486,7 +490,7 @@ class WP_Plugin_Filters_Uninstaller {
 	public static function emergency_cleanup() {
 		global $wpdb;
 
-		// Force delete all plugin-related entries using WordPress functions
+		// Force delete all plugin-related entries using WordPress functions.
 		$all_options = array(
 			'wp_plugin_filters_cache_duration',
 			'wp_plugin_filters_api_timeout',
@@ -503,27 +507,27 @@ class WP_Plugin_Filters_Uninstaller {
 			'wp_plugin_rating_cache',
 		);
 
-		// Delete all options
+		// Delete all options.
 		foreach ( $all_options as $option ) {
 			delete_option( $option );
 		}
 
-		// Delete all transients
+		// Delete all transients.
 		foreach ( $all_transients as $transient ) {
 			delete_transient( $transient );
 		}
 
-		// Clear object cache
+		// Clear object cache.
 		if ( wp_using_ext_object_cache() ) {
 			wp_cache_flush_group( 'wppd-filters' );
 		}
 
-		// Clear all cron events (just in case)
+		// Clear all cron events (just in case).
 		wp_clear_scheduled_hook( 'wp_plugin_filters_cleanup' );
 		wp_clear_scheduled_hook( 'wp_plugin_filters_warm_cache' );
 		wp_clear_scheduled_hook( 'wp_plugin_filters_collect_stats' );
 
-		// Force clear cache
+		// Force clear cache.
 		if ( wp_using_ext_object_cache() ) {
 			wp_cache_flush();
 		}
@@ -540,8 +544,8 @@ class WP_Plugin_Filters_Uninstaller {
 	 * @return bool User confirmed deletion
 	 */
 	private static function user_confirmed_deletion() {
-		// In WordPress, plugin uninstall already requires user confirmation
-		// This is just an additional check if needed
+		// In WordPress, plugin uninstall already requires user confirmation.
+		// This is just an additional check if needed.
 		return true;
 	}
 
@@ -559,7 +563,7 @@ class WP_Plugin_Filters_Uninstaller {
 				'wordpress_version' => get_bloginfo( 'version' ),
 			);
 
-			// Store backup as a temporary option (will be auto-removed)
+			// Store backup as a temporary option (will be auto-removed).
 			set_transient( 'wp_plugin_filters_uninstall_backup', $backup_data, WEEK_IN_SECONDS );
 		}
 	}

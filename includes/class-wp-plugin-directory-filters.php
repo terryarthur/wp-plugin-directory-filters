@@ -61,29 +61,29 @@ class WP_Plugin_Directory_Filters {
 	 * Initialize WordPress hooks
 	 */
 	private function init_hooks() {
-		// Admin hooks
+		// Admin hooks.
 		add_action( 'admin_init', array( $this, 'admin_init' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_assets' ) );
 		add_action( 'admin_menu', array( $this, 'add_admin_menu' ) );
 
-		// Plugin installer specific hooks
+		// Plugin installer specific hooks.
 		add_action( 'load-plugin-install.php', array( $this, 'enhance_plugin_installer' ) );
 
-		// AJAX hooks for logged-in users
+		// AJAX hooks for logged-in users.
 		add_action( 'wp_ajax_wp_plugin_filter', array( $this, 'handle_filter_request' ) );
 		add_action( 'wp_ajax_wp_plugin_sort', array( $this, 'handle_sort_request' ) );
 		add_action( 'wp_ajax_wp_plugin_rating', array( $this, 'handle_rating_calculation' ) );
 		add_action( 'wp_ajax_wp_plugin_clear_cache', array( $this, 'handle_cache_clear' ) );
 
-		// Debug AJAX endpoint
+		// Debug AJAX endpoint.
 		add_action( 'wp_ajax_wp_plugin_test', array( $this, 'handle_test_request' ) );
 
-		// Multisite hooks
+		// Multisite hooks.
 		if ( is_multisite() ) {
 			add_action( 'network_admin_menu', array( $this, 'add_network_admin_menu' ) );
 		}
 
-		// Cron hooks
+		// Cron hooks.
 		add_action( 'wp_plugin_filters_cleanup', array( $this, 'cleanup_cache' ) );
 		add_action( 'wp_plugin_filters_warm_cache', array( $this, 'warm_cache' ) );
 	}
@@ -92,13 +92,13 @@ class WP_Plugin_Directory_Filters {
 	 * Load plugin dependencies
 	 */
 	private function load_dependencies() {
-		// Core classes
+		// Core classes.
 		require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-api-handler.php';
 		require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-rating-calculator.php';
-		require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-health-calculator.php';
-		require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-cache-manager.php';
+		require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-wp-plugin-filters-health-calculator.php';
+		require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-wp-plugin-filters-cache-manager.php';
 		require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-ajax-handler.php';
-		require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-admin-settings.php';
+		require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-wp-plugin-filters-admin-settings.php';
 		require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-security-handler.php';
 	}
 
@@ -115,19 +115,21 @@ class WP_Plugin_Directory_Filters {
 	 */
 	public function admin_init() {
 		// Admin settings are already initialized in constructor
-		// This method is kept for future admin initialization needs
+		// This method is kept for future admin initialization needs.
 	}
 
 	/**
 	 * Enqueue admin assets
+	 *
+	 * @param string $hook_suffix The admin page hook suffix.
 	 */
 	public function enqueue_admin_assets( $hook_suffix ) {
-		// Only load on plugin installer pages
-		if ( $hook_suffix !== 'plugin-install.php' && $hook_suffix !== 'settings_page_wp-plugin-directory-filters' ) {
+		// Only load on plugin installer pages.
+		if ( 'plugin-install.php' !== $hook_suffix && 'settings_page_wp-plugin-directory-filters' !== $hook_suffix ) {
 			return;
 		}
 
-		// Enqueue JavaScript
+		// Enqueue JavaScript.
 		wp_enqueue_script(
 			'wppd-filters',
 			WP_PLUGIN_FILTERS_PLUGIN_URL . 'assets/js/admin.js',
@@ -136,7 +138,7 @@ class WP_Plugin_Directory_Filters {
 			true
 		);
 
-		// Localize script with WordPress admin data
+		// Localize script with WordPress admin data.
 		wp_localize_script(
 			'wppd-filters',
 			'wpPluginFilters',
@@ -157,7 +159,7 @@ class WP_Plugin_Directory_Filters {
 			)
 		);
 
-		// Enqueue CSS
+		// Enqueue CSS.
 		wp_enqueue_style(
 			'wp-plugin-directory-filters-admin',
 			WP_PLUGIN_FILTERS_PLUGIN_URL . 'assets/css/admin.css',
@@ -197,7 +199,7 @@ class WP_Plugin_Directory_Filters {
 	 * Enhance plugin installer page
 	 */
 	public function enhance_plugin_installer() {
-		// Add enhancement CSS to plugin installer page
+		// Add enhancement CSS to plugin installer page.
 		add_action( 'admin_head', array( $this, 'inject_enhancement_styles' ) );
 	}
 
@@ -293,7 +295,7 @@ class WP_Plugin_Directory_Filters {
 	 */
 	public function handle_test_request() {
 		try {
-			// Simple test response
+			// Simple test response.
 			wp_send_json_success(
 				array(
 					'message'     => 'AJAX is working correctly',

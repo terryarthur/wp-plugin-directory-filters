@@ -17,28 +17,28 @@ class WP_Plugin_Filters_Security_Handler {
 	/**
 	 * Validate AJAX request security
 	 *
-	 * @param string $nonce_action  Nonce action to verify
-	 * @param string $required_capability WordPress capability required
+	 * @param string $nonce_action  Nonce action to verify.
+	 * @param string $required_capability WordPress capability required.
 	 * @return bool|WP_Error True if valid, WP_Error if invalid
 	 */
 	public function validate_ajax_request( $nonce_action, $required_capability = 'install_plugins' ) {
-		// Check if request is AJAX
+		// Check if request is AJAX.
 		if ( ! wp_doing_ajax() ) {
 			return new WP_Error( 'not_ajax', __( 'This endpoint only accepts AJAX requests', 'wppd-filters' ) );
 		}
 
-		// Verify nonce
+		// Verify nonce.
 		$nonce_key = 'nonce';
 		if ( ! isset( $_POST[ $nonce_key ] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST[ $nonce_key ] ) ), $nonce_action ) ) {
 			return new WP_Error( 'nonce_verification_failed', __( 'Security verification failed', 'wppd-filters' ) );
 		}
 
-		// Check user capabilities
+		// Check user capabilities.
 		if ( ! current_user_can( $required_capability ) ) {
 			return new WP_Error( 'insufficient_permissions', __( 'You do not have permission to perform this action', 'wppd-filters' ) );
 		}
 
-		// Additional security checks
+		// Additional security checks.
 		if ( ! $this->validate_referrer() ) {
 			return new WP_Error( 'invalid_referrer', __( 'Invalid request origin', 'wppd-filters' ) );
 		}
@@ -52,13 +52,13 @@ class WP_Plugin_Filters_Security_Handler {
 	 * @return bool Valid referrer
 	 */
 	private function validate_referrer() {
-		// Check if request comes from admin area
+		// Check if request comes from admin area.
 		$referrer = wp_get_referer();
 		if ( ! $referrer ) {
 			return false;
 		}
 
-		// Ensure referrer is from our admin area
+		// Ensure referrer is from our admin area.
 		$admin_url = admin_url();
 		return strpos( $referrer, $admin_url ) === 0;
 	}
@@ -66,7 +66,7 @@ class WP_Plugin_Filters_Security_Handler {
 	/**
 	 * Sanitize plugin search parameters
 	 *
-	 * @param array $params Raw parameters
+	 * @param array $params Raw parameters.
 	 * @return array Sanitized parameters
 	 */
 	public function sanitize_search_params( $params ) {
@@ -86,19 +86,19 @@ class WP_Plugin_Filters_Security_Handler {
 	/**
 	 * Sanitize search term
 	 *
-	 * @param string $term Search term
+	 * @param string $term Search term.
 	 * @return string Sanitized term
 	 */
 	private function sanitize_search_term( $term ) {
 		$term = sanitize_text_field( $term );
 		$term = wp_strip_all_tags( $term );
-		return substr( $term, 0, 200 ); // Limit length
+		return substr( $term, 0, 200 ); // Limit length.
 	}
 
 	/**
 	 * Sanitize installation range
 	 *
-	 * @param string $range Installation range
+	 * @param string $range Installation range.
 	 * @return string Valid range
 	 */
 	private function sanitize_installation_range( $range ) {
@@ -109,7 +109,7 @@ class WP_Plugin_Filters_Security_Handler {
 	/**
 	 * Sanitize timeframe
 	 *
-	 * @param string $timeframe Update timeframe
+	 * @param string $timeframe Update timeframe.
 	 * @return string Valid timeframe
 	 */
 	private function sanitize_timeframe( $timeframe ) {
@@ -120,7 +120,7 @@ class WP_Plugin_Filters_Security_Handler {
 	/**
 	 * Sanitize rating value
 	 *
-	 * @param mixed $rating Rating value
+	 * @param mixed $rating Rating value.
 	 * @return float Valid rating
 	 */
 	private function sanitize_rating( $rating ) {
@@ -131,7 +131,7 @@ class WP_Plugin_Filters_Security_Handler {
 	/**
 	 * Sanitize health score
 	 *
-	 * @param mixed $score Health score
+	 * @param mixed $score Health score.
 	 * @return int Valid score
 	 */
 	private function sanitize_health_score( $score ) {
@@ -142,7 +142,7 @@ class WP_Plugin_Filters_Security_Handler {
 	/**
 	 * Sanitize sort field
 	 *
-	 * @param string $field Sort field
+	 * @param string $field Sort field.
 	 * @return string Valid field
 	 */
 	private function sanitize_sort_field( $field ) {
@@ -161,7 +161,7 @@ class WP_Plugin_Filters_Security_Handler {
 	/**
 	 * Sanitize sort direction
 	 *
-	 * @param string $direction Sort direction
+	 * @param string $direction Sort direction.
 	 * @return string Valid direction
 	 */
 	private function sanitize_sort_direction( $direction ) {
@@ -171,29 +171,29 @@ class WP_Plugin_Filters_Security_Handler {
 	/**
 	 * Sanitize page number
 	 *
-	 * @param mixed $page Page number
+	 * @param mixed $page Page number.
 	 * @return int Valid page number
 	 */
 	private function sanitize_page_number( $page ) {
 		$page = intval( $page );
-		return max( 1, min( 1000, $page ) ); // Limit to reasonable range
+		return max( 1, min( 1000, $page ) ); // Limit to reasonable range.
 	}
 
 	/**
 	 * Sanitize per page value
 	 *
-	 * @param mixed $per_page Results per page
+	 * @param mixed $per_page Results per page.
 	 * @return int Valid per page value
 	 */
 	private function sanitize_per_page( $per_page ) {
 		$per_page = intval( $per_page );
-		return max( 1, min( 48, $per_page ) ); // WordPress plugin installer limits
+		return max( 1, min( 48, $per_page ) ); // WordPress plugin installer limits.
 	}
 
 	/**
 	 * Validate and sanitize plugin slug
 	 *
-	 * @param string $slug Plugin slug
+	 * @param string $slug Plugin slug.
 	 * @return string|WP_Error Sanitized slug or error
 	 */
 	public function validate_plugin_slug( $slug ) {
@@ -207,7 +207,7 @@ class WP_Plugin_Filters_Security_Handler {
 			return new WP_Error( 'slug_too_long', __( 'Plugin slug is too long', 'wppd-filters' ) );
 		}
 
-		// Plugin slugs should only contain lowercase letters, numbers, and hyphens
+		// Plugin slugs should only contain lowercase letters, numbers, and hyphens.
 		if ( ! preg_match( '/^[a-z0-9\-]+$/', $slug ) ) {
 			return new WP_Error( 'invalid_slug_format', __( 'Invalid plugin slug format', 'wppd-filters' ) );
 		}
@@ -218,20 +218,20 @@ class WP_Plugin_Filters_Security_Handler {
 	/**
 	 * Rate limiting check for API requests
 	 *
-	 * @param string $action    Action being performed
-	 * @param int    $limit     Requests per minute limit
-	 * @param int    $window    Time window in seconds
+	 * @param string $action    Action being performed.
+	 * @param int    $limit     Requests per minute limit.
+	 * @param int    $window    Time window in seconds.
 	 * @return bool|WP_Error True if allowed, WP_Error if rate limited
 	 */
 	public function check_rate_limit( $action = 'general', $limit = 60, $window = 60 ) {
 		$user_id    = get_current_user_id();
 		$ip_address = $this->get_client_ip();
 
-		// Create rate limit key based on user and IP
+		// Create rate limit key based on user and IP.
 		$rate_key = "wp_plugin_rate_{$action}_{$user_id}_{$ip_address}";
 
 		$current_count = get_transient( $rate_key );
-		if ( $current_count === false ) {
+		if ( false === $current_count ) {
 			$current_count = 0;
 		}
 
@@ -247,7 +247,7 @@ class WP_Plugin_Filters_Security_Handler {
 			);
 		}
 
-		// Increment counter
+		// Increment counter.
 		set_transient( $rate_key, $current_count + 1, $window );
 
 		return true;
@@ -273,25 +273,25 @@ class WP_Plugin_Filters_Security_Handler {
 			if ( array_key_exists( $key, $_SERVER ) && ! empty( $_SERVER[ $key ] ) ) {
 				$ip = sanitize_text_field( wp_unslash( $_SERVER[ $key ] ) );
 
-				// Handle comma-separated list of IPs
-				if ( strpos( $ip, ',' ) !== false ) {
+				// Handle comma-separated list of IPs.
+				if ( false !== strpos( $ip, ',' ) ) {
 					$ip = trim( explode( ',', $ip )[0] );
 				}
 
-				// Validate IP
+				// Validate IP.
 				if ( filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) ) {
 					return $ip;
 				}
 			}
 		}
 
-		return '127.0.0.1'; // Fallback
+		return '127.0.0.1'; // Fallback.
 	}
 
 	/**
 	 * Escape output for HTML context
 	 *
-	 * @param mixed $data Data to escape
+	 * @param mixed $data Data to escape.
 	 * @return mixed Escaped data
 	 */
 	public function escape_output( $data ) {
@@ -312,13 +312,13 @@ class WP_Plugin_Filters_Security_Handler {
 	/**
 	 * Validate and escape URL
 	 *
-	 * @param string $url URL to validate
+	 * @param string $url URL to validate.
 	 * @return string|false Valid URL or false
 	 */
 	public function validate_url( $url ) {
 		$url = esc_url_raw( $url );
 
-		// Only allow http(s) URLs
+		// Only allow http(s) URLs.
 		if ( ! filter_var( $url, FILTER_VALIDATE_URL ) || ! in_array( wp_parse_url( $url, PHP_URL_SCHEME ), array( 'http', 'https' ), true ) ) {
 			return false;
 		}
@@ -329,9 +329,9 @@ class WP_Plugin_Filters_Security_Handler {
 	/**
 	 * Log security events
 	 *
-	 * @param string $event_type Event type
-	 * @param string $message    Log message
-	 * @param array  $context    Additional context
+	 * @param string $event_type Event type.
+	 * @param string $message    Log message.
+	 * @param array  $context    Additional context.
 	 */
 	public function log_security_event( $event_type, $message, $context = array() ) {
 		if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
@@ -354,15 +354,15 @@ class WP_Plugin_Filters_Security_Handler {
 	/**
 	 * Generate secure random token
 	 *
-	 * @param int $length Token length
+	 * @param int $length Token length.
 	 * @return string Random token
 	 */
 	public function generate_token( $length = 32 ) {
 		if ( function_exists( 'random_bytes' ) ) {
 			try {
 				return bin2hex( random_bytes( $length / 2 ) );
-			} catch ( Exception $e ) {
-				// Fall back to wp_generate_password
+			} catch ( Exception $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
+				// Fall back to wp_generate_password.
 			}
 		}
 

@@ -10,27 +10,27 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * AJAX request handling class
+ * AJAX request handling class.
  */
 class WP_Plugin_Filters_AJAX_Handler {
 
 	/**
-	 * Rate limiting - requests per minute per user
+	 * Rate limiting - requests per minute per user.
 	 */
 	const RATE_LIMIT_PER_MINUTE = 30;
 
 	/**
-	 * Security handler instance
+	 * Security handler instance.
 	 *
 	 * @var WP_Plugin_Filters_Security_Handler
 	 */
 	private $security_handler;
 
 	/**
-	 * Constructor
+	 * Constructor.
 	 */
 	public function __construct() {
-		// Ensure plugin directory constant is defined
+		// Ensure plugin directory constant is defined.
 		if ( ! defined( 'WP_PLUGIN_FILTERS_PLUGIN_DIR' ) ) {
 			define( 'WP_PLUGIN_FILTERS_PLUGIN_DIR', plugin_dir_path( dirname( __FILE__ ) ) );
 		}
@@ -40,20 +40,20 @@ class WP_Plugin_Filters_AJAX_Handler {
 	}
 
 	/**
-	 * Handle plugin filter request
+	 * Handle plugin filter request.
 	 */
 	public function handle_filter_request() {
-		// Add error handling for debugging
+		// Add error handling for debugging.
 		try {
-			// Ensure all required classes are loaded
+			// Ensure all required classes are loaded.
 			if ( ! class_exists( 'WP_Plugin_Filters_API_Handler' ) ) {
 				require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-api-handler.php';
 			}
 			if ( ! class_exists( 'WP_Plugin_Filters_Cache_Manager' ) ) {
-				require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-cache-manager.php';
+				require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-wp-plugin-filters-cache-manager.php';
 			}
 
-			// Security validation
+			// Security validation..
 			$security_check = $this->security_handler->validate_ajax_request( 'wp_plugin_filter_action', 'install_plugins' );
 			if ( is_wp_error( $security_check ) ) {
 				wp_send_json_error(
@@ -65,7 +65,7 @@ class WP_Plugin_Filters_AJAX_Handler {
 				);
 			}
 
-			// Rate limiting check
+			// Rate limiting check..
 			$rate_limit_check = $this->check_rate_limit();
 			if ( is_wp_error( $rate_limit_check ) ) {
 				wp_send_json_error(
@@ -77,7 +77,7 @@ class WP_Plugin_Filters_AJAX_Handler {
 				);
 			}
 
-			// Sanitize and validate input
+			// Sanitize and validate input..
 			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified above via security_handler
 			$request_data      = $this->sanitize_filter_request( $_POST );
 			$validation_result = $this->validate_filter_request( $request_data );
@@ -92,7 +92,7 @@ class WP_Plugin_Filters_AJAX_Handler {
 				);
 			}
 
-			// Execute filtered search
+			// Execute filtered search.
 			$results = $this->execute_filtered_search( $request_data );
 
 			if ( is_wp_error( $results ) ) {
@@ -105,11 +105,11 @@ class WP_Plugin_Filters_AJAX_Handler {
 				);
 			}
 
-			// Return successful response
+			// Return successful response.
 			wp_send_json_success( $results );
 
 		} catch ( Exception $e ) {
-				if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 				error_log( '[WP Plugin Filters] Filter request exception: ' . $e->getMessage() . ' in ' . $e->getFile() . ' on line ' . $e->getLine() );
 			}
@@ -122,7 +122,7 @@ class WP_Plugin_Filters_AJAX_Handler {
 				500
 			);
 		} catch ( Error $e ) {
-			// Catch PHP 7+ fatal errors
+			// Catch PHP 7+ fatal errors.
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 				error_log( '[WP Plugin Filters] PHP Fatal error in handle_filter_request: ' . $e->getMessage() . ' in ' . $e->getFile() . ' on line ' . $e->getLine() );
@@ -139,10 +139,10 @@ class WP_Plugin_Filters_AJAX_Handler {
 	}
 
 	/**
-	 * Handle plugin sort request
+	 * Handle plugin sort request.
 	 */
 	public function handle_sort_request() {
-		// Security validation
+		// Security validation.
 		$security_check = $this->security_handler->validate_ajax_request( 'wp_plugin_sort_action', 'install_plugins' );
 		if ( is_wp_error( $security_check ) ) {
 			wp_send_json_error(
@@ -154,7 +154,7 @@ class WP_Plugin_Filters_AJAX_Handler {
 			);
 		}
 
-		// Rate limiting check
+		// Rate limiting check.
 		$rate_limit_check = $this->check_rate_limit();
 		if ( is_wp_error( $rate_limit_check ) ) {
 			wp_send_json_error(
@@ -166,12 +166,12 @@ class WP_Plugin_Filters_AJAX_Handler {
 			);
 		}
 
-		// Sanitize and validate input
+		// Sanitize and validate input.
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified above via security_handler
 		$request_data = $this->sanitize_sort_request( $_POST );
 
 		try {
-			// Execute sorted search
+			// Execute sorted search.
 			$results = $this->execute_sorted_search( $request_data );
 
 			if ( is_wp_error( $results ) ) {
@@ -187,7 +187,7 @@ class WP_Plugin_Filters_AJAX_Handler {
 			wp_send_json_success( $results );
 
 		} catch ( Exception $e ) {
-				if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 				error_log( '[WP Plugin Filters] Sort request exception: ' . $e->getMessage() );
 			}
@@ -202,10 +202,10 @@ class WP_Plugin_Filters_AJAX_Handler {
 	}
 
 	/**
-	 * Handle rating calculation request
+	 * Handle rating calculation request.
 	 */
 	public function handle_rating_calculation() {
-		// Security validation
+		// Security validation.
 		$security_check = $this->security_handler->validate_ajax_request( 'wp_plugin_rating_action', 'install_plugins' );
 		if ( is_wp_error( $security_check ) ) {
 			wp_send_json_error(
@@ -232,14 +232,14 @@ class WP_Plugin_Filters_AJAX_Handler {
 		try {
 			$cache_manager = WP_Plugin_Filters_Cache_Manager::get_instance();
 
-			// Check cache first
+			// Check cache first.
 			$cached_rating = $cache_manager->get( $plugin_slug . '_ratings', 'calculated_ratings' );
-			if ( $cached_rating !== null ) {
+			if ( null !== $cached_rating ) {
 				wp_send_json_success( $cached_rating );
 				return;
 			}
 
-			// Get plugin details
+			// Get plugin details.
 			$api_handler    = new WP_Plugin_Filters_API_Handler();
 			$plugin_details = $api_handler->get_plugin_details( $plugin_slug );
 
@@ -253,7 +253,7 @@ class WP_Plugin_Filters_AJAX_Handler {
 				);
 			}
 
-			// Calculate ratings
+			// Calculate ratings.
 			$rating_calculator = new WP_Plugin_Filters_Rating_Calculator();
 			$health_calculator = new WP_Plugin_Filters_Health_Calculator();
 
@@ -273,13 +273,13 @@ class WP_Plugin_Filters_AJAX_Handler {
 				),
 			);
 
-			// Cache the result
+			// Cache the result.
 			$cache_manager->set( $plugin_slug . '_ratings', $result, 'calculated_ratings' );
 
 			wp_send_json_success( $result );
 
 		} catch ( Exception $e ) {
-				if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 				error_log( '[WP Plugin Filters] Rating calculation exception: ' . $e->getMessage() );
 			}
@@ -294,10 +294,10 @@ class WP_Plugin_Filters_AJAX_Handler {
 	}
 
 	/**
-	 * Handle cache clear request
+	 * Handle cache clear request.
 	 */
 	public function handle_cache_clear() {
-		// Security validation (requires manage_options capability)
+		// Security validation. (requires manage_options capability).
 		$security_check = $this->security_handler->validate_ajax_request( 'wp_plugin_clear_cache', 'manage_options' );
 		if ( is_wp_error( $security_check ) ) {
 			wp_send_json_error(
@@ -327,7 +327,7 @@ class WP_Plugin_Filters_AJAX_Handler {
 			);
 
 		} catch ( Exception $e ) {
-				if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 				error_log( '[WP Plugin Filters] Cache clear exception: ' . $e->getMessage() );
 			}
@@ -344,23 +344,23 @@ class WP_Plugin_Filters_AJAX_Handler {
 	/**
 	 * Execute filtered plugin search
 	 *
-	 * @param array $request_data Sanitized request data
-	 * @return array|WP_Error Search results or error
+	 * @param array $request_data Sanitized request data.
+	 * @return array|WP_Error Search results or error.
 	 */
 	private function execute_filtered_search( $request_data ) {
 		$api_handler   = new WP_Plugin_Filters_API_Handler();
 		$cache_manager = WP_Plugin_Filters_Cache_Manager::get_instance();
 
-		// Generate cache key for this search
+		// Generate cache key for this search.
 		$cache_key = 'search_' . md5( serialize( $request_data ) );
 
-		// Check cache first
+		// Check cache first.
 		$cached_results = $cache_manager->get( $cache_key, 'search_results' );
-		if ( $cached_results !== null ) {
+		if ( null !== $cached_results ) {
 			return $cached_results;
 		}
 
-		// Perform API search
+		// Perform API search.
 		$api_results = $api_handler->search_plugins(
 			$request_data['search_term'],
 			$request_data['page'],
@@ -371,16 +371,16 @@ class WP_Plugin_Filters_AJAX_Handler {
 			return $api_results;
 		}
 
-		// Apply filters to results
+		// Apply filters to results.
 		$filtered_plugins = $this->apply_filters_to_plugins( $api_results['plugins'], $request_data );
 
-		// Calculate ratings for filtered plugins
+		// Calculate ratings for filtered plugins.
 		$enhanced_plugins = $this->enhance_plugins_with_ratings( $filtered_plugins );
 
-		// Apply sorting
+		// Apply sorting.
 		$sorted_plugins = $this->sort_plugins( $enhanced_plugins, $request_data );
 
-		// Format response
+		// Format response.
 		$response = array(
 			'plugins'         => $sorted_plugins,
 			'pagination'      => array(
@@ -397,7 +397,7 @@ class WP_Plugin_Filters_AJAX_Handler {
 			),
 		);
 
-		// Cache the results
+		// Cache the results.
 		$cache_manager->set( $cache_key, $response, 'search_results' );
 
 		return $response;
@@ -406,40 +406,40 @@ class WP_Plugin_Filters_AJAX_Handler {
 	/**
 	 * Execute sorted plugin search
 	 *
-	 * @param array $request_data Sanitized request data
-	 * @return array|WP_Error Search results or error
+	 * @param array $request_data Sanitized request data.
+	 * @return array|WP_Error Search results or error.
 	 */
 	private function execute_sorted_search( $request_data ) {
-		// This can reuse the filtered search logic
+		// This can reuse the filtered search logic.
 		return $this->execute_filtered_search( $request_data );
 	}
 
 	/**
 	 * Apply filters to plugin results
 	 *
-	 * @param array $plugins      Plugin data
-	 * @param array $request_data Request parameters
-	 * @return array Filtered plugins
+	 * @param array $plugins      Plugin data.
+	 * @param array $request_data Request parameters.
+	 * @return array Filtered plugins.
 	 */
 	private function apply_filters_to_plugins( $plugins, $request_data ) {
 		$filtered = array();
 
 		foreach ( $plugins as $plugin ) {
-			// Installation range filter
-			if ( ! empty( $request_data['installation_range'] ) && $request_data['installation_range'] !== 'all' ) {
+			// Installation range filter.
+			if ( ! empty( $request_data['installation_range'] ) && 'all' !== $request_data['installation_range'] ) {
 				if ( ! $this->plugin_matches_installation_range( $plugin, $request_data['installation_range'] ) ) {
 					continue;
 				}
 			}
 
-			// Update timeframe filter
-			if ( ! empty( $request_data['update_timeframe'] ) && $request_data['update_timeframe'] !== 'all' ) {
+			// Update timeframe filter.
+			if ( ! empty( $request_data['update_timeframe'] ) && 'all' !== $request_data['update_timeframe'] ) {
 				if ( ! $this->plugin_matches_update_timeframe( $plugin, $request_data['update_timeframe'] ) ) {
 					continue;
 				}
 			}
 
-			// Rating filter (will be applied after rating calculation)
+			// Rating filter (will be applied after rating calculation).
 			$filtered[] = $plugin;
 		}
 
@@ -449,24 +449,24 @@ class WP_Plugin_Filters_AJAX_Handler {
 	/**
 	 * Check if plugin matches installation range
 	 *
-	 * @param array  $plugin Plugin data
-	 * @param string $range  Installation range
-	 * @return bool Matches range
+	 * @param array  $plugin Plugin data.
+	 * @param string $range  Installation range.
+	 * @return bool Matches range.
 	 */
 	private function plugin_matches_installation_range( $plugin, $range ) {
 		$installs = intval( $plugin['active_installs'] );
 
 		switch ( $range ) {
 			case '0-1k':
-				return $installs < 1000;
+				return 1000 > $installs;
 			case '1k-10k':
-				return $installs >= 1000 && $installs < 10000;
+				return 1000 <= $installs && 10000 > $installs;
 			case '10k-100k':
-				return $installs >= 10000 && $installs < 100000;
+				return 10000 <= $installs && 100000 > $installs;
 			case '100k-1m':
-				return $installs >= 100000 && $installs < 1000000;
+				return 100000 <= $installs && 1000000 > $installs;
 			case '1m-plus':
-				return $installs >= 1000000;
+				return 1000000 <= $installs;
 			default:
 				return true;
 		}
@@ -475,9 +475,9 @@ class WP_Plugin_Filters_AJAX_Handler {
 	/**
 	 * Check if plugin matches update timeframe
 	 *
-	 * @param array  $plugin    Plugin data
-	 * @param string $timeframe Update timeframe
-	 * @return bool Matches timeframe
+	 * @param array  $plugin    Plugin data.
+	 * @param string $timeframe Update timeframe.
+	 * @return bool Matches timeframe.
 	 */
 	private function plugin_matches_update_timeframe( $plugin, $timeframe ) {
 		if ( empty( $plugin['last_updated'] ) ) {
@@ -490,17 +490,17 @@ class WP_Plugin_Filters_AJAX_Handler {
 
 		switch ( $timeframe ) {
 			case 'last_week':
-				return $days_ago <= 7;
+				return 7 >= $days_ago;
 			case 'last_month':
-				return $days_ago <= 30;
+				return 30 >= $days_ago;
 			case 'last_3months':
-				return $days_ago <= 90;
+				return 90 >= $days_ago;
 			case 'last_6months':
-				return $days_ago <= 180;
+				return 180 >= $days_ago;
 			case 'last_year':
-				return $days_ago <= 365;
+				return 365 >= $days_ago;
 			case 'older':
-				return $days_ago > 365;
+				return 365 < $days_ago;
 			default:
 				return true;
 		}
@@ -509,8 +509,8 @@ class WP_Plugin_Filters_AJAX_Handler {
 	/**
 	 * Enhance plugins with calculated ratings
 	 *
-	 * @param array $plugins Plugin data
-	 * @return array Enhanced plugins
+	 * @param array $plugins Plugin data.
+	 * @return array Enhanced plugins.
 	 */
 	private function enhance_plugins_with_ratings( $plugins ) {
 		$rating_calculator = new WP_Plugin_Filters_Rating_Calculator();
@@ -518,20 +518,20 @@ class WP_Plugin_Filters_AJAX_Handler {
 		$cache_manager     = WP_Plugin_Filters_Cache_Manager::get_instance();
 
 		foreach ( $plugins as &$plugin ) {
-			// Check cache first
+			// Check cache first.
 			$cached_ratings = $cache_manager->get( $plugin['slug'] . '_ratings', 'calculated_ratings' );
 
-			if ( $cached_ratings !== null ) {
+			if ( null !== $cached_ratings ) {
 				$plugin['usability_rating'] = $cached_ratings['usability_rating'];
 				$plugin['health_score']     = $cached_ratings['health_score'];
 				$plugin['health_color']     = $cached_ratings['health_color'] ?? $health_calculator->get_health_color( $cached_ratings['health_score'] );
 			} else {
-				// Calculate ratings
+				// Calculate ratings.
 				$plugin['usability_rating'] = $rating_calculator->calculate_usability_rating( $plugin );
 				$plugin['health_score']     = $health_calculator->calculate_health_score( $plugin );
 				$plugin['health_color']     = $health_calculator->get_health_color( $plugin['health_score'] );
 
-				// Cache the calculations
+				// Cache the calculations.
 				$rating_data = array(
 					'usability_rating' => $plugin['usability_rating'],
 					'health_score'     => $plugin['health_score'],
@@ -541,7 +541,7 @@ class WP_Plugin_Filters_AJAX_Handler {
 				$cache_manager->set( $plugin['slug'] . '_ratings', $rating_data, 'calculated_ratings' );
 			}
 
-			// Add human-readable last updated
+			// Add human-readable last updated.
 			if ( ! empty( $plugin['last_updated'] ) ) {
 				$plugin['last_updated_human'] = human_time_diff( strtotime( $plugin['last_updated'] ), current_time( 'timestamp' ) ) . ' ' . __( 'ago', 'wppd-filters' );
 			}
@@ -553,16 +553,16 @@ class WP_Plugin_Filters_AJAX_Handler {
 	/**
 	 * Sort plugins based on request parameters
 	 *
-	 * @param array $plugins      Plugin data
-	 * @param array $request_data Request parameters
-	 * @return array Sorted plugins
+	 * @param array $plugins      Plugin data.
+	 * @param array $request_data Request parameters.
+	 * @return array Sorted plugins.
 	 */
 	private function sort_plugins( $plugins, $request_data ) {
-		if ( empty( $request_data['sort_by'] ) || $request_data['sort_by'] === 'relevance' ) {
-			return $plugins; // Keep original order for relevance
+		if ( empty( $request_data['sort_by'] ) || 'relevance' === $request_data['sort_by'] ) {
+			return $plugins; // Keep original order for relevance.
 		}
 
-		$sort_direction = $request_data['sort_direction'] === 'asc' ? 1 : -1;
+		$sort_direction = 'asc' === $request_data['sort_direction'] ? 1 : -1;
 
 		usort(
 			$plugins,
@@ -600,8 +600,8 @@ class WP_Plugin_Filters_AJAX_Handler {
 	/**
 	 * Get applied filters summary
 	 *
-	 * @param array $request_data Request data
-	 * @return array Applied filters
+	 * @param array $request_data Request data.
+	 * @return array Applied filters.
 	 */
 	private function get_applied_filters( $request_data ) {
 		$filters = array();
@@ -610,15 +610,15 @@ class WP_Plugin_Filters_AJAX_Handler {
 			$filters['search_term'] = $request_data['search_term'];
 		}
 
-		if ( ! empty( $request_data['installation_range'] ) && $request_data['installation_range'] !== 'all' ) {
+		if ( ! empty( $request_data['installation_range'] ) && 'all' !== $request_data['installation_range'] ) {
 			$filters['installation_range'] = $request_data['installation_range'];
 		}
 
-		if ( ! empty( $request_data['update_timeframe'] ) && $request_data['update_timeframe'] !== 'all' ) {
+		if ( ! empty( $request_data['update_timeframe'] ) && 'all' !== $request_data['update_timeframe'] ) {
 			$filters['update_timeframe'] = $request_data['update_timeframe'];
 		}
 
-		if ( ! empty( $request_data['sort_by'] ) && $request_data['sort_by'] !== 'relevance' ) {
+		if ( ! empty( $request_data['sort_by'] ) && 'relevance' !== $request_data['sort_by'] ) {
 			$filters['sort_by']        = $request_data['sort_by'];
 			$filters['sort_direction'] = $request_data['sort_direction'];
 		}
@@ -629,8 +629,8 @@ class WP_Plugin_Filters_AJAX_Handler {
 	/**
 	 * Sanitize filter request data
 	 *
-	 * @param array $post_data POST data
-	 * @return array Sanitized data
+	 * @param array $post_data POST data.
+	 * @return array Sanitized data.
 	 */
 	private function sanitize_filter_request( $post_data ) {
 		return array(
@@ -640,7 +640,7 @@ class WP_Plugin_Filters_AJAX_Handler {
 			'usability_rating'   => floatval( $post_data['usability_rating'] ?? 0 ),
 			'health_score'       => intval( $post_data['health_score'] ?? 0 ),
 			'sort_by'            => sanitize_key( $post_data['sort_by'] ?? 'relevance' ),
-			'sort_direction'     => in_array( $post_data['sort_direction'] ?? 'desc', array( 'asc', 'desc' ) ) ? $post_data['sort_direction'] : 'desc',
+			'sort_direction'     => in_array( $post_data['sort_direction'] ?? 'desc', array( 'asc', 'desc' ), true ) ? $post_data['sort_direction'] : 'desc',
 			'page'               => max( 1, intval( $post_data['page'] ?? 1 ) ),
 			'per_page'           => max( 1, min( 48, intval( $post_data['per_page'] ?? 24 ) ) ),
 		);
@@ -649,8 +649,8 @@ class WP_Plugin_Filters_AJAX_Handler {
 	/**
 	 * Sanitize sort request data
 	 *
-	 * @param array $post_data POST data
-	 * @return array Sanitized data
+	 * @param array $post_data POST data.
+	 * @return array Sanitized data.
 	 */
 	private function sanitize_sort_request( $post_data ) {
 		return $this->sanitize_filter_request( $post_data );
@@ -659,22 +659,22 @@ class WP_Plugin_Filters_AJAX_Handler {
 	/**
 	 * Validate filter request data
 	 *
-	 * @param array $request_data Request data
-	 * @return bool|WP_Error Validation result
+	 * @param array $request_data Request data.
+	 * @return bool|WP_Error Validation result.
 	 */
 	private function validate_filter_request( $request_data ) {
-		// Search term length validation
-		if ( strlen( $request_data['search_term'] ) > 200 ) {
+		// Search term length validation.
+		if ( 200 < strlen( $request_data['search_term'] ) ) {
 			return new WP_Error( 'search_term_too_long', __( 'Search term is too long', 'wppd-filters' ) );
 		}
 
-		// Results per page validation
-		if ( $request_data['per_page'] > 48 ) {
+		// Results per page validation.
+		if ( 48 < $request_data['per_page'] ) {
 			return new WP_Error( 'per_page_limit', __( 'Results per page exceeds maximum', 'wppd-filters' ) );
 		}
 
-		// Page number validation
-		if ( $request_data['page'] > 1000 ) {
+		// Page number validation.
+		if ( 1000 < $request_data['page'] ) {
 			return new WP_Error( 'page_limit', __( 'Page number exceeds maximum', 'wppd-filters' ) );
 		}
 
@@ -691,15 +691,15 @@ class WP_Plugin_Filters_AJAX_Handler {
 		$rate_key = 'wp_plugin_ajax_rate_' . $user_id;
 
 		$current_count = get_transient( $rate_key );
-		if ( $current_count === false ) {
+		if ( false === $current_count ) {
 			$current_count = 0;
 		}
 
-		if ( $current_count >= self::RATE_LIMIT_PER_MINUTE ) {
+		if ( self::RATE_LIMIT_PER_MINUTE <= $current_count ) {
 			return new WP_Error( 'rate_limit_exceeded', __( 'Too many requests. Please slow down and try again in a minute.', 'wppd-filters' ) );
 		}
 
-		// Increment counter
+		// Increment counter.
 		set_transient( $rate_key, $current_count + 1, 60 );
 
 		return true;

@@ -45,7 +45,7 @@ class WP_Plugin_Filters_Rating_Calculator {
 		$settings      = get_option( 'wp_plugin_filters_settings', array() );
 		$this->weights = isset( $settings['usability_weights'] ) ? $settings['usability_weights'] : self::DEFAULT_WEIGHTS;
 
-		// Validate weights sum to 100
+		// Validate weights sum to 100.
 		$total_weight = array_sum( $this->weights );
 		if ( abs( $total_weight - 100 ) > 1 ) {
 			$this->weights = self::DEFAULT_WEIGHTS;
@@ -55,13 +55,13 @@ class WP_Plugin_Filters_Rating_Calculator {
 	/**
 	 * Calculate usability rating for a plugin
 	 *
-	 * @param array $plugin_data Plugin metadata from WordPress.org API
+	 * @param array $plugin_data Plugin metadata from WordPress.org API.
 	 * @return float Usability rating from 1.0 to 5.0
 	 */
 	public function calculate_usability_rating( $plugin_data ) {
 		$this->breakdown = array();
 
-		// Calculate individual components
+		// Calculate individual components.
 		$components = array(
 			'user_rating'            => $this->calculate_user_rating_component( $plugin_data ),
 			'rating_count'           => $this->calculate_rating_count_component( $plugin_data ),
@@ -69,25 +69,25 @@ class WP_Plugin_Filters_Rating_Calculator {
 			'support_responsiveness' => $this->calculate_support_component( $plugin_data ),
 		);
 
-		// Calculate weighted score
+		// Calculate weighted score.
 		$weighted_score = 0;
 		$total_weight   = 0;
 
 		foreach ( $components as $component => $score ) {
-			if ( $score !== null ) {
+			if ( null !== $score ) {
 				$weight          = $this->weights[ $component ] / 100;
 				$weighted_score += $score * $weight;
 				$total_weight   += $weight;
 			}
 		}
 
-		// Normalize if some components are missing
+		// Normalize if some components are missing.
 		$normalized_score = $total_weight > 0 ? $weighted_score / $total_weight : 0;
 
-		// Scale to 1-5 range and ensure minimum of 1.0
+		// Scale to 1-5 range and ensure minimum of 1.0.
 		$final_score = max( 1.0, min( 5.0, $normalized_score * 5 ) );
 
-		// Store calculation breakdown
+		// Store calculation breakdown.
 		$this->breakdown = array(
 			'components'       => $components,
 			'weights'          => $this->weights,
@@ -103,7 +103,7 @@ class WP_Plugin_Filters_Rating_Calculator {
 	/**
 	 * Calculate user rating component (existing WordPress.org ratings)
 	 *
-	 * @param array $plugin_data Plugin metadata
+	 * @param array $plugin_data Plugin metadata.
 	 * @return float|null Component score (0.0-1.0) or null if no data
 	 */
 	private function calculate_user_rating_component( $plugin_data ) {
@@ -111,14 +111,14 @@ class WP_Plugin_Filters_Rating_Calculator {
 			return null;
 		}
 
-		// Rating is already on 0-5 scale, normalize to 0-1
+		// Rating is already on 0-5 scale, normalize to 0-1.
 		return floatval( $plugin_data['rating'] ) / 5.0;
 	}
 
 	/**
 	 * Calculate rating count component (credibility based on number of ratings)
 	 *
-	 * @param array $plugin_data Plugin metadata
+	 * @param array $plugin_data Plugin metadata.
 	 * @return float|null Component score (0.0-1.0) or null if no data
 	 */
 	private function calculate_rating_count_component( $plugin_data ) {
@@ -128,37 +128,37 @@ class WP_Plugin_Filters_Rating_Calculator {
 
 		$rating_count = intval( $plugin_data['num_ratings'] );
 
-		// Logarithmic scale for rating count significance
-		// More ratings = higher credibility, but with diminishing returns
+		// Logarithmic scale for rating count significance.
+		// More ratings = higher credibility, but with diminishing returns.
 		if ( $rating_count >= 1000 ) {
-			return 1.0;    // Excellent credibility
+			return 1.0;    // Excellent credibility.
 		}
 		if ( $rating_count >= 500 ) {
-			return 0.9;     // Very good credibility
+			return 0.9;     // Very good credibility.
 		}
 		if ( $rating_count >= 100 ) {
-			return 0.8;     // Good credibility
+			return 0.8;     // Good credibility.
 		}
 		if ( $rating_count >= 50 ) {
-			return 0.7;      // Fair credibility
+			return 0.7;      // Fair credibility.
 		}
 		if ( $rating_count >= 20 ) {
-			return 0.6;      // Some credibility
+			return 0.6;      // Some credibility.
 		}
 		if ( $rating_count >= 10 ) {
-			return 0.5;      // Limited credibility
+			return 0.5;      // Limited credibility.
 		}
 		if ( $rating_count >= 5 ) {
-			return 0.4;       // Low credibility
+			return 0.4;       // Low credibility.
 		}
 
-		return 0.3; // Very low credibility
+		return 0.3; // Very low credibility.
 	}
 
 	/**
 	 * Calculate installation count component (popularity indicator)
 	 *
-	 * @param array $plugin_data Plugin metadata
+	 * @param array $plugin_data Plugin metadata.
 	 * @return float|null Component score (0.0-1.0) or null if no data
 	 */
 	private function calculate_installation_component( $plugin_data ) {
@@ -168,43 +168,43 @@ class WP_Plugin_Filters_Rating_Calculator {
 
 		$installs = intval( $plugin_data['active_installs'] );
 
-		// Logarithmic scale for installation count
-		// More installs generally indicate better usability
+		// Logarithmic scale for installation count.
+		// More installs generally indicate better usability.
 		if ( $installs >= 5000000 ) {
-			return 1.0;     // Extremely popular (5M+)
+			return 1.0;     // Extremely popular (5M+).
 		}
 		if ( $installs >= 1000000 ) {
-			return 0.95;    // Very popular (1M-5M)
+			return 0.95;    // Very popular (1M-5M).
 		}
 		if ( $installs >= 500000 ) {
-			return 0.9;      // Popular (500K-1M)
+			return 0.9;      // Popular (500K-1M).
 		}
 		if ( $installs >= 100000 ) {
-			return 0.8;      // Well-used (100K-500K)
+			return 0.8;      // Well-used (100K-500K).
 		}
 		if ( $installs >= 50000 ) {
-			return 0.7;       // Moderately used (50K-100K)
+			return 0.7;       // Moderately used (50K-100K).
 		}
 		if ( $installs >= 10000 ) {
-			return 0.6;       // Some usage (10K-50K)
+			return 0.6;       // Some usage (10K-50K).
 		}
 		if ( $installs >= 5000 ) {
-			return 0.5;        // Limited usage (5K-10K)
+			return 0.5;        // Limited usage (5K-10K).
 		}
 		if ( $installs >= 1000 ) {
-			return 0.4;        // Low usage (1K-5K)
+			return 0.4;        // Low usage (1K-5K).
 		}
 		if ( $installs >= 100 ) {
-			return 0.3;         // Very low usage (100-1K)
+			return 0.3;         // Very low usage (100-1K).
 		}
 
-		return 0.2; // Minimal usage (<100)
+		return 0.2; // Minimal usage (<100).
 	}
 
 	/**
 	 * Calculate support responsiveness component
 	 *
-	 * @param array $plugin_data Plugin metadata
+	 * @param array $plugin_data Plugin metadata.
 	 * @return float|null Component score (0.0-1.0) or null if no data
 	 */
 	private function calculate_support_component( $plugin_data ) {
@@ -215,38 +215,38 @@ class WP_Plugin_Filters_Rating_Calculator {
 		$total_threads    = intval( $plugin_data['support_threads'] );
 		$resolved_threads = intval( $plugin_data['support_threads_resolved'] );
 
-		// If no support threads, give neutral score
-		if ( $total_threads === 0 ) {
+		// If no support threads, give neutral score.
+		if ( 0 === $total_threads ) {
 			return 0.5;
 		}
 
-		// Calculate resolution rate
+		// Calculate resolution rate.
 		$resolution_rate = floatval( $resolved_threads ) / floatval( $total_threads );
 
-		// Adjust score based on resolution rate and activity level
+		// Adjust score based on resolution rate and activity level.
 		if ( $resolution_rate >= 0.9 ) {
-			return 1.0;    // Excellent support (90%+)
+			return 1.0;    // Excellent support (90%+).
 		}
 		if ( $resolution_rate >= 0.8 ) {
-			return 0.9;    // Very good support (80-89%)
+			return 0.9;    // Very good support (80-89%).
 		}
 		if ( $resolution_rate >= 0.7 ) {
-			return 0.8;    // Good support (70-79%)
+			return 0.8;    // Good support (70-79%).
 		}
 		if ( $resolution_rate >= 0.6 ) {
-			return 0.7;    // Fair support (60-69%)
+			return 0.7;    // Fair support (60-69%).
 		}
 		if ( $resolution_rate >= 0.5 ) {
-			return 0.6;    // Poor support (50-59%)
+			return 0.6;    // Poor support (50-59%).
 		}
 		if ( $resolution_rate >= 0.4 ) {
-			return 0.5;    // Bad support (40-49%)
+			return 0.5;    // Bad support (40-49%).
 		}
 		if ( $resolution_rate >= 0.3 ) {
-			return 0.4;    // Very bad support (30-39%)
+			return 0.4;    // Very bad support (30-39%).
 		}
 
-		return 0.3; // Terrible support (<30%)
+		return 0.3; // Terrible support (<30%).
 	}
 
 	/**
@@ -261,16 +261,16 @@ class WP_Plugin_Filters_Rating_Calculator {
 	/**
 	 * Update algorithm weights
 	 *
-	 * @param array $weights New weight configuration
+	 * @param array $weights New weight configuration.
 	 * @return bool|WP_Error Success status or error
 	 */
 	public function update_weights( $weights ) {
-		// Validate weights
+		// Validate weights.
 		if ( ! is_array( $weights ) ) {
 			return new WP_Error( 'invalid_weights', __( 'Weights must be an array', 'wppd-filters' ) );
 		}
 
-		// Check required components
+		// Check required components.
 		$required_components = array( 'user_rating', 'rating_count', 'installation_count', 'support_responsiveness' );
 		foreach ( $required_components as $component ) {
 			if ( ! isset( $weights[ $component ] ) || ! is_numeric( $weights[ $component ] ) ) {
@@ -279,13 +279,13 @@ class WP_Plugin_Filters_Rating_Calculator {
 			}
 		}
 
-		// Validate weights sum to 100 (allow 1% tolerance)
+		// Validate weights sum to 100 (allow 1% tolerance).
 		$total_weight = array_sum( $weights );
 		if ( abs( $total_weight - 100 ) > 1 ) {
 			return new WP_Error( 'invalid_total', __( 'Algorithm weights must sum to 100%', 'wppd-filters' ) );
 		}
 
-		// Validate individual weights (0-100)
+		// Validate individual weights (0-100).
 		foreach ( $weights as $component => $weight ) {
 			if ( $weight < 0 || $weight > 100 ) {
 				/* translators: %s: component name */
@@ -293,10 +293,10 @@ class WP_Plugin_Filters_Rating_Calculator {
 			}
 		}
 
-		// Update instance weights
+		// Update instance weights.
 		$this->weights = array_map( 'intval', $weights );
 
-		// Update stored settings
+		// Update stored settings.
 		$settings                      = get_option( 'wp_plugin_filters_settings', array() );
 		$settings['usability_weights'] = $this->weights;
 		update_option( 'wp_plugin_filters_settings', $settings );
@@ -366,7 +366,7 @@ class WP_Plugin_Filters_Rating_Calculator {
 	/**
 	 * Calculate rating for multiple plugins efficiently
 	 *
-	 * @param array $plugins_data Array of plugin data
+	 * @param array $plugins_data Array of plugin data.
 	 * @return array Array of ratings keyed by plugin slug
 	 */
 	public function calculate_batch_ratings( $plugins_data ) {

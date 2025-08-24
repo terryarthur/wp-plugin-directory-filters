@@ -33,10 +33,10 @@ define( 'WP_PLUGIN_FILTERS_BASENAME', plugin_basename( __FILE__ ) );
  * Main plugin initialization
  */
 function wp_plugin_filters_init() {
-	// Text domain automatically loaded by WordPress for plugins hosted on WordPress.org
-	
+	// Text domain automatically loaded by WordPress for plugins hosted on WordPress.org.
+
 	// Require core plugin class.
-	require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-plugin-core.php';
+	require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-wp-plugin-directory-filters.php';
 
 	// Initialize the plugin.
 	WP_Plugin_Directory_Filters::get_instance();

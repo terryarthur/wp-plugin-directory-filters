@@ -36,7 +36,7 @@ class WP_Plugin_Filters_Admin_Settings {
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
 
-		// Add settings link to plugin page
+		// Add settings link to plugin page.
 		add_filter( 'plugin_action_links_' . WP_PLUGIN_FILTERS_BASENAME, array( $this, 'add_settings_link' ) );
 	}
 
@@ -44,7 +44,7 @@ class WP_Plugin_Filters_Admin_Settings {
 	 * Register WordPress settings
 	 */
 	public function register_settings() {
-		// Register main settings
+		// Register main settings.
 		register_setting(
 			self::SETTINGS_GROUP,
 			self::SETTINGS_OPTION,
@@ -55,7 +55,7 @@ class WP_Plugin_Filters_Admin_Settings {
 			)
 		);
 
-		// Add settings sections
+		// Add settings sections.
 
 		add_settings_section(
 			'cache_section',
@@ -64,7 +64,7 @@ class WP_Plugin_Filters_Admin_Settings {
 			self::SETTINGS_PAGE_SLUG
 		);
 
-		// Add cache settings fields
+		// Add cache settings fields.
 		$cache_fields = array(
 			'plugin_metadata'    => __( 'Plugin Metadata Cache Duration (seconds)', 'wppd-filters' ),
 			'calculated_ratings' => __( 'Calculated Ratings Cache Duration (seconds)', 'wppd-filters' ),
@@ -86,7 +86,7 @@ class WP_Plugin_Filters_Admin_Settings {
 			);
 		}
 
-		// Add cache management field
+		// Add cache management field.
 		add_settings_field(
 			'cache_management',
 			__( 'Cache Management', 'wppd-filters' ),
@@ -98,6 +98,8 @@ class WP_Plugin_Filters_Admin_Settings {
 
 	/**
 	 * Enqueue admin scripts and styles
+	 *
+	 * @param string $hook_suffix The admin page hook suffix.
 	 */
 	public function enqueue_admin_scripts( $hook_suffix ) {
 		if ( 'settings_page_' . self::SETTINGS_PAGE_SLUG !== $hook_suffix ) {
@@ -141,6 +143,9 @@ class WP_Plugin_Filters_Admin_Settings {
 
 	/**
 	 * Add settings link to plugin actions
+	 *
+	 * @param array $links The existing plugin action links.
+	 * @return array Modified links array.
 	 */
 	public function add_settings_link( $links ) {
 		$settings_link = sprintf(
@@ -160,7 +165,7 @@ class WP_Plugin_Filters_Admin_Settings {
 			wp_die( esc_html__( 'You do not have sufficient permissions to access this page.', 'wppd-filters' ) );
 		}
 
-		// Handle form submission
+		// Handle form submission.
 		if ( isset( $_POST['submit'] ) && check_admin_referer( self::SETTINGS_GROUP . '-options' ) ) {
 			$this->handle_settings_update();
 		}
@@ -168,9 +173,9 @@ class WP_Plugin_Filters_Admin_Settings {
 		?>
 		<div class="wrap">
 			<h1><?php esc_html_e( 'Plugin Directory Filters Settings', 'wppd-filters' ); ?></h1>
-			
+
 			<?php settings_errors(); ?>
-			
+
 			<form method="post" action="">
 				<?php
 				wp_nonce_field( self::SETTINGS_GROUP . '-options' );
@@ -179,22 +184,22 @@ class WP_Plugin_Filters_Admin_Settings {
 				submit_button();
 				?>
 			</form>
-			
+
 			<div class="wp-plugin-directory-filters-admin-info">
 				<h2><?php esc_html_e( 'Algorithm Information', 'wppd-filters' ); ?></h2>
-				
+
 				<div class="algorithm-explanations">
 					<p><?php esc_html_e( 'The plugin directory filters provide enhanced usability ratings and health scores to help you make better plugin choices. These metrics are calculated automatically based on WordPress.org data and are not user-configurable.', 'wppd-filters' ); ?></p>
-					
+
 					<div class="algorithm-explanation">
 						<h3><?php esc_html_e( 'Usability Rating', 'wppd-filters' ); ?></h3>
 						<p><?php esc_html_e( 'Combines user ratings, rating count, installation count, and support responsiveness to provide an overall assessment of plugin usability and quality.', 'wppd-filters' ); ?></p>
 					</div>
-					
+
 					<div class="algorithm-explanation">
 						<h3><?php esc_html_e( 'Health Score', 'wppd-filters' ); ?></h3>
 						<p><?php esc_html_e( 'Evaluates plugin maintenance quality based on update frequency, WordPress compatibility, support response, and other reliability indicators.', 'wppd-filters' ); ?></p>
-						
+
 						<h4><?php esc_html_e( 'Color Coding:', 'wppd-filters' ); ?></h4>
 						<ul>
 							<li><span class="health-badge health-badge-green">86-100</span> <?php esc_html_e( 'Excellent', 'wppd-filters' ); ?></li>
@@ -221,15 +226,15 @@ class WP_Plugin_Filters_Admin_Settings {
 		<div class="wrap">
 			<h1><?php esc_html_e( 'Plugin Directory Filters Network Settings', 'wppd-filters' ); ?></h1>
 			<p><?php esc_html_e( 'Configure plugin directory filter settings for the entire network.', 'wppd-filters' ); ?></p>
-			
+
 			<form method="post" action="">
 				<?php
 				wp_nonce_field( 'wp_plugin_filters_network_settings' );
 
-				// Network-specific settings would go here
+				// Network-specific settings would go here.
 				$network_settings = get_site_option( 'wp_plugin_filters_network_settings', array() );
 				?>
-				
+
 				<table class="form-table">
 					<tr>
 						<th scope="row"><?php esc_html_e( 'Override Site Settings', 'wppd-filters' ); ?></th>
@@ -250,7 +255,7 @@ class WP_Plugin_Filters_Admin_Settings {
 						</td>
 					</tr>
 				</table>
-				
+
 				<?php submit_button( __( 'Update Network Settings', 'wppd-filters' ) ); ?>
 			</form>
 		</div>
@@ -264,7 +269,7 @@ class WP_Plugin_Filters_Admin_Settings {
 	public function render_cache_section_description() {
 		echo '<p>' . esc_html__( 'Configure cache durations and manage cached data.', 'wppd-filters' ) . '</p>';
 
-		// Display cache statistics
+		// Display cache statistics.
 		$cache_manager = WP_Plugin_Filters_Cache_Manager::get_instance();
 		$stats         = $cache_manager->get_cache_statistics();
 
@@ -284,6 +289,8 @@ class WP_Plugin_Filters_Admin_Settings {
 
 	/**
 	 * Render cache duration field
+	 *
+	 * @param array $args Field arguments containing field name and label.
 	 */
 	public function render_cache_duration_field( $args ) {
 		$settings = get_option( self::SETTINGS_OPTION, $this->get_default_settings() );
@@ -298,7 +305,7 @@ class WP_Plugin_Filters_Admin_Settings {
 			intval( $value )
 		);
 
-		// Add helpful description
+		// Add helpful description.
 		$descriptions = array(
 			'plugin_metadata'    => __( 'How long to cache plugin information from WordPress.org (recommended: 86400 = 24 hours)', 'wppd-filters' ),
 			'calculated_ratings' => __( 'How long to cache calculated usability ratings and health scores (recommended: 21600 = 6 hours)', 'wppd-filters' ),
@@ -327,10 +334,10 @@ class WP_Plugin_Filters_Admin_Settings {
 	 * Handle settings update
 	 */
 	private function handle_settings_update() {
-		// Note: Nonce verification is already done in render_admin_page() before calling this method
+		// Note: Nonce verification is already done in render_admin_page() before calling this method.
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce is verified in caller
 		$raw_settings = isset( $_POST[ self::SETTINGS_OPTION ] ) ? map_deep( wp_unslash( $_POST[ self::SETTINGS_OPTION ] ), 'sanitize_text_field' ) : array();
-		$settings = $this->sanitize_settings( $raw_settings );
+		$settings     = $this->sanitize_settings( $raw_settings );
 
 		if ( update_option( self::SETTINGS_OPTION, $settings ) ) {
 			add_settings_error(
@@ -351,11 +358,14 @@ class WP_Plugin_Filters_Admin_Settings {
 
 	/**
 	 * Sanitize settings input
+	 *
+	 * @param array $input Raw input data to sanitize.
+	 * @return array Sanitized settings array.
 	 */
 	public function sanitize_settings( $input ) {
 		$sanitized = $this->get_default_settings();
 
-		// Sanitize cache durations
+		// Sanitize cache durations.
 		if ( isset( $input['cache_durations'] ) && is_array( $input['cache_durations'] ) ) {
 			foreach ( $sanitized['cache_durations'] as $key => $default_value ) {
 				if ( isset( $input['cache_durations'][ $key ] ) ) {

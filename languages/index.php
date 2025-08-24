@@ -1,2 +1,6 @@
 <?php
-// Silence is golden.
+/**
+ * Silence is golden.
+ *
+ * @package WP_Plugin_Directory_Filters
+ */

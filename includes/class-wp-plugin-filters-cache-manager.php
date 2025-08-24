@@ -10,38 +10,38 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Cache management class using WordPress Transients and Object Cache
+ * Cache management class using WordPress Transients and Object Cache.
  */
 class WP_Plugin_Filters_Cache_Manager {
 
 	/**
-	 * Single instance of the class
+	 * Single instance of the class.
 	 *
 	 * @var WP_Plugin_Filters_Cache_Manager
 	 */
 	private static $instance = null;
 
 	/**
-	 * Cache configuration
+	 * Cache configuration.
 	 *
 	 * @var array
 	 */
 	private $cache_config;
 
 	/**
-	 * Default cache durations (in seconds)
+	 * Default cache durations (in seconds).
 	 */
 	const DEFAULT_CACHE_DURATIONS = array(
-		'plugin_metadata'    => 86400,    // 24 hours
-		'calculated_ratings' => 21600, // 6 hours
-		'search_results'     => 3600,      // 1 hour
-		'api_responses'      => 1800,        // 30 minutes
+		'plugin_metadata'    => 86400,    // 24 hours.
+		'calculated_ratings' => 21600, // 6 hours.
+		'search_results'     => 3600,      // 1 hour.
+		'api_responses'      => 1800,        // 30 minutes.
 	);
 
 	/**
 	 * Get single instance of the class
 	 *
-	 * @return WP_Plugin_Filters_Cache_Manager
+	 * @return WP_Plugin_Filters_Cache_Manager.
 	 */
 	public static function get_instance() {
 		if ( null === self::$instance ) {
@@ -51,7 +51,7 @@ class WP_Plugin_Filters_Cache_Manager {
 	}
 
 	/**
-	 * Constructor
+	 * Constructor.
 	 */
 	private function __construct() {
 		$this->load_cache_config();
@@ -59,7 +59,7 @@ class WP_Plugin_Filters_Cache_Manager {
 	}
 
 	/**
-	 * Load cache configuration from WordPress options
+	 * Load cache configuration from WordPress options.
 	 */
 	private function load_cache_config() {
 		$settings           = get_option( 'wp_plugin_filters_settings', array() );
@@ -67,15 +67,15 @@ class WP_Plugin_Filters_Cache_Manager {
 	}
 
 	/**
-	 * Initialize WordPress hooks
+	 * Initialize WordPress hooks.
 	 */
 	private function init_hooks() {
-		// Schedule daily cache cleanup
+		// Schedule daily cache cleanup.
 		if ( ! wp_next_scheduled( 'wp_plugin_filters_cleanup' ) ) {
 			wp_schedule_event( time(), 'daily', 'wp_plugin_filters_cleanup' );
 		}
 
-		// Schedule cache warming for popular plugins
+		// Schedule cache warming for popular plugins.
 		if ( ! wp_next_scheduled( 'wp_plugin_filters_warm_cache' ) ) {
 			wp_schedule_event( time() + 300, 'hourly', 'wp_plugin_filters_warm_cache' );
 		}
@@ -84,25 +84,25 @@ class WP_Plugin_Filters_Cache_Manager {
 	/**
 	 * Get cached data with fallback strategy
 	 *
-	 * @param string $key        Cache key
-	 * @param string $cache_type Type of cache (plugin_metadata, calculated_ratings, etc.)
-	 * @return mixed|null Cached data or null if not found
+	 * @param string $key        Cache key.
+	 * @param string $cache_type Type of cache (plugin_metadata, calculated_ratings, etc.).
+	 * @return mixed|null Cached data or null if not found.
 	 */
 	public function get( $key, $cache_type = 'plugin_metadata' ) {
-		// Try object cache first if available
+		// Try object cache first if available.
 		if ( wp_using_ext_object_cache() ) {
 			$data = wp_cache_get( $key, $cache_type );
-			if ( $data !== false ) {
+			if ( false !== $data ) {
 				return $this->maybe_decompress_data( $data );
 			}
 		}
 
-		// Fall back to transients
+		// Fall back to transients.
 		$transient_key = $this->build_transient_key( $key, $cache_type );
 		$data          = get_transient( $transient_key );
 
-		if ( $data !== false ) {
-			// Store in object cache for subsequent requests if available
+		if ( false !== $data ) {
+			// Store in object cache for subsequent requests if available.
 			if ( wp_using_ext_object_cache() ) {
 				wp_cache_set( $key, $data, $cache_type, 3600 );
 			}
@@ -115,24 +115,24 @@ class WP_Plugin_Filters_Cache_Manager {
 	/**
 	 * Set cached data with appropriate TTL
 	 *
-	 * @param string $key        Cache key
-	 * @param mixed  $data       Data to cache
-	 * @param string $cache_type Type of cache
-	 * @return bool Success status
+	 * @param string $key        Cache key.
+	 * @param mixed  $data       Data to cache.
+	 * @param string $cache_type Type of cache.
+	 * @return bool Success status.
 	 */
 	public function set( $key, $data, $cache_type = 'plugin_metadata' ) {
 		$ttl = isset( $this->cache_config[ $cache_type ] ) ? $this->cache_config[ $cache_type ] : self::DEFAULT_CACHE_DURATIONS[ $cache_type ];
 
-		// Compress data if it's large
+		// Compress data if it's large.
 		$compressed_data = $this->maybe_compress_data( $data );
 
-		// Store in object cache if available
+		// Store in object cache if available.
 		if ( wp_using_ext_object_cache() ) {
-			$object_cache_ttl = min( $ttl, 3600 ); // Limit object cache TTL
+			$object_cache_ttl = min( $ttl, 3600 ); // Limit object cache TTL.
 			wp_cache_set( $key, $compressed_data, $cache_type, $object_cache_ttl );
 		}
 
-		// Store in transients for persistence
+		// Store in transients for persistence.
 		$transient_key = $this->build_transient_key( $key, $cache_type );
 		return set_transient( $transient_key, $compressed_data, $ttl );
 	}
@@ -140,17 +140,17 @@ class WP_Plugin_Filters_Cache_Manager {
 	/**
 	 * Delete cached data
 	 *
-	 * @param string $key        Cache key
-	 * @param string $cache_type Type of cache
-	 * @return bool Success status
+	 * @param string $key        Cache key.
+	 * @param string $cache_type Type of cache.
+	 * @return bool Success status.
 	 */
 	public function delete( $key, $cache_type = 'plugin_metadata' ) {
-		// Delete from object cache if available
+		// Delete from object cache if available.
 		if ( wp_using_ext_object_cache() ) {
 			wp_cache_delete( $key, $cache_type );
 		}
 
-		// Delete from transients
+		// Delete from transients.
 		$transient_key = $this->build_transient_key( $key, $cache_type );
 		return delete_transient( $transient_key );
 	}
@@ -158,19 +158,19 @@ class WP_Plugin_Filters_Cache_Manager {
 	/**
 	 * Get multiple cached items efficiently
 	 *
-	 * @param array  $keys       Array of cache keys
-	 * @param string $cache_type Type of cache
-	 * @return array Cached data keyed by original keys
+	 * @param array  $keys       Array of cache keys.
+	 * @param string $cache_type Type of cache.
+	 * @return array Cached data keyed by original keys.
 	 */
 	public function get_multiple( $keys, $cache_type = 'plugin_metadata' ) {
 		$results      = array();
 		$missing_keys = array();
 
-		// Try object cache first if available
+		// Try object cache first if available.
 		if ( wp_using_ext_object_cache() ) {
 			foreach ( $keys as $key ) {
 				$data = wp_cache_get( $key, $cache_type );
-				if ( $data !== false ) {
+				if ( false !== $data ) {
 					$results[ $key ] = $this->maybe_decompress_data( $data );
 				} else {
 					$missing_keys[] = $key;
@@ -180,14 +180,14 @@ class WP_Plugin_Filters_Cache_Manager {
 			$missing_keys = $keys;
 		}
 
-		// Get missing keys from transients
+		// Get missing keys from transients.
 		if ( ! empty( $missing_keys ) ) {
 			$transient_results = $this->get_multiple_transients( $missing_keys, $cache_type );
 
 			foreach ( $transient_results as $key => $data ) {
 				$results[ $key ] = $this->maybe_decompress_data( $data );
 
-				// Store in object cache for future requests
+				// Store in object cache for future requests.
 				if ( wp_using_ext_object_cache() ) {
 					wp_cache_set( $key, $data, $cache_type, 3600 );
 				}
@@ -200,94 +200,99 @@ class WP_Plugin_Filters_Cache_Manager {
 	/**
 	 * Get multiple transients efficiently
 	 *
-	 * @param array  $keys       Cache keys
-	 * @param string $cache_type Cache type
-	 * @return array Results
+	 * @param array  $keys       Cache keys.
+	 * @param string $cache_type Cache type.
+	 * @return array Results.
 	 */
 	private function get_multiple_transients( $keys, $cache_type ) {
 		global $wpdb;
 
-		// Build transient option names
+		// Build transient option names.
 		$transient_keys = array();
 		foreach ( $keys as $key ) {
 			$transient_keys[ $key ] = '_transient_' . $this->build_transient_key( $key, $cache_type );
 		}
 
-		// Create placeholders for IN clause
+		// Create placeholders for IN clause.
 		$placeholders       = array_fill( 0, count( $transient_keys ), '%s' );
 		$placeholder_string = implode( ',', $placeholders );
 
-		// Try to get results from object cache first
+		// Try to get results from object cache first.
 		$cache_key = 'bulk_transients_' . md5( serialize( $transient_keys ) );
-		$results = wp_cache_get( $cache_key, 'wp_plugin_filters_bulk' );
-		
+		$results   = wp_cache_get( $cache_key, 'wp_plugin_filters_bulk' );
+
 		if ( false === $results ) {
-			// Single query to get all transients
-			$query = "SELECT option_name, option_value FROM {$wpdb->options} WHERE option_name IN ($placeholder_string) AND option_name NOT LIKE %s";
+			// Single query to get all transients.
+			$query      = "SELECT option_name, option_value FROM {$wpdb->options} WHERE option_name IN ($placeholder_string) AND option_name NOT LIKE %s";
 			$query_args = array_merge( array_values( $transient_keys ), array( '%\\_transient\\_timeout\\_%' ) );
-			$results = $wpdb->get_results(
+			$results    = $wpdb->get_results(
+				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Query is properly prepared above.
 				$wpdb->prepare( $query, $query_args ),
 				ARRAY_A
 			);
-			// Cache for 1 minute
+			// Cache for 1 minute.
 			wp_cache_set( $cache_key, $results, 'wp_plugin_filters_bulk', 60 );
 		}
 
-		// Check expiration for found transients
+		// Check expiration for found transients.
 		$valid_results = array();
 		$timeout_keys  = array();
 
 		foreach ( $results as $result ) {
-			$transient_name = substr( $result['option_name'], 11 ); // Remove '_transient_' prefix
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Transient prefix removal is required.
+			$transient_name = substr( $result['option_name'], 11 );
 			$timeout_key    = "_transient_timeout_{$transient_name}";
 			$timeout_keys[] = $timeout_key;
 
-			// Find original key
-			$original_key = array_search( $result['option_name'], $transient_keys );
-			if ( $original_key !== false ) {
+			// Find original key.
+			$original_key = array_search( $result['option_name'], $transient_keys, true );
+			if ( false !== $original_key ) {
 				$valid_results[ $original_key ] = $result['option_value'];
 			}
 		}
 
-		// Check timeouts if we have any
+		// Check timeouts if we have any.
 		if ( ! empty( $timeout_keys ) ) {
 			$timeout_placeholders       = array_fill( 0, count( $timeout_keys ), '%s' );
 			$timeout_placeholder_string = implode( ',', $timeout_placeholders );
 
-			// Try to get timeout results from cache first
+			// Try to get timeout results from cache first.
+			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize -- Serialization needed for cache key generation.
 			$timeout_cache_key = 'timeout_check_' . md5( serialize( $timeout_keys ) );
-			$timeout_results = wp_cache_get( $timeout_cache_key, 'wp_plugin_filters_timeout' );
-			
+			$timeout_results   = wp_cache_get( $timeout_cache_key, 'wp_plugin_filters_timeout' );
+
 			if ( false === $timeout_results ) {
-				$timeout_query = "SELECT option_name, option_value FROM {$wpdb->options} WHERE option_name IN ($timeout_placeholder_string)";
+				$timeout_query   = "SELECT option_name, option_value FROM {$wpdb->options} WHERE option_name IN ($timeout_placeholder_string)";
 				$timeout_results = $wpdb->get_results(
+					// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Query is properly prepared above.
 					$wpdb->prepare( $timeout_query, $timeout_keys ),
 					ARRAY_A
 				);
-				// Cache for 30 seconds
+				// Cache for 30 seconds.
 				wp_cache_set( $timeout_cache_key, $timeout_results, 'wp_plugin_filters_timeout', 30 );
 			}
 
 			$current_time = time();
 			foreach ( $timeout_results as $timeout_result ) {
-				$transient_name = substr( $timeout_result['option_name'], 19 ); // Remove '_transient_timeout_' prefix
+				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Transient timeout prefix removal is required.
+				$transient_name = substr( $timeout_result['option_name'], 19 );
 				$timeout        = intval( $timeout_result['option_value'] );
 
 				if ( $timeout > 0 && $timeout < $current_time ) {
-					// Transient expired, find and remove it
-					$original_key = array_search( "_transient_{$transient_name}", $transient_keys );
-					if ( $original_key !== false ) {
+					// Transient expired, find and remove it.
+					$original_key = array_search( "_transient_{$transient_name}", $transient_keys, true );
+					if ( false !== $original_key ) {
 						unset( $valid_results[ $original_key ] );
 					}
 				}
 			}
 		}
 
-		// Unserialize results
+		// Unserialize results.
 		$final_results = array();
 		foreach ( $valid_results as $key => $value ) {
 			$unserialized = maybe_unserialize( $value );
-			if ( $unserialized !== false ) {
+			if ( false !== $unserialized ) {
 				$final_results[ $key ] = $unserialized;
 			}
 		}
@@ -298,7 +303,7 @@ class WP_Plugin_Filters_Cache_Manager {
 	/**
 	 * Warm cache for popular plugins
 	 *
-	 * @return int Number of plugins cached
+	 * @return int Number of plugins cached.
 	 */
 	public function warm_popular_plugins_cache() {
 		$api_handler   = new WP_Plugin_Filters_API_Handler();
@@ -307,7 +312,7 @@ class WP_Plugin_Filters_Cache_Manager {
 		$warmed_count = 0;
 
 		foreach ( $popular_slugs as $slug ) {
-			// Only warm cache if data is not already cached
+			// Only warm cache if data is not already cached.
 			if ( $this->get( $slug, 'plugin_metadata' ) === null ) {
 				$plugin_details = $api_handler->get_plugin_details( $slug );
 
@@ -315,7 +320,7 @@ class WP_Plugin_Filters_Cache_Manager {
 					$this->set( $slug, $plugin_details, 'plugin_metadata' );
 					$warmed_count++;
 
-					// Calculate and cache ratings
+					// Calculate and cache ratings.
 					$rating_calculator = new WP_Plugin_Filters_Rating_Calculator();
 					$health_calculator = new WP_Plugin_Filters_Health_Calculator();
 
@@ -330,13 +335,13 @@ class WP_Plugin_Filters_Cache_Manager {
 
 					$this->set( $slug . '_ratings', $rating_data, 'calculated_ratings' );
 
-					// Limit warming to prevent resource exhaustion
+					// Limit warming to prevent resource exhaustion.
 					if ( $warmed_count >= 10 ) {
 						break;
 					}
 
-					// Small delay between requests to be respectful
-					usleep( 100000 ); // 0.1 second
+					// Small delay between requests to be respectful.
+					usleep( 100000 ); // 0.1 second.
 				}
 			}
 		}
@@ -347,15 +352,15 @@ class WP_Plugin_Filters_Cache_Manager {
 	/**
 	 * Clean up expired cache entries
 	 *
-	 * @param int $limit Maximum entries to process
-	 * @return int Number of entries cleaned up
+	 * @param int $limit Maximum entries to process.
+	 * @return int Number of entries cleaned up.
 	 */
 	public function cleanup_expired_cache( $limit = 1000 ) {
 		global $wpdb;
 
 		$current_time = time();
 
-		// Find expired transients  
+		// Find expired transients.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Direct query needed for expired transient cleanup
 		$expired_transients = $wpdb->get_col(
 			$wpdb->prepare(
@@ -375,25 +380,27 @@ class WP_Plugin_Filters_Cache_Manager {
 			return 0;
 		}
 
-		// Build corresponding transient names
+		// Build corresponding transient names.
 		$transient_names = array();
 		foreach ( $expired_transients as $timeout_name ) {
-			$transient_name    = '_transient_' . substr( $timeout_name, 19 ); // Remove '_transient_timeout_' prefix
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Transient timeout prefix removal is required.
+			$transient_name    = '_transient_' . substr( $timeout_name, 19 );
 			$transient_names[] = $transient_name;
 		}
 
-		// Delete in batch
+		// Delete in batch.
 		$all_names          = array_merge( $expired_transients, $transient_names );
 		$placeholders       = array_fill( 0, count( $all_names ), '%s' );
 		$placeholder_string = implode( ',', $placeholders );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Direct query needed for bulk transient deletion
-		$delete_query = "DELETE FROM {$wpdb->options} WHERE option_name IN ($placeholder_string)";
+		$delete_query  = "DELETE FROM {$wpdb->options} WHERE option_name IN ($placeholder_string)";
 		$deleted_count = $wpdb->query(
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Query is properly prepared above.
 			$wpdb->prepare( $delete_query, $all_names )
 		);
 
-		// Clear object cache for deleted transients
+		// Clear object cache for deleted transients.
 		if ( wp_using_ext_object_cache() ) {
 			foreach ( $expired_transients as $timeout_name ) {
 				$key = substr( $timeout_name, 19 );
@@ -401,8 +408,8 @@ class WP_Plugin_Filters_Cache_Manager {
 			}
 		}
 
-		// Invalidate cache statistics since cache contents changed
-		if ( $deleted_count > 0 ) {
+		// Invalidate cache statistics since cache contents changed.
+		if ( 0 < $deleted_count ) {
 			wp_cache_delete( 'wp_plugin_cache_stats', 'wp_plugin_filters_stats' );
 		}
 
@@ -412,8 +419,8 @@ class WP_Plugin_Filters_Cache_Manager {
 	/**
 	 * Clear all plugin filter cache
 	 *
-	 * @param string $cache_type Type of cache to clear ('all' or specific type)
-	 * @return int Number of entries cleared
+	 * @param string $cache_type Type of cache to clear ('all' or specific type).
+	 * @return int Number of entries cleared.
 	 */
 	public function clear_all_cache( $cache_type = 'all' ) {
 		global $wpdb;
@@ -455,12 +462,12 @@ class WP_Plugin_Filters_Cache_Manager {
 				)
 			);
 
-			if ( $deleted !== false ) {
+			if ( false !== $deleted ) {
 				$deleted_count += $deleted;
 			}
 		}
 
-		// Clear object cache groups
+		// Clear object cache groups.
 		if ( wp_using_ext_object_cache() ) {
 			wp_cache_flush_group( 'plugin_metadata' );
 			wp_cache_flush_group( 'calculated_ratings' );
@@ -468,8 +475,8 @@ class WP_Plugin_Filters_Cache_Manager {
 			wp_cache_flush_group( 'api_responses' );
 		}
 
-		// Invalidate cache statistics since cache contents changed
-		if ( $deleted_count > 0 ) {
+		// Invalidate cache statistics since cache contents changed.
+		if ( 0 < $deleted_count ) {
 			wp_cache_delete( 'wp_plugin_cache_stats', 'wp_plugin_filters_stats' );
 		}
 
@@ -479,15 +486,15 @@ class WP_Plugin_Filters_Cache_Manager {
 	/**
 	 * Get cache statistics
 	 *
-	 * @return array Cache statistics
+	 * @return array Cache statistics.
 	 */
 	public function get_cache_statistics() {
 		global $wpdb;
 
-		// Try to get stats from object cache first (cache for 5 minutes)
+		// Try to get stats from object cache first (cache for 5 minutes).
 		$cache_key = 'wp_plugin_cache_stats';
-		$stats = wp_cache_get( $cache_key, 'wp_plugin_filters_stats' );
-		
+		$stats     = wp_cache_get( $cache_key, 'wp_plugin_filters_stats' );
+
 		if ( false === $stats ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Direct query needed for cache statistics
 			$stats = $wpdb->get_results(
@@ -508,8 +515,8 @@ class WP_Plugin_Filters_Cache_Manager {
 	             GROUP BY cache_type",
 				ARRAY_A
 			);
-			
-			// Cache the results for 5 minutes (300 seconds)
+
+			// Cache the results for 5 minutes (300 seconds).
 			wp_cache_set( $cache_key, $stats, 'wp_plugin_filters_stats', 300 );
 		}
 
@@ -540,9 +547,9 @@ class WP_Plugin_Filters_Cache_Manager {
 	/**
 	 * Build transient key with prefix
 	 *
-	 * @param string $key        Original key
-	 * @param string $cache_type Cache type
-	 * @return string Transient key
+	 * @param string $key        Original key.
+	 * @param string $cache_type Cache type.
+	 * @return string Transient key.
 	 */
 	private function build_transient_key( $key, $cache_type ) {
 		return 'wp_plugin_' . $cache_type . '_' . md5( $key );
@@ -551,15 +558,17 @@ class WP_Plugin_Filters_Cache_Manager {
 	/**
 	 * Compress data if it's large
 	 *
-	 * @param mixed $data Data to potentially compress
-	 * @return mixed Original or compressed data
+	 * @param mixed $data Data to potentially compress.
+	 * @return mixed Original or compressed data.
 	 */
 	private function maybe_compress_data( $data ) {
 		if ( function_exists( 'gzcompress' ) ) {
+			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize -- Serialization needed for data compression.
 			$serialized = serialize( $data );
-			if ( strlen( $serialized ) > 1024 ) { // Only compress if > 1KB
+			if ( 1024 < strlen( $serialized ) ) { // Only compress if > 1KB.
 				return array(
 					'compressed' => true,
+					// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Base64 encoding needed for compressed data storage.
 					'data'       => base64_encode( gzcompress( $serialized, 6 ) ),
 				);
 			}
@@ -570,12 +579,14 @@ class WP_Plugin_Filters_Cache_Manager {
 	/**
 	 * Decompress data if it was compressed
 	 *
-	 * @param mixed $data Data to potentially decompress
-	 * @return mixed Decompressed data
+	 * @param mixed $data Data to potentially decompress.
+	 * @return mixed Decompressed data.
 	 */
 	private function maybe_decompress_data( $data ) {
 		if ( is_array( $data ) && isset( $data['compressed'] ) && $data['compressed'] && function_exists( 'gzuncompress' ) ) {
+			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- Base64 decoding needed for compressed data retrieval.
 			$decompressed = gzuncompress( base64_decode( $data['data'] ) );
+			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize -- Unserialization needed for data decompression.
 			return unserialize( $decompressed );
 		}
 		return $data;
@@ -584,8 +595,8 @@ class WP_Plugin_Filters_Cache_Manager {
 	/**
 	 * Update cache configuration
 	 *
-	 * @param array $new_config New cache configuration
-	 * @return bool Success status
+	 * @param array $new_config New cache configuration.
+	 * @return bool Success status.
 	 */
 	public function update_cache_config( $new_config ) {
 		$this->cache_config = array_merge( $this->cache_config, $new_config );

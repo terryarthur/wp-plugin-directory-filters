@@ -20,22 +20,22 @@ class WP_Plugin_Filters_Deactivator {
 	 * This method is called when the plugin is deactivated
 	 */
 	public static function deactivate() {
-		// Clear scheduled cron events
+		// Clear scheduled cron events.
 		self::clear_cron_events();
 
-		// Clear transients and temporary data
+		// Clear transients and temporary data.
 		self::clear_temporary_data();
 
-		// Log deactivation
+		// Log deactivation.
 		self::log_deactivation();
 
-		// Set deactivation flag
+		// Set deactivation flag.
 		set_transient( 'wp_plugin_filters_deactivated', true, 60 );
 
-		// Clear object cache if available
+		// Clear object cache if available.
 		self::clear_object_cache();
 
-		// Preserve user settings for potential reactivation
+		// Preserve user settings for potential reactivation.
 		self::preserve_user_settings();
 	}
 
@@ -43,16 +43,16 @@ class WP_Plugin_Filters_Deactivator {
 	 * Clear WordPress cron events
 	 */
 	private static function clear_cron_events() {
-		// Clear daily cache cleanup
+		// Clear daily cache cleanup.
 		wp_clear_scheduled_hook( 'wp_plugin_filters_cleanup' );
 
-		// Clear hourly cache warming
+		// Clear hourly cache warming.
 		wp_clear_scheduled_hook( 'wp_plugin_filters_warm_cache' );
 
-		// Clear weekly statistics collection
+		// Clear weekly statistics collection.
 		wp_clear_scheduled_hook( 'wp_plugin_filters_collect_stats' );
 
-		// Clear any other plugin-specific cron events
+		// Clear any other plugin-specific cron events.
 		$cron_hooks = array(
 			'wp_plugin_filters_maintenance',
 			'wp_plugin_filters_api_health_check',
@@ -70,21 +70,21 @@ class WP_Plugin_Filters_Deactivator {
 	private static function clear_temporary_data() {
 		global $wpdb;
 
-		// Clear all plugin-related transients using WordPress API
+		// Clear all plugin-related transients using WordPress API.
 		$cache_keys = wp_cache_get( 'wp_plugin_filters_cache_keys', 'wp_plugin_filters' );
 		if ( ! $cache_keys ) {
 			$cache_keys = array();
 		}
-		
-		// Delete transients using WordPress API instead of direct query
+
+		// Delete transients using WordPress API instead of direct query.
 		foreach ( $cache_keys as $key ) {
 			delete_transient( $key );
 		}
-		
-		// Clear the cache key registry
+
+		// Clear the cache key registry.
 		wp_cache_delete( 'wp_plugin_filters_cache_keys', 'wp_plugin_filters' );
 
-		// Clear specific temporary options
+		// Clear specific temporary options.
 		$temp_options = array(
 			'wp_plugin_filters_activated',
 			'wp_plugin_filters_activation_notice',
@@ -123,7 +123,7 @@ class WP_Plugin_Filters_Deactivator {
 	private static function preserve_user_settings() {
 		$settings = get_option( 'wp_plugin_filters_settings' );
 		if ( $settings ) {
-			// Add deactivation timestamp to settings
+			// Add deactivation timestamp to settings.
 			$settings['deactivated_at']    = current_time( 'mysql' );
 			$settings['preserve_settings'] = true;
 			update_option( 'wp_plugin_filters_settings', $settings );
@@ -161,16 +161,16 @@ class WP_Plugin_Filters_Deactivator {
 	private static function get_final_cache_stats() {
 		global $wpdb;
 
-		// Get cached statistics or calculate if not cached
+		// Get cached statistics or calculate if not cached.
 		$stats = wp_cache_get( 'wp_plugin_filters_deactivation_stats', 'wp_plugin_filters' );
 		if ( false === $stats ) {
 			$stats = array(
 				array(
 					'total_transients' => 0,
-					'total_size' => 0
-				)
+					'total_size'       => 0,
+				),
 			);
-			// Cache for 1 minute during deactivation
+			// Cache for 1 minute during deactivation.
 			wp_cache_set( 'wp_plugin_filters_deactivation_stats', $stats, 'wp_plugin_filters', 60 );
 		}
 
@@ -199,11 +199,16 @@ class WP_Plugin_Filters_Deactivator {
 
 		global $wpdb;
 
-		// Get all blog IDs using WordPress multisite functions
+		// Get all blog IDs using WordPress multisite functions.
 		$blog_ids = wp_cache_get( 'multisite_blog_ids', 'wp_plugin_filters' );
 		if ( false === $blog_ids ) {
-			$blog_ids = get_sites( array( 'fields' => 'ids', 'number' => 0 ) );
-			wp_cache_set( 'multisite_blog_ids', $blog_ids, 'wp_plugin_filters', 300 ); // 5 minutes
+			$blog_ids = get_sites(
+				array(
+					'fields' => 'ids',
+					'number' => 0,
+				)
+			);
+			wp_cache_set( 'multisite_blog_ids', $blog_ids, 'wp_plugin_filters', 300 ); // 5 minutes.
 		}
 
 		foreach ( $blog_ids as $blog_id ) {
@@ -216,7 +221,7 @@ class WP_Plugin_Filters_Deactivator {
 	/**
 	 * Clean up cache directories (optional)
 	 *
-	 * @param bool $remove_directories Whether to remove cache directories
+	 * @param bool $remove_directories Whether to remove cache directories.
 	 */
 	public static function cleanup_cache_directories( $remove_directories = false ) {
 		$upload_dir = wp_upload_dir();
@@ -224,7 +229,7 @@ class WP_Plugin_Filters_Deactivator {
 
 		if ( file_exists( $cache_dir ) ) {
 			if ( $remove_directories ) {
-				// Remove cache files
+				// Remove cache files.
 				$files = glob( $cache_dir . '/*' );
 				foreach ( $files as $file ) {
 					if ( is_file( $file ) ) {
@@ -232,8 +237,8 @@ class WP_Plugin_Filters_Deactivator {
 					}
 				}
 
-				// Remove directory if empty
-				if ( count( glob( $cache_dir . '/*' ) ) === 0 ) {
+				// Remove directory if empty.
+				if ( 0 === count( glob( $cache_dir . '/*' ) ) ) {
 					require_once ABSPATH . 'wp-admin/includes/file.php';
 					$wp_filesystem = WP_Filesystem();
 					if ( $wp_filesystem && $wp_filesystem->is_dir( $cache_dir ) && $wp_filesystem->is_empty( $cache_dir ) ) {
@@ -241,7 +246,7 @@ class WP_Plugin_Filters_Deactivator {
 					}
 				}
 			} else {
-				// Just clear cache files, keep directory structure
+				// Just clear cache files, keep directory structure.
 				$cache_files = glob( $cache_dir . '/*.cache' );
 				foreach ( $cache_files as $file ) {
 					wp_delete_file( $file );
@@ -275,7 +280,7 @@ class WP_Plugin_Filters_Deactivator {
 			'dismissible' => true,
 		);
 
-		set_transient( 'wp_plugin_filters_deactivation_notice', $notice, 300 ); // 5 minutes
+		set_transient( 'wp_plugin_filters_deactivation_notice', $notice, 300 ); // 5 minutes.
 	}
 
 	/**
@@ -284,12 +289,12 @@ class WP_Plugin_Filters_Deactivator {
 	 * @return bool Deactivation successful
 	 */
 	public static function verify_deactivation() {
-		// Check if cron events were cleared
+		// Check if cron events were cleared.
 		if ( wp_next_scheduled( 'wp_plugin_filters_cleanup' ) ) {
 			return false;
 		}
 
-		// Check if temporary data was cleared
+		// Check if temporary data was cleared.
 		if ( get_transient( 'wp_plugin_filters_activated' ) ) {
 			return false;
 		}
@@ -311,7 +316,7 @@ class WP_Plugin_Filters_Deactivator {
 			'deactivation_time'   => current_time( 'mysql' ),
 		);
 
-		// Count cleared cron events
+		// Count cleared cron events.
 		$cron_hooks = array(
 			'wp_plugin_filters_cleanup',
 			'wp_plugin_filters_warm_cache',
@@ -324,23 +329,23 @@ class WP_Plugin_Filters_Deactivator {
 			}
 		}
 
-		// Check if settings are preserved
+		// Check if settings are preserved.
 		$settings = get_option( 'wp_plugin_filters_settings' );
 		if ( $settings && ! empty( $settings['preserve_settings'] ) ) {
 			$summary['settings_preserved'] = true;
 		}
 
-		// Check if cache was cleared
+		// Check if cache was cleared.
 		global $wpdb;
-		// Check transient count using cached data
+		// Check transient count using cached data.
 		$transient_count = wp_cache_get( 'wp_plugin_filters_transient_count', 'wp_plugin_filters' );
 		if ( false === $transient_count ) {
-			$transient_count = 0; // Assume clean state after proper cleanup
+			$transient_count = 0; // Assume clean state after proper cleanup.
 			wp_cache_set( 'wp_plugin_filters_transient_count', $transient_count, 'wp_plugin_filters', 60 );
 		}
 
 		$summary['transients_cleared'] = intval( $transient_count );
-		$summary['cache_cleared']      = $transient_count == 0;
+		$summary['cache_cleared']      = 0 === $transient_count;
 
 		return $summary;
 	}
@@ -352,20 +357,20 @@ class WP_Plugin_Filters_Deactivator {
 		try {
 			self::deactivate();
 
-			// Verify deactivation
+			// Verify deactivation.
 			if ( ! self::verify_deactivation() ) {
-				// Attempt cleanup again
+				// Attempt cleanup again.
 				self::clear_cron_events();
 				self::clear_temporary_data();
 			}
 		} catch ( Exception $e ) {
-			// Log error but continue deactivation
+			// Log error but continue deactivation.
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 				error_log( '[WP Plugin Filters] Deactivation error: ' . $e->getMessage() );
 			}
 
-			// Force cleanup
+			// Force cleanup.
 			self::force_cleanup();
 		}
 	}
@@ -376,22 +381,22 @@ class WP_Plugin_Filters_Deactivator {
 	private static function force_cleanup() {
 		global $wpdb;
 
-		// Force clear using WordPress API
+		// Force clear using WordPress API.
 		$options_to_delete = array(
 			'wp_plugin_filters_activated',
 			'wp_plugin_filters_activation_notice',
 			'wp_plugin_filters_cache_stats',
-			'wp_plugin_filters_last_cleanup'
+			'wp_plugin_filters_last_cleanup',
 		);
-		
+
 		foreach ( $options_to_delete as $option ) {
 			delete_option( $option );
 		}
-		
-		// Clear all plugin caches
+
+		// Clear all plugin caches.
 		wp_cache_flush_group( 'wp_plugin_filters' );
 
-		// Clear object cache
+		// Clear object cache.
 		if ( wp_using_ext_object_cache() ) {
 			wp_cache_flush();
 		}
@@ -401,7 +406,7 @@ class WP_Plugin_Filters_Deactivator {
 	 * Prepare for uninstall (called before uninstall)
 	 */
 	public static function prepare_uninstall() {
-		// Mark settings for removal
+		// Mark settings for removal.
 		$settings = get_option( 'wp_plugin_filters_settings' );
 		if ( $settings ) {
 			$settings['marked_for_uninstall']  = true;
@@ -409,7 +414,7 @@ class WP_Plugin_Filters_Deactivator {
 			update_option( 'wp_plugin_filters_settings', $settings );
 		}
 
-		// Final cleanup
+		// Final cleanup.
 		self::clear_cron_events();
 		self::clear_temporary_data();
 		self::clear_object_cache();

@@ -44,27 +44,27 @@ class WP_Plugin_Filters_API_Handler {
 	 * @return array|WP_Error Search results or error
 	 */
 	public function search_plugins( $search_term = '', $page = 1, $per_page = 24, $filters = array() ) {
-		// Check rate limiting
+		// Check rate limiting.
 		$rate_limit_check = $this->check_rate_limit();
 		if ( is_wp_error( $rate_limit_check ) ) {
 			return $rate_limit_check;
 		}
 
-		// Generate cache key
+		// Generate cache key.
 		$cache_key = $this->generate_search_cache_key( $search_term, $page, $per_page, $filters );
 
-		// Check cache first - temporarily disable to force fresh API requests for testing
-		// TODO: Re-enable caching after icon issue is resolved
-		$cached_result = false; // get_transient($cache_key);
-		if ( $cached_result !== false ) {
+		// Check cache first - temporarily disable to force fresh API requests for testing.
+		// TODO: Re-enable caching after icon issue is resolved.
+		$cached_result = false; // get_transient( $cache_key ) - temporarily disabled.
+		if ( false !== $cached_result ) {
 			return $cached_result;
 		}
 
-		// Prepare API request
+		// Prepare API request.
 		$request_args = array(
 			'search'   => sanitize_text_field( $search_term ),
 			'page'     => absint( $page ),
-			'per_page' => min( 48, absint( $per_page ) ), // Limit to 48 for performance
+			'per_page' => min( 48, absint( $per_page ) ), // Limit to 48 for performance.
 			'fields'   => array(
 				'short_description'        => true,
 				'description'              => false,
@@ -86,7 +86,7 @@ class WP_Plugin_Filters_API_Handler {
 			),
 		);
 
-		// Apply additional filters
+		// Apply additional filters.
 		if ( ! empty( $filters['tag'] ) ) {
 			$request_args['tag'] = sanitize_key( $filters['tag'] );
 		}
@@ -95,26 +95,26 @@ class WP_Plugin_Filters_API_Handler {
 			$request_args['author'] = sanitize_user( $filters['author'] );
 		}
 
-		// Debug: Log the request args
+		// Debug: Log the request args.
 		if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			error_log( '[WP Plugin Filters] API Request Args: ' . wp_json_encode( $request_args ) );
 		}
 
-		// Icons ARE supported in query_plugins - the Chrome extension proves this works
-		// Keep icons in the request
+		// Icons ARE supported in query_plugins - the Chrome extension proves this works.
+		// Keep icons in the request.
 
-		// Make API request
+		// Make API request.
 		$response = $this->make_api_request( 'query_plugins', $request_args );
 
 		if ( is_wp_error( $response ) ) {
 			return $response;
 		}
 
-		// Process and sanitize response
+		// Process and sanitize response.
 		$processed_response = $this->process_search_response( $response );
 
-		// Debug: Log first plugin to see if icons are included after processing
+		// Debug: Log first plugin to see if icons are included after processing.
 		if ( isset( $processed_response['plugins'] ) && count( $processed_response['plugins'] ) > 0 ) {
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
@@ -122,7 +122,7 @@ class WP_Plugin_Filters_API_Handler {
 			}
 		}
 
-		// Cache the result (1 hour TTL)
+		// Cache the result (1 hour TTL).
 		set_transient( $cache_key, $processed_response, 3600 );
 
 		return $processed_response;
@@ -131,11 +131,11 @@ class WP_Plugin_Filters_API_Handler {
 	/**
 	 * Get plugin details via WordPress.org API
 	 *
-	 * @param string $slug Plugin slug
+	 * @param string $slug Plugin slug.
 	 * @return array|WP_Error Plugin details or error
 	 */
 	public function get_plugin_details( $slug ) {
-		// Check rate limiting
+		// Check rate limiting.
 		$rate_limit_check = $this->check_rate_limit();
 		if ( is_wp_error( $rate_limit_check ) ) {
 			return $rate_limit_check;
@@ -144,14 +144,14 @@ class WP_Plugin_Filters_API_Handler {
 		$slug      = sanitize_key( $slug );
 		$cache_key = 'wp_plugin_details_' . $slug;
 
-		// Check cache first (24 hour TTL) - temporarily disable to force fresh API requests
-		// TODO: Re-enable caching after icon issue is resolved
-		$cached_result = false; // get_transient($cache_key);
-		if ( $cached_result !== false ) {
+		// Check cache first (24 hour TTL) - temporarily disable to force fresh API requests.
+		// TODO: Re-enable caching after icon issue is resolved.
+		$cached_result = false; // get_transient( $cache_key ) - temporarily disabled.
+		if ( false !== $cached_result ) {
 			return $cached_result;
 		}
 
-		// Prepare API request
+		// Prepare API request.
 		$request_args = array(
 			'slug'   => $slug,
 			'fields' => array(
@@ -178,17 +178,17 @@ class WP_Plugin_Filters_API_Handler {
 			),
 		);
 
-		// Make API request
+		// Make API request.
 		$response = $this->make_api_request( 'plugin_information', $request_args );
 
 		if ( is_wp_error( $response ) ) {
 			return $response;
 		}
 
-		// Process and sanitize response
+		// Process and sanitize response.
 		$processed_response = $this->process_plugin_details_response( $response );
 
-		// Cache the result (6 hours TTL)
+		// Cache the result (6 hours TTL).
 		set_transient( $cache_key, $processed_response, 21600 );
 
 		return $processed_response;
@@ -197,12 +197,12 @@ class WP_Plugin_Filters_API_Handler {
 	/**
 	 * Make WordPress.org API request
 	 *
-	 * @param string $action      API action
-	 * @param array  $request_args Request arguments
+	 * @param string $action      API action.
+	 * @param array  $request_args Request arguments.
 	 * @return array|WP_Error API response or error
 	 */
 	private function make_api_request( $action, $request_args ) {
-		// WordPress.org API uses GET with query parameters, not POST
+		// WordPress.org API uses GET with query parameters, not POST.
 		$query_args = array(
 			'action'  => $action,
 			'request' => wp_json_encode( $request_args ),
@@ -230,7 +230,7 @@ class WP_Plugin_Filters_API_Handler {
 		}
 
 		$response_code = wp_remote_retrieve_response_code( $response );
-		if ( $response_code !== 200 ) {
+		if ( 200 !== $response_code ) {
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 				error_log( '[WP Plugin Filters] API Request HTTP Error: ' . $response_code );
@@ -256,7 +256,7 @@ class WP_Plugin_Filters_API_Handler {
 	/**
 	 * Process search response
 	 *
-	 * @param array $response Raw API response
+	 * @param array $response Raw API response.
 	 * @return array Processed response
 	 */
 	private function process_search_response( $response ) {
@@ -290,7 +290,7 @@ class WP_Plugin_Filters_API_Handler {
 	/**
 	 * Process plugin details response
 	 *
-	 * @param array $response Raw API response
+	 * @param array $response Raw API response.
 	 * @return array Processed response
 	 */
 	private function process_plugin_details_response( $response ) {
@@ -300,7 +300,7 @@ class WP_Plugin_Filters_API_Handler {
 	/**
 	 * Sanitize plugin data
 	 *
-	 * @param array $plugin Raw plugin data
+	 * @param array $plugin Raw plugin data.
 	 * @return array Sanitized plugin data
 	 */
 	private function sanitize_plugin_data( $plugin ) {
@@ -310,7 +310,7 @@ class WP_Plugin_Filters_API_Handler {
 			'version'                  => sanitize_text_field( $plugin['version'] ?? '' ),
 			'author'                   => sanitize_text_field( wp_strip_all_tags( $plugin['author'] ?? '' ) ),
 			'author_profile'           => esc_url_raw( $plugin['author_profile'] ?? '' ),
-			'rating'                   => floatval( $plugin['rating'] ?? 0 ) / 20, // Convert 0-100 to 0-5 scale
+			'rating'                   => floatval( $plugin['rating'] ?? 0 ) / 20, // Convert 0-100 to 0-5 scale.
 			'num_ratings'              => absint( $plugin['num_ratings'] ?? 0 ),
 			'active_installs'          => absint( $plugin['active_installs'] ?? 0 ),
 			'last_updated'             => sanitize_text_field( $plugin['last_updated'] ?? '' ),
@@ -340,7 +340,7 @@ class WP_Plugin_Filters_API_Handler {
 		$rate_key = 'wp_plugin_api_rate_' . $user_id;
 
 		$current_count = get_transient( $rate_key );
-		if ( $current_count === false ) {
+		if ( false === $current_count ) {
 			$current_count = 0;
 		}
 
@@ -348,7 +348,7 @@ class WP_Plugin_Filters_API_Handler {
 			return new WP_Error( 'rate_limit_exceeded', __( 'API rate limit exceeded. Please try again in a minute.', 'wppd-filters' ) );
 		}
 
-		// Increment counter
+		// Increment counter.
 		set_transient( $rate_key, $current_count + 1, 60 );
 
 		return true;
@@ -357,10 +357,10 @@ class WP_Plugin_Filters_API_Handler {
 	/**
 	 * Generate cache key for search
 	 *
-	 * @param string $search_term Search term
-	 * @param int    $page        Page number
-	 * @param int    $per_page    Results per page
-	 * @param array  $filters     Additional filters
+	 * @param string $search_term Search term.
+	 * @param int    $page        Page number.
+	 * @param int    $per_page    Results per page.
+	 * @param array  $filters     Additional filters.
 	 * @return string Cache key
 	 */
 	private function generate_search_cache_key( $search_term, $page, $per_page, $filters ) {
@@ -371,7 +371,7 @@ class WP_Plugin_Filters_API_Handler {
 			'filters'  => $filters,
 		);
 
-		return 'wp_plugin_search_' . md5( serialize( $cache_data ) );
+		return 'wp_plugin_search_' . md5( wp_json_encode( $cache_data ) );
 	}
 
 	/**
@@ -402,13 +402,13 @@ class WP_Plugin_Filters_API_Handler {
 	/**
 	 * Clear API cache
 	 *
-	 * @param string $cache_type Type of cache to clear ('all', 'search', 'details')
+	 * @param string $cache_type Type of cache to clear ('all', 'search', 'details').
 	 * @return int Number of cache entries cleared
 	 */
 	public function clear_api_cache( $cache_type = 'all' ) {
 		$deleted_count = 0;
 
-		// Define known transient keys that we use
+		// Define known transient keys that we use.
 		$transient_keys = array();
 
 		switch ( $cache_type ) {
@@ -427,19 +427,19 @@ class WP_Plugin_Filters_API_Handler {
 				break;
 		}
 
-		// Delete transients using WordPress functions
+		// Delete transients using WordPress functions.
 		foreach ( $transient_keys as $transient_key ) {
 			if ( delete_transient( $transient_key ) ) {
 				$deleted_count++;
 			}
 		}
 
-		// Clear object cache for these keys
+		// Clear object cache for these keys.
 		foreach ( $transient_keys as $transient_key ) {
 			wp_cache_delete( $transient_key, 'wppd-filters' );
 		}
 
-		// Clear any remaining object cache
+		// Clear any remaining object cache.
 		if ( wp_using_ext_object_cache() ) {
 			wp_cache_flush_group( 'wppd-filters' );
 		}
@@ -453,8 +453,8 @@ class WP_Plugin_Filters_API_Handler {
 	 * @return array List of search transient keys
 	 */
 	private function get_search_transient_keys() {
-		// Return commonly used search transient keys
-		// In practice, these would be tracked when created
+		// Return commonly used search transient keys.
+		// In practice, these would be tracked when created.
 		return array(
 			'wp_plugin_search_default',
 			'wp_plugin_search_popular',
@@ -468,8 +468,8 @@ class WP_Plugin_Filters_API_Handler {
 	 * @return array List of details transient keys
 	 */
 	private function get_details_transient_keys() {
-		// Return commonly used details transient keys
-		// In practice, these would be tracked when created
+		// Return commonly used details transient keys.
+		// In practice, these would be tracked when created.
 		return array(
 			'wp_plugin_details_popular',
 			'wp_plugin_details_metadata',
