@@ -470,18 +470,6 @@
             
             clearTimeout(this.debounceTimers.search);
             this.debounceTimers.search = setTimeout(function() {
-                // Get current search term
-                var searchTerm = '';
-                if (self.$elements.searchInput && self.$elements.searchInput.length > 0) {
-                    searchTerm = self.$elements.searchInput.val() || '';
-                }
-                
-                // If there's a search term, clear the filter dropdowns first
-                if (searchTerm && searchTerm.trim() !== '') {
-                    console.log('[WP Plugin Filters] Search term detected, clearing filters first');
-                    self.clearFilterFormValues();
-                }
-                
                 self.applyFilters();
             }, this.config.debounceDelay);
         },
@@ -514,11 +502,14 @@
             // Use working extension approach - direct API call
             this.fetchPluginDataFromAPI(filterData.search_term)
                 .then(function(response) {
-                    if (hasActiveFilters) {
-                        // Apply custom filtered layout
+                    if (filterData.search_term && filterData.search_term.trim() !== '') {
+                        // When there's a search term, ALWAYS use clean native layout to avoid styling conflicts
+                        this.handleDirectAPISuccessClean(response);
+                    } else if (hasActiveFilters) {
+                        // Only use filtered layout when there's no search term but filters are applied
                         this.handleDirectAPISuccess(response);
                     } else {
-                        // Apply clean native layout for pure search
+                        // No search and no filters - use clean layout 
                         this.handleDirectAPISuccessClean(response);
                     }
                 }.bind(this))
