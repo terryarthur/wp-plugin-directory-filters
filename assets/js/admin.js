@@ -469,23 +469,6 @@
             
             clearTimeout(this.debounceTimers.search);
             this.debounceTimers.search = setTimeout(function() {
-                // Get current search term
-                var searchTerm = '';
-                if (self.$elements.searchInput && self.$elements.searchInput.length > 0) {
-                    searchTerm = self.$elements.searchInput.val() || '';
-                }
-                
-                // If there's a search term, reset filters and remove enhanced CSS classes
-                if (searchTerm && searchTerm.trim() !== '') {
-                    console.log('[WP Plugin Filters] Search term detected - resetting filters and CSS classes');
-                    
-                    // Remove enhanced CSS classes to ensure clean native styling for search results
-                    $('body').removeClass('wp-filter-active wp-filter-results-active');
-                    
-                    // Reset filter dropdowns to defaults so UI matches functionality
-                    self.clearFilterFormValues();
-                }
-                
                 self.applyFilters();
             }, this.config.debounceDelay);
         },
