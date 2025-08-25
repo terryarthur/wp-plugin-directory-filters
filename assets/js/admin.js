@@ -475,9 +475,9 @@
                     searchTerm = self.$elements.searchInput.val() || '';
                 }
                 
-                // If there's a search term AND enhanced styling was previously active, reset everything
-                if (searchTerm && searchTerm.trim() !== '' && $('body').hasClass('wp-filter-active')) {
-                    console.log('[WP Plugin Filters] Search term entered after filters were applied - resetting to clean search');
+                // If there's a search term, reset filters and remove enhanced CSS classes
+                if (searchTerm && searchTerm.trim() !== '') {
+                    console.log('[WP Plugin Filters] Search term detected - resetting filters and CSS classes');
                     
                     // Remove enhanced CSS classes to ensure clean native styling for search results
                     $('body').removeClass('wp-filter-active wp-filter-results-active');
