@@ -77,6 +77,37 @@
         },
 
         /**
+         * Refresh cached DOM elements - critical for maintaining functionality after DOM changes
+         */
+        refreshElementCache: function() {
+            console.log('[WP Plugin Filters] Refreshing element cache...');
+            
+            // Re-cache basic elements that might have changed
+            this.$elements.searchInput = $('#plugin-search-input, .wp-filter-search input[type="search"], input[name="s"]').first();
+            this.$elements.resultsContainer = $('.plugin-browser .plugin-list-table-body, .plugin-browser .wp-list-table tbody, #the-list');
+            this.$elements.pluginCards = $('.plugin-browser .plugin-card');
+            this.$elements.paginationLinks = $('.tablenav-pages');
+            
+            // Re-cache filter control elements (these should still exist)
+            this.$elements.filterControls = $('.wp-plugin-filters-controls');
+            this.$elements.installationRange = $('#wp-plugin-filter-installations');
+            this.$elements.updateTimeframe = $('#wp-plugin-filter-updates');
+            this.$elements.usabilityRating = $('#wp-plugin-filter-usability');
+            this.$elements.healthScore = $('#wp-plugin-filter-health');
+            this.$elements.rating = $('#wp-plugin-filter-rating');
+            this.$elements.sortBy = $('#wp-plugin-filter-sort');
+            this.$elements.sortDirection = $('#wp-plugin-filter-direction');
+            this.$elements.clearFilters = $('#wp-plugin-clear-filters');
+            
+            console.log('[WP Plugin Filters] Element cache refreshed:', {
+                filterControls: this.$elements.filterControls.length,
+                installationRange: this.$elements.installationRange.length,
+                searchInput: this.$elements.searchInput.length,
+                resultsContainer: this.$elements.resultsContainer.length
+            });
+        },
+
+        /**
          * Simple detection of modal/popup contexts - KEEP IT SIMPLE
          */
         isModalContext: function() {
@@ -190,7 +221,9 @@
             
             // Prevent double injection
             if ($('.wp-plugin-filters-controls').length > 0) {
-                console.log('[WP Plugin Filters] Filter controls already exist, skipping injection');
+                console.log('[WP Plugin Filters] Filter controls already exist, updating cache and skipping injection');
+                // Update cache to ensure we have fresh references
+                this.refreshElementCache();
                 return;
             }
             
@@ -408,6 +441,15 @@
         applyFilters: function() {
             if (this.state.isLoading) {
                 return;
+            }
+            
+            // Ensure elements are fresh before applying filters
+            this.refreshElementCache();
+            
+            // Defensive check - if filter controls are missing, re-inject them
+            if (this.$elements.filterControls.length === 0) {
+                console.warn('[WP Plugin Filters] Filter controls missing, re-injecting...');
+                this.injectFilterControls();
             }
             
             var filterData = this.getCurrentFilterData();
@@ -628,18 +670,24 @@
          * Get current filter data from form
          */
         getCurrentFilterData: function() {
-            var searchTerm = this.$elements.searchInput.val() || '';
+            // Defensive checks - ensure elements exist before accessing their values
+            var searchTerm = '';
+            if (this.$elements.searchInput && this.$elements.searchInput.length > 0) {
+                searchTerm = this.$elements.searchInput.val() || '';
+            }
+            
             console.log('[WP Plugin Filters] Search term captured:', searchTerm);
-            console.log('[WP Plugin Filters] Search input element:', this.$elements.searchInput.length, this.$elements.searchInput.attr('id'));
+            console.log('[WP Plugin Filters] Search input element:', this.$elements.searchInput ? this.$elements.searchInput.length : 0);
+            
             return {
                 search_term: searchTerm,
-                installation_range: this.$elements.installationRange.val() || 'all',
-                update_timeframe: this.$elements.updateTimeframe.val() || 'all',
-                usability_rating: parseFloat(this.$elements.usabilityRating.val()) || 0,
-                health_score: parseInt(this.$elements.healthScore.val()) || 0,
-                rating: parseFloat(this.$elements.rating.val()) || 0,
-                sort_by: this.$elements.sortBy.val() || '',
-                sort_direction: this.$elements.sortDirection.val() || 'desc',
+                installation_range: (this.$elements.installationRange && this.$elements.installationRange.length) ? this.$elements.installationRange.val() || 'all' : 'all',
+                update_timeframe: (this.$elements.updateTimeframe && this.$elements.updateTimeframe.length) ? this.$elements.updateTimeframe.val() || 'all' : 'all',
+                usability_rating: (this.$elements.usabilityRating && this.$elements.usabilityRating.length) ? parseFloat(this.$elements.usabilityRating.val()) || 0 : 0,
+                health_score: (this.$elements.healthScore && this.$elements.healthScore.length) ? parseInt(this.$elements.healthScore.val()) || 0 : 0,
+                rating: (this.$elements.rating && this.$elements.rating.length) ? parseFloat(this.$elements.rating.val()) || 0 : 0,
+                sort_by: (this.$elements.sortBy && this.$elements.sortBy.length) ? this.$elements.sortBy.val() || '' : '',
+                sort_direction: (this.$elements.sortDirection && this.$elements.sortDirection.length) ? this.$elements.sortDirection.val() || 'desc' : 'desc',
                 page: 1, // Reset to first page when filters change
                 per_page: 24 // WordPress default
             };
@@ -899,7 +947,13 @@
                                          style="width: 64px; height: 64px; border-radius: 4px; object-fit: cover;"
                                          onerror="this.style.display='none'">
                                 </div>
-                                <h3 class="entry-title" style="margin: 0; flex: 1;"><a href="https://wordpress.org/plugins/${plugin.slug}/">${this.escapeHtml(plugin.name)}</a></h3>
+                                <div style="flex: 1; display: flex; flex-direction: column;">
+                                    <h3 class="entry-title" style="margin: 0 0 8px 0;"><a href="${this.getPluginDetailsUrl(plugin.slug)}" class="thickbox open-plugin-details-modal" aria-label="${this.escapeHtml(plugin.name)} plugin information">${this.escapeHtml(plugin.name)}</a></h3>
+                                    <div class="plugin-card-top-actions" style="display: flex; gap: 8px;">
+                                        <a class="install-now button button-primary" data-slug="${plugin.slug}" href="${this.getInstallUrl(plugin.slug)}" aria-label="Install ${this.escapeHtml(plugin.name)} now">Install Now</a>
+                                        <a href="${this.getPluginDetailsUrl(plugin.slug)}" class="thickbox open-plugin-details-modal button" aria-label="More information about ${this.escapeHtml(plugin.name)}">More Details</a>
+                                    </div>
+                                </div>
                             </header>
 
                             <div class="plugin-rating">
@@ -1446,17 +1500,33 @@
          * Clear all filters and revert to native WordPress layout
          */
         clearAllFilters: function() {
-            // Reset all filter form values
-            this.$elements.installationRange.val('all');
-            this.$elements.updateTimeframe.val('all');
-            this.$elements.usabilityRating.val('0');
-            this.$elements.healthScore.val('0');
-            this.$elements.rating.val('0');
-            this.$elements.sortBy.val('');
-            this.$elements.sortDirection.val('desc');
+            // Reset all filter form values with defensive checks
+            if (this.$elements.installationRange && this.$elements.installationRange.length) {
+                this.$elements.installationRange.val('all');
+            }
+            if (this.$elements.updateTimeframe && this.$elements.updateTimeframe.length) {
+                this.$elements.updateTimeframe.val('all');
+            }
+            if (this.$elements.usabilityRating && this.$elements.usabilityRating.length) {
+                this.$elements.usabilityRating.val('0');
+            }
+            if (this.$elements.healthScore && this.$elements.healthScore.length) {
+                this.$elements.healthScore.val('0');
+            }
+            if (this.$elements.rating && this.$elements.rating.length) {
+                this.$elements.rating.val('0');
+            }
+            if (this.$elements.sortBy && this.$elements.sortBy.length) {
+                this.$elements.sortBy.val('');
+            }
+            if (this.$elements.sortDirection && this.$elements.sortDirection.length) {
+                this.$elements.sortDirection.val('desc');
+            }
             
             // Clear search input to fully reset
-            this.$elements.searchInput.val('');
+            if (this.$elements.searchInput && this.$elements.searchInput.length) {
+                this.$elements.searchInput.val('');
+            }
             
             // Remove ALL filter-related classes to restore native WordPress layout
             $('body').removeClass('wp-filter-active wp-filter-results-active wp-plugin-filters-loading');
@@ -1465,6 +1535,11 @@
             $('.plugin-card').removeClass('wp-plugin-enhanced');
             
             console.log('[WP Plugin Filters] Cleared all filters - restoring native layout');
+            
+            // Reset state
+            this.state.currentFilters = {};
+            this.state.isLoading = false;
+            this.state.retryCount = 0;
             
             // Restore original WordPress plugin content if we have it saved
             if (this.state.originalContent) {
@@ -1484,6 +1559,10 @@
                 console.log('[WP Plugin Filters] No saved original content - using fallback');
                 this.fallbackToBrowseAll();
             }
+            
+            // CRITICAL: Re-cache elements after DOM changes
+            // The filter controls should still be in the DOM, but other elements may have changed
+            this.refreshElementCache();
         },
 
         /**

@@ -59,7 +59,7 @@
     margin-left: auto;
     padding: 6px 12px;
     background: #2271b1;
-    border-radius: 6px;
+    border-radius: 3px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     font-size: 11px;
     font-weight: 500;
@@ -1584,4 +1584,64 @@ body.wp-filter-results-active .wp-compat-unknown,
 /* Hover effects for compatibility status */
 .tested-with:hover {
     opacity: 0.8;
+}
+
+/* =====================================================
+   Plugin Card Top Actions (Install buttons in header)
+   ===================================================== */
+
+.plugin-card-top-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.plugin-card-top-actions .button {
+    font-size: 12px !important;
+    padding: 4px 12px !important;
+    line-height: 1.4 !important;
+    height: auto !important;
+    min-height: 28px;
+    border-radius: 3px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+}
+
+.plugin-card-top-actions .button-primary {
+    background: #2271b1 !important;
+    border-color: #2271b1 !important;
+    color: #fff !important;
+    font-weight: 600;
+}
+
+.plugin-card-top-actions .button-primary:hover,
+.plugin-card-top-actions .button-primary:focus {
+    background: #135e96 !important;
+    border-color: #135e96 !important;
+    color: #fff !important;
+}
+
+.plugin-card-top-actions .button:not(.button-primary) {
+    background: #f6f7f7 !important;
+    border-color: #dcdcde !important;
+    color: #50575e !important;
+}
+
+.plugin-card-top-actions .button:not(.button-primary):hover,
+.plugin-card-top-actions .button:not(.button-primary):focus {
+    background: #f0f0f1 !important;
+    border-color: #8c8f94 !important;
+    color: #1d2327 !important;
+}
+
+/* Responsive adjustments for top actions */
+@media screen and (max-width: 782px) {
+    .plugin-card-top-actions .button {
+        font-size: 14px !important;
+        padding: 6px 14px !important;
+        min-height: 32px;
+    }
 }
