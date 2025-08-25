@@ -51,7 +51,6 @@
             this.injectFilterControls();
             this.bindEvents();
             this.saveOriginalPlugins();
-            this.enhanceNativePluginCards();
             this.monitorForModals();
             // loadStateFromURL disabled to avoid auto-applying filters on load
             
