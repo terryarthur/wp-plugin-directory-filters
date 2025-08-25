@@ -508,15 +508,17 @@
             // Use working extension approach - direct API call
             this.fetchPluginDataFromAPI(filterData.search_term)
                 .then(function(response) {
-                    if (filterData.search_term && filterData.search_term.trim() !== '') {
-                        // When there's a search term, ALWAYS use clean native layout to avoid styling conflicts
-                        this.handleDirectAPISuccessClean(response);
-                    } else if (hasActiveFilters) {
-                        // Only use filtered layout when there's no search term but filters are applied
-                        this.handleDirectAPISuccess(response);
+                    // TESTING: Use unified system (remove this when ready for production)
+                    if (window.wpPluginFiltersUseUnified !== false) {
+                        console.log('[WP Plugin Filters] Using UNIFIED system for testing');
+                        this.handleDirectAPISuccessUnified(response, hasActiveFilters);
                     } else {
-                        // No search and no filters - use clean layout 
-                        this.handleDirectAPISuccessClean(response);
+                        // Original system
+                        if (hasActiveFilters) {
+                            this.handleDirectAPISuccess(response);
+                        } else {
+                            this.handleDirectAPISuccessClean(response);
+                        }
                     }
                 }.bind(this))
                 .catch(this.handleDirectAPIError.bind(this));
@@ -1160,6 +1162,186 @@
             `;
         },
         
+        /**
+         * NEW: Unified plugin card builder - always uses native structure with optional feature injection
+         */
+        buildUnifiedPluginCard: function(plugin, includeEnhancements) {
+            // Always start with native WordPress structure
+            var rating = plugin.rating ? (plugin.rating / 20) : 0; // Convert 0-100 to 0-5
+            var installs = plugin.active_installs || 0;
+            
+            // Build base native card structure
+            var card = `
+                <li class="wp-block-post post-${plugin.slug} plugin type-plugin status-publish hentry">
+                    <div class="plugin-card" data-slug="${plugin.slug}">
+                        <div class="plugin-card-top">
+                            <div class="name column-name">
+                                <h3>
+                                    <a href="${this.getPluginDetailsUrl(plugin.slug)}" class="thickbox open-plugin-details-modal" aria-label="${this.escapeHtml(plugin.name)} plugin information">
+                                        ${this.escapeHtml(plugin.name)}
+                                        <img class="plugin-icon" 
+                                             src="${this.getIconUrl(plugin)}" 
+                                             alt="${this.escapeHtml(plugin.name)} icon"
+                                             onerror="this.style.display='none'">
+                                    </a>
+                                </h3>
+                            </div>
+                            <div class="action-links">
+                                <ul class="plugin-action-buttons">
+                                    <li><a class="install-now button" data-slug="${plugin.slug}" href="${this.getInstallUrl(plugin.slug)}" aria-label="Install ${this.escapeHtml(plugin.name)} now">Install Now</a></li>
+                                    <li><a href="${this.getPluginDetailsUrl(plugin.slug)}" class="thickbox open-plugin-details-modal" aria-label="More information about ${this.escapeHtml(plugin.name)}">More Details</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="plugin-card-bottom">
+                            <div class="vers column-rating">
+                                ${this.formatRatingStars(rating)}
+                                <span class="num-ratings" aria-hidden="true">(${plugin.num_ratings || 0})</span>
+                            </div>
+                            <div class="column-downloaded">
+                                ${this.formatInstallCount(installs)}+ active installations
+                            </div>
+                            <div class="column-updated">
+                                <strong>Last Updated:</strong> ${this.formatLastUpdated(plugin.last_updated)}
+                            </div>
+                            <div class="column-compatibility">
+                                <span class="compatibility-compatible"><strong>Compatible</strong> with your version of WordPress</span>
+                            </div>
+                        </div>
+                        <div class="column-description">
+                            <p>${this.escapeHtml(plugin.short_description || '')}</p>
+                        </div>
+            `;
+            
+            // Conditionally inject enhancements if requested
+            if (includeEnhancements) {
+                card += this.injectEnhancementFeatures(plugin);
+            }
+            
+            card += `
+                    </div>
+                </li>
+            `;
+            
+            return card;
+        },
+
+        /**
+         * Inject enhancement features into the native card structure
+         */
+        injectEnhancementFeatures: function(plugin) {
+            var healthScore = plugin.health_score || this.calculateHealthProxy(plugin);
+            var usability = this.calculateUsability(plugin.ratings || {}, plugin.num_ratings || 0);
+            var updateStatus = this.getUpdateStatus(plugin.last_updated);
+            var wpCompatStatus = this.getWPCompatibilityStatus(plugin.tested);
+            
+            return `
+                <div class="wp-plugin-enhancements" style="border-top: 1px solid #ddd; margin-top: 12px; padding-top: 12px;">
+                    <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+                        <div class="health-indicator" style="display: flex; align-items: center; gap: 6px;">
+                            <span style="font-size: 12px; font-weight: 600; color: #666;">Health:</span>
+                            <span class="health-score" style="padding: 2px 6px; border-radius: 3px; font-size: 11px; font-weight: 600; background: ${this.getHealthColor(healthScore)}; color: white;">
+                                ${Math.round(healthScore)}%
+                            </span>
+                        </div>
+                        <div class="usability-indicator" style="display: flex; align-items: center; gap: 6px;">
+                            <span style="font-size: 12px; font-weight: 600; color: #666;">Usability:</span>
+                            <span class="usability-score" style="padding: 2px 6px; border-radius: 3px; font-size: 11px; font-weight: 600; background: ${this.getUsabilityColor(usability.score)}; color: white;">
+                                ${usability.score}%
+                            </span>
+                        </div>
+                        <div class="update-indicator" style="display: flex; align-items: center; gap: 6px;">
+                            <span style="font-size: 12px; font-weight: 600; color: #666;">Update:</span>
+                            <span style="color: ${updateStatus.color}; font-size: 11px; font-weight: 600;">
+                                ${updateStatus.text}
+                            </span>
+                        </div>
+                        <div class="compat-indicator" style="display: flex; align-items: center; gap: 6px;">
+                            <span style="font-size: 12px; font-weight: 600; color: #666;">WP Compat:</span>
+                            <span style="color: ${wpCompatStatus.color}; font-size: 11px; font-weight: 600;">
+                                ${wpCompatStatus.text}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        },
+
+        /**
+         * NEW: Unified response handler - no CSS switching, optional enhancements
+         */
+        handleDirectAPISuccessUnified: function(response, includeEnhancements) {
+            console.log('[WP Plugin Filters] Unified API Success with enhancements:', includeEnhancements);
+            this.hideLoadingState();
+            this.state.retryCount = 0;
+            
+            if (response && response.plugins) {
+                // Apply client-side filters if needed (only for non-search scenarios)
+                var plugins = response.plugins;
+                if (includeEnhancements && !this.getCurrentFilterData().search_term) {
+                    plugins = this.applyClientSideFilters(plugins, this.state.currentFilters);
+                }
+                
+                var processedResponse = {
+                    plugins: plugins,
+                    pagination: response.pagination
+                };
+                
+                console.log('[WP Plugin Filters] Unified update - using native structure with enhancements:', includeEnhancements);
+                this.updatePluginGridUnified(processedResponse, includeEnhancements);
+                this.updatePagination(processedResponse.pagination);
+                
+                // Show filter summary only if enhancements are included
+                if (includeEnhancements) {
+                    this.showFilterSummary(this.state.currentFilters);
+                }
+            } else {
+                this.showNoResults();
+            }
+        },
+
+        /**
+         * NEW: Unified grid update function - no CSS class switching, always native structure
+         */
+        updatePluginGridUnified: function(data, includeEnhancements) {
+            var self = this;
+            includeEnhancements = includeEnhancements !== false; // Default to true
+            
+            console.log('[WP Plugin Filters] updatePluginGridUnified called with enhancements:', includeEnhancements);
+            
+            if (!data.plugins || !Array.isArray(data.plugins)) {
+                console.error('[WP Plugin Filters] No plugins array in unified data:', data);
+                this.showNoResults();
+                return;
+            }
+            
+            var $container = $('.plugin-browser .wp-list-table tbody, #the-list').first();
+            if (!$container.length) {
+                console.error('[WP Plugin Filters] Could not find plugin container for unified update');
+                return;
+            }
+            
+            console.log('[WP Plugin Filters] Unified update found container, building cards for', data.plugins.length, 'plugins');
+            
+            // Generate plugin cards using unified builder
+            var pluginCards = data.plugins.map(function(plugin) {
+                return self.buildUnifiedPluginCard(plugin, includeEnhancements);
+            }).join('');
+            
+            console.log('[WP Plugin Filters] Generated unified cards, updating DOM');
+            
+            // NO CSS class switching - always use native WordPress styling
+            // Replace the content
+            $container.html(pluginCards);
+            
+            // Update results count if available
+            if (data.pagination && data.pagination.total_results) {
+                $('.displaying-num').text(data.pagination.total_results + ' items');
+            }
+            
+            console.log('[WP Plugin Filters] Unified grid update completed - native layout with optional enhancements');
+        },
+
         /**
          * Get current WordPress version for compatibility
          */
