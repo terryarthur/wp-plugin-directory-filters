@@ -461,6 +461,34 @@
             // This prevents breaking the native search functionality
         },
 
+        /**
+         * Handle search input changes
+         */
+        handleSearchChange: function() {
+            var self = this;
+            
+            clearTimeout(this.debounceTimers.search);
+            this.debounceTimers.search = setTimeout(function() {
+                // Get current search term
+                var searchTerm = '';
+                if (self.$elements.searchInput && self.$elements.searchInput.length > 0) {
+                    searchTerm = self.$elements.searchInput.val() || '';
+                }
+                
+                // If there's a search term AND enhanced styling was previously active, reset everything
+                if (searchTerm && searchTerm.trim() !== '' && $('body').hasClass('wp-filter-active')) {
+                    console.log('[WP Plugin Filters] Search term entered after filters were applied - resetting to clean search');
+                    
+                    // Remove enhanced CSS classes to ensure clean native styling for search results
+                    $('body').removeClass('wp-filter-active wp-filter-results-active');
+                    
+                    // Reset filter dropdowns to defaults so UI matches functionality
+                    self.clearFilterFormValues();
+                }
+                
+                self.applyFilters();
+            }, this.config.debounceDelay);
+        },
 
         /**
          * Apply current filters - Direct API call like working Chrome extension
