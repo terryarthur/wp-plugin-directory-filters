@@ -499,14 +499,17 @@
             
             this.showLoadingState();
             
-            // Use working extension approach - direct API call
-            this.fetchPluginDataFromAPI(filterData.search_term)
+            // Use working extension approach - direct API call with filters
+            this.fetchPluginDataFromAPI(filterData.search_term, filterData)
                 .then(function(response) {
-                    if (hasActiveFilters) {
-                        // Apply custom filtered layout
+                    if (filterData.search_term) {
+                        // When there's a search term, always use clean layout (Option 1)
+                        this.handleDirectAPISuccessClean(response);
+                    } else if (hasActiveFilters) {
+                        // When there's no search term but filters are applied, use filtered layout
                         this.handleDirectAPISuccess(response);
                     } else {
-                        // Apply clean native layout for pure search
+                        // Pure search or no filters - use clean layout
                         this.handleDirectAPISuccessClean(response);
                     }
                 }.bind(this))
@@ -516,11 +519,12 @@
         /**
          * Fetch plugin data from WordPress.org API directly (like Chrome extension)
          */
-        fetchPluginDataFromAPI: function(searchTerm) {
+        fetchPluginDataFromAPI: function(searchTerm, filterData) {
             var self = this;
             searchTerm = searchTerm || '';
+            filterData = filterData || {};
             
-            console.log('[WP Plugin Filters] fetchPluginDataFromAPI called with search term:', searchTerm);
+            console.log('[WP Plugin Filters] fetchPluginDataFromAPI called with search term:', searchTerm, 'and filters:', filterData);
             
             var apiUrl = 'https://api.wordpress.org/plugins/info/1.2/?action=query_plugins' +
                 '&request[search]=' + encodeURIComponent(searchTerm) +
@@ -533,6 +537,28 @@
                 '&request[fields][last_updated]=true' +
                 '&request[fields][icons]=true' +
                 '&request[fields][num_ratings]=true';
+            
+            // Add browse parameter for filtering when no search term
+            if (!searchTerm && filterData.installation_range) {
+                if (filterData.installation_range === '1m-plus') {
+                    apiUrl += '&request[browse]=popular';
+                }
+            }
+            
+            // Add sorting parameters if specified
+            if (filterData.sort_by) {
+                switch (filterData.sort_by) {
+                    case 'installations':
+                        apiUrl += '&request[browse]=popular';
+                        break;
+                    case 'rating':
+                        apiUrl += '&request[browse]=popular'; // WordPress.org doesn't have pure rating sort
+                        break;
+                    case 'updated':
+                        apiUrl += '&request[browse]=new';
+                        break;
+                }
+            }
             
             console.log('[WP Plugin Filters] Calling WordPress.org API directly:', apiUrl);
             
@@ -1688,7 +1714,7 @@
             this.showLoadingState();
             
             // Fetch plugins with just the search term
-            this.fetchPluginDataFromAPI(searchTerm)
+            this.fetchPluginDataFromAPI(searchTerm, {})
                 .then(function(response) {
                     // Always use clean layout for native searches
                     this.handleDirectAPISuccessClean(response);
@@ -1817,7 +1843,7 @@
             console.log('[WP Plugin Filters] Using fallback to browse all plugins');
             
             // Make clean API call with no search term to get popular plugins
-            this.fetchPluginDataFromAPI('')
+            this.fetchPluginDataFromAPI('', {})
                 .then((response) => {
                     // Don't apply filter classes for clean results
                     this.updatePluginGridClean(response);

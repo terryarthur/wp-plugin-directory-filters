@@ -80,3 +80,11 @@ Thumbs.db
 # Development workspaces and folders
 wp-plugin-directory-filters-workspace/
 wppd-filters/
+
+# Screenshot and image files
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+wppd-filters-plugin-cards.png
