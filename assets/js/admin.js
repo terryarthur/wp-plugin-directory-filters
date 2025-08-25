@@ -470,7 +470,24 @@
             
             clearTimeout(this.debounceTimers.search);
             this.debounceTimers.search = setTimeout(function() {
-                self.applyFilters();
+                // Get current search term
+                var searchTerm = '';
+                if (self.$elements.searchInput && self.$elements.searchInput.length > 0) {
+                    searchTerm = self.$elements.searchInput.val() || '';
+                }
+                
+                // Check if filters were previously applied
+                var hadActiveFilters = self.hasActiveFilters(self.getCurrentFilterData());
+                
+                // If there's a search term and filters were previously applied, reset to default
+                if (searchTerm && searchTerm.trim() !== '' && hadActiveFilters) {
+                    console.log('[WP Plugin Filters] Search term entered after filters - resetting to default style');
+                    self.resetToDefaultLayout();
+                    self.performCleanSearch(searchTerm);
+                } else {
+                    // Normal filter application
+                    self.applyFilters();
+                }
             }, this.config.debounceDelay);
         },
 
