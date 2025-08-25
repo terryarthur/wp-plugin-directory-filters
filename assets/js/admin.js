@@ -420,10 +420,21 @@
                 var searchTerm = $(this).val() || '';
                 console.log('[WP Plugin Filters] Search input changed:', searchTerm);
                 
-                // If search box is cleared (empty), reset to default layout
                 if (searchTerm.length === 0) {
+                    // If search box is cleared (empty), reset to default layout
                     console.log('[WP Plugin Filters] Search cleared, resetting to default layout');
                     self.resetToDefaultLayout();
+                } else if (searchTerm.trim() !== '' && $('body').hasClass('wp-filter-active')) {
+                    // If search term entered while filters are active, reset filters and styling before AJAX
+                    console.log('[WP Plugin Filters] Search term entered after filters - resetting before AJAX refresh');
+                    
+                    // Remove enhanced CSS classes immediately
+                    $('body').removeClass('wp-filter-active wp-filter-results-active');
+                    
+                    // Clear filter dropdowns to match the clean search state
+                    self.clearFilterFormValues();
+                    
+                    console.log('[WP Plugin Filters] Filter state reset - AJAX will load clean search results');
                 }
             });
             
