@@ -402,8 +402,47 @@
                 self.clearAllFilters();
             });
             
-            // Search input changes - disabled to avoid interfering with native search
-            // Search will only be handled when Apply Filters is clicked
+            // Native WordPress search form submission - handle with clean layout
+            $(document).on('submit', '.wp-filter-search form, .search-form', function(e) {
+                e.preventDefault();
+                console.log('[WP Plugin Filters] Native search form submitted');
+                
+                // Get search term from native search input
+                var searchTerm = $(this).find('input[type="search"], input[name="s"]').val() || '';
+                console.log('[WP Plugin Filters] Native search term:', searchTerm);
+                
+                // Clear all custom filters first to ensure clean search
+                self.clearFilterFormValues();
+                
+                // Perform clean search with just the search term
+                self.performCleanSearch(searchTerm);
+                
+                return false;
+            });
+            
+            // Watch for search input changes (including clear events)
+            $(document).on('input keyup', '.wp-filter-search input[type="search"], input[name="s"], #plugin-search-input', function(e) {
+                var searchTerm = $(this).val() || '';
+                console.log('[WP Plugin Filters] Search input changed:', searchTerm);
+                
+                // If search box is cleared (empty), reset to default layout
+                if (searchTerm.length === 0) {
+                    console.log('[WP Plugin Filters] Search cleared, resetting to default layout');
+                    self.resetToDefaultLayout();
+                }
+            });
+            
+            // Handle search clear button (X) specifically
+            $(document).on('search', '.wp-filter-search input[type="search"], input[name="s"], #plugin-search-input', function(e) {
+                var searchTerm = $(this).val() || '';
+                console.log('[WP Plugin Filters] Search event triggered:', searchTerm);
+                
+                // If search box is cleared via X button, reset to default layout
+                if (searchTerm.length === 0) {
+                    console.log('[WP Plugin Filters] Search cleared via X button, resetting to default layout');
+                    self.resetToDefaultLayout();
+                }
+            });
             
             // Pagination clicks
             $(document).on('click', '.tablenav-pages a', function(e) {
@@ -455,11 +494,22 @@
             var filterData = this.getCurrentFilterData();
             this.state.currentFilters = filterData;
             
+            // Check if this is a pure search (no filters applied) or filtered search
+            var hasActiveFilters = this.hasActiveFilters(filterData);
+            
             this.showLoadingState();
             
             // Use working extension approach - direct API call
             this.fetchPluginDataFromAPI(filterData.search_term)
-                .then(this.handleDirectAPISuccess.bind(this))
+                .then(function(response) {
+                    if (hasActiveFilters) {
+                        // Apply custom filtered layout
+                        this.handleDirectAPISuccess(response);
+                    } else {
+                        // Apply clean native layout for pure search
+                        this.handleDirectAPISuccessClean(response);
+                    }
+                }.bind(this))
                 .catch(this.handleDirectAPIError.bind(this));
         },
 
@@ -516,10 +566,49 @@
         },
 
         /**
-         * Handle successful direct API response
+         * Check if any filters are actively applied (not just search)
+         */
+        hasActiveFilters: function(filterData) {
+            // Check if any non-search filters are applied
+            return (filterData.installation_range && filterData.installation_range !== 'all') ||
+                   (filterData.update_timeframe && filterData.update_timeframe !== 'all') ||
+                   (filterData.usability_rating && parseFloat(filterData.usability_rating) > 0) ||
+                   (filterData.health_score && parseInt(filterData.health_score) > 0) ||
+                   (filterData.rating && parseFloat(filterData.rating) > 0) ||
+                   (filterData.sort_by && filterData.sort_by !== '');
+        },
+
+        /**
+         * Handle successful direct API response with clean native layout
+         */
+        handleDirectAPISuccessClean: function(response) {
+            console.log('[WP Plugin Filters] Direct API Success (Clean Layout):', response);
+            this.hideLoadingState();
+            this.state.retryCount = 0;
+            
+            if (response && response.plugins) {
+                // For clean layout, don't apply client-side filters (only search was used)
+                var processedResponse = {
+                    plugins: response.plugins,
+                    pagination: response.pagination
+                };
+                
+                console.log('[WP Plugin Filters] Updating grid with clean native layout:', processedResponse);
+                // Remove filter classes to ensure native WordPress layout
+                $('body').removeClass('wp-filter-active wp-filter-results-active');
+                this.updatePluginGridClean(processedResponse);
+                this.updatePagination(processedResponse.pagination);
+            } else {
+                console.error('[WP Plugin Filters] Invalid clean API response structure:', response);
+                this.showError('Invalid API response structure');
+            }
+        },
+
+        /**
+         * Handle successful direct API response with filtered layout
          */
         handleDirectAPISuccess: function(response) {
-            console.log('[WP Plugin Filters] Direct API Success:', response);
+            console.log('[WP Plugin Filters] Direct API Success (Filtered Layout):', response);
             this.hideLoadingState();
             this.state.retryCount = 0;
             
@@ -532,11 +621,11 @@
                     pagination: response.pagination
                 };
                 
-                console.log('[WP Plugin Filters] Updating grid with direct API data:', processedResponse);
+                console.log('[WP Plugin Filters] Updating grid with filtered layout:', processedResponse);
                 this.updatePluginGrid(processedResponse);
                 this.updatePagination(processedResponse.pagination);
             } else {
-                console.error('[WP Plugin Filters] Invalid direct API response structure:', response);
+                console.error('[WP Plugin Filters] Invalid filtered API response structure:', response);
                 this.showError('Invalid API response structure');
             }
         },
@@ -899,12 +988,14 @@
                 return;
             }
             
+            // Build clean native WordPress plugin cards (no enhancements)
             var pluginCards = data.plugins.map(function(plugin) {
-                return self.buildPluginCard(plugin);
+                return self.buildNativePluginCard(plugin);
             }).join('');
             
             // DO NOT add filter classes for clean results
             // This maintains the native WordPress layout
+            $('body').removeClass('wp-filter-active wp-filter-results-active');
             
             // Replace the content
             $container.html(pluginCards);
@@ -915,6 +1006,64 @@
             }
             
             console.log('[WP Plugin Filters] Clean grid update completed - native layout preserved');
+        },
+
+        /**
+         * Build HTML for a native WordPress plugin card (no enhancements)
+         */
+        buildNativePluginCard: function(plugin) {
+            var rating = plugin.rating ? (plugin.rating / 20) : 0; // Convert 0-100 to 0-5
+            var installs = plugin.active_installs || 0;
+            
+            return `
+                <li class="wp-block-post post-${plugin.slug} plugin type-plugin status-publish hentry">
+                    <div class="plugin-card" data-slug="${plugin.slug}">
+                        <div class="plugin-card-top">
+                            <div class="name column-name">
+                                <h3>
+                                    <a href="${this.getPluginDetailsUrl(plugin.slug)}" class="thickbox open-plugin-details-modal" aria-label="${this.escapeHtml(plugin.name)} plugin information">
+                                        ${this.escapeHtml(plugin.name)}
+                                        <img class="plugin-icon" 
+                                             src="${this.getIconUrl(plugin)}" 
+                                             alt="${this.escapeHtml(plugin.name)} icon"
+                                             onerror="this.style.display='none'">
+                                    </a>
+                                </h3>
+                            </div>
+                            <div class="action-links">
+                                <ul>
+                                    <li><a class="install-now button" data-slug="${plugin.slug}" href="${this.getInstallUrl(plugin.slug)}" aria-label="Install ${this.escapeHtml(plugin.name)} now">Install Now</a></li>
+                                    <li><a href="${this.getPluginDetailsUrl(plugin.slug)}" class="thickbox open-plugin-details-modal" aria-label="More information about ${this.escapeHtml(plugin.name)}">More Details</a></li>
+                                </ul>
+                            </div>
+                            <div class="desc column-description">
+                                <p>${this.escapeHtml(plugin.short_description || '')}</p>
+                                <p class="authors"><cite>By ${plugin.author || 'Unknown'}</cite></p>
+                            </div>
+                        </div>
+                        <div class="plugin-card-bottom">
+                            <div class="vers column-rating">
+                                <div class="star-rating" aria-label="${rating} out of 5 stars" data-rating="${rating}">
+                                    ${this.createStarRating(rating)}
+                                </div>
+                                <span class="num-ratings">(${plugin.num_ratings || 0})</span>
+                            </div>
+                            <div class="column-updated">
+                                <strong>Last Updated:</strong>
+                                <span title="${plugin.last_updated || 'Unknown'}">${this.formatRelativeTime(plugin.last_updated)}</span>
+                            </div>
+                            <div class="column-downloaded">
+                                ${this.formatInstallCount(installs)} Active Installations
+                            </div>
+                            <div class="column-compatibility">
+                                <span class="compatibility-compatible">
+                                    <strong>Tested up to:</strong> ${plugin.tested || 'Unknown'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+            `;
         },
 
         /**
@@ -939,7 +1088,7 @@
                 <li class="wp-block-post post-${plugin.slug} plugin type-plugin status-publish hentry">
                     <div class="plugin-card wp-block-wporg-link-wrapper is-style-no-underline wp-plugin-enhanced" data-slug="${plugin.slug}">
                         <div class="entry">
-                            <header class="entry-header" style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                            <header class="entry-header" style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px; position: relative;">
                                 <div class="entry-thumbnail" style="flex-shrink: 0;">
                                     <img class="plugin-icon" 
                                          src="${this.getIconUrl(plugin)}" 
@@ -948,11 +1097,10 @@
                                          onerror="this.style.display='none'">
                                 </div>
                                 <div style="flex: 1; display: flex; flex-direction: column;">
-                                    <h3 class="entry-title" style="margin: 0 0 8px 0;"><a href="${this.getPluginDetailsUrl(plugin.slug)}" class="thickbox open-plugin-details-modal" aria-label="${this.escapeHtml(plugin.name)} plugin information">${this.escapeHtml(plugin.name)}</a></h3>
-                                    <div class="plugin-card-top-actions" style="display: flex; gap: 8px;">
-                                        <a class="install-now button button-primary" data-slug="${plugin.slug}" href="${this.getInstallUrl(plugin.slug)}" aria-label="Install ${this.escapeHtml(plugin.name)} now">Install Now</a>
-                                        <a href="${this.getPluginDetailsUrl(plugin.slug)}" class="thickbox open-plugin-details-modal button" aria-label="More information about ${this.escapeHtml(plugin.name)}">More Details</a>
-                                    </div>
+                                    <h3 class="entry-title" style="margin: 0 0 8px 0; padding-right: 120px;"><a href="${this.getPluginDetailsUrl(plugin.slug)}" class="thickbox open-plugin-details-modal" aria-label="${this.escapeHtml(plugin.name)} plugin information">${this.escapeHtml(plugin.name)}</a></h3>
+                                </div>
+                                <div class="plugin-card-details-action" style="position: absolute; top: 0; right: 0;">
+                                    <a href="${this.getPluginDetailsUrl(plugin.slug)}" class="thickbox open-plugin-details-modal button" aria-label="More information about ${this.escapeHtml(plugin.name)}">More Details</a>
                                 </div>
                             </header>
 
@@ -967,31 +1115,36 @@
                             </div>
                         </div>
 
-                        <footer>
-                            <span class="plugin-author">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M15.5 9.5a1 1 0 100-2 1 1 0 000 2zm0 1.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5zm-2.25 6v-2a2.75 2.75 0 00-2.75-2.75h-4A2.75 2.75 0 003.75 15v2h1.5v-2c0-.69.56-1.25 1.25-1.25h4c.69 0 1.25.56 1.25 1.25v2h1.5zm7-2v2h-1.5v-2c0-.69-.56-1.25-1.25-1.25H15v-1.5h2.5A2.75 2.75 0 0120.25 15zM9.5 8.5a1 1 0 11-2 0 1 1 0 012 0zm1.5 0a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" fill-rule="evenodd"></path></svg>
-                                ${plugin.author || 'Unknown'}
-                            </span>
-                            <span class="active-installs">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path fill-rule="evenodd" d="M11.25 5h1.5v15h-1.5V5zM6 10h1.5v10H6V10zm12 4h-1.5v6H18v-6z" clip-rule="evenodd"></path></svg>
-                                <span>${this.formatInstallCount(installs)} active installations</span>
-                            </span>
-                            <span class="tested-with ${wpCompatStatus.cssClass}">
-                                <span style="display: inline-flex; align-items: center; margin-right: 6px;">${wpCompatStatus.icon}</span>
-                                <span>${wpCompatStatus.text}${wpCompatStatus.label ? ' (' + wpCompatStatus.label + ')' : ''}</span>
-                            </span>
-                            <span class="last-updated ${updateStatus.cssClass}">
-                                <span style="display: inline-flex; align-items: center; margin-right: 6px;">${updateStatus.icon}</span>
-                                <span>${updateStatus.text}${updateStatus.label ? ' (' + updateStatus.label + ')' : ''}</span>
-                            </span>
-                            <span class="usability-score usability-${usabilityColor}">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path></svg>
-                                <span>Usability Rating: ${usability.score}/100</span>
-                            </span>
-                            <span class="health-score health-${this.getHealthColor(healthScore)}" data-slug="${plugin.slug}">
-                                <span class="health-meter">${this.getHealthPowerMeter(healthScore)}</span>
-                                <span>Health Score: ${healthScore}/100</span>
-                            </span>
+                        <footer style="position: relative;">
+                            <div class="plugin-footer-info">
+                                <span class="plugin-author">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M15.5 9.5a1 1 0 100-2 1 1 0 000 2zm0 1.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5zm-2.25 6v-2a2.75 2.75 0 00-2.75-2.75h-4A2.75 2.75 0 003.75 15v2h1.5v-2c0-.69.56-1.25 1.25-1.25h4c.69 0 1.25.56 1.25 1.25v2h1.5zm7-2v2h-1.5v-2c0-.69-.56-1.25-1.25-1.25H15v-1.5h2.5A2.75 2.75 0 0120.25 15zM9.5 8.5a1 1 0 11-2 0 1 1 0 012 0zm1.5 0a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" fill-rule="evenodd"></path></svg>
+                                    ${plugin.author || 'Unknown'}
+                                </span>
+                                <span class="active-installs">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path fill-rule="evenodd" d="M11.25 5h1.5v15h-1.5V5zM6 10h1.5v10H6V10zm12 4h-1.5v6H18v-6z" clip-rule="evenodd"></path></svg>
+                                    <span>${this.formatInstallCount(installs)} active installations</span>
+                                </span>
+                                <span class="tested-with ${wpCompatStatus.cssClass}">
+                                    <span style="display: inline-flex; align-items: center; margin-right: 6px;">${wpCompatStatus.icon}</span>
+                                    <span>${wpCompatStatus.text}${wpCompatStatus.label ? ' (' + wpCompatStatus.label + ')' : ''}</span>
+                                </span>
+                                <span class="last-updated ${updateStatus.cssClass}">
+                                    <span style="display: inline-flex; align-items: center; margin-right: 6px;">${updateStatus.icon}</span>
+                                    <span>${updateStatus.text}${updateStatus.label ? ' (' + updateStatus.label + ')' : ''}</span>
+                                </span>
+                                <span class="usability-score usability-${usabilityColor}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path></svg>
+                                    <span>Usability Rating: ${usability.score}/100</span>
+                                </span>
+                                <span class="health-score health-${this.getHealthColor(healthScore)}" data-slug="${plugin.slug}">
+                                    <span class="health-meter">${this.getHealthPowerMeter(healthScore)}</span>
+                                    <span>Health Score: ${healthScore}/100</span>
+                                </span>
+                            </div>
+                            <div class="plugin-card-install-action" style="position: absolute; bottom: 0; right: 0;">
+                                <a class="install-now button button-primary" data-slug="${plugin.slug}" href="${this.getInstallUrl(plugin.slug)}" aria-label="Install ${this.escapeHtml(plugin.name)} now">Install Now</a>
+                            </div>
                         </footer>
                     </div>
                 </li>
@@ -1497,6 +1650,98 @@
         },
 
         /**
+         * Clear filter form values only (not search)
+         */
+        clearFilterFormValues: function() {
+            // Reset all filter form values with defensive checks
+            if (this.$elements.installationRange && this.$elements.installationRange.length) {
+                this.$elements.installationRange.val('all');
+            }
+            if (this.$elements.updateTimeframe && this.$elements.updateTimeframe.length) {
+                this.$elements.updateTimeframe.val('all');
+            }
+            if (this.$elements.usabilityRating && this.$elements.usabilityRating.length) {
+                this.$elements.usabilityRating.val('0');
+            }
+            if (this.$elements.healthScore && this.$elements.healthScore.length) {
+                this.$elements.healthScore.val('0');
+            }
+            if (this.$elements.rating && this.$elements.rating.length) {
+                this.$elements.rating.val('0');
+            }
+            if (this.$elements.sortBy && this.$elements.sortBy.length) {
+                this.$elements.sortBy.val('');
+            }
+            if (this.$elements.sortDirection && this.$elements.sortDirection.length) {
+                this.$elements.sortDirection.val('desc');
+            }
+            
+            console.log('[WP Plugin Filters] Filter form values cleared');
+        },
+
+        /**
+         * Perform clean search with native WordPress layout
+         */
+        performCleanSearch: function(searchTerm) {
+            console.log('[WP Plugin Filters] Performing clean search for:', searchTerm);
+            
+            this.showLoadingState();
+            
+            // Fetch plugins with just the search term
+            this.fetchPluginDataFromAPI(searchTerm)
+                .then(function(response) {
+                    // Always use clean layout for native searches
+                    this.handleDirectAPISuccessClean(response);
+                }.bind(this))
+                .catch(this.handleDirectAPIError.bind(this));
+        },
+
+        /**
+         * Reset to default WordPress layout (when search is cleared)
+         */
+        resetToDefaultLayout: function() {
+            console.log('[WP Plugin Filters] Resetting to default layout');
+            
+            // Clear all custom filters
+            this.clearFilterFormValues();
+            
+            // Remove all filter classes to restore native WordPress layout
+            $('body').removeClass('wp-filter-active wp-filter-results-active wp-plugin-filters-loading');
+            
+            // Remove any enhanced classes from plugin cards
+            $('.plugin-card').removeClass('wp-plugin-enhanced');
+            
+            // Reset state
+            this.state.currentFilters = {};
+            this.state.isLoading = false;
+            this.state.retryCount = 0;
+            
+            // Restore original WordPress plugin content if available
+            if (this.state.originalContent) {
+                console.log('[WP Plugin Filters] Restoring saved original HTML content');
+                var $container = this.$elements.resultsContainer;
+                if (!$container.length) {
+                    $container = $('#the-list, .wp-list-table tbody').first();
+                }
+                if ($container.length) {
+                    $container.parent().html(this.state.originalContent);
+                    console.log('[WP Plugin Filters] Original content restored successfully');
+                } else {
+                    console.warn('[WP Plugin Filters] Could not find container to restore original content');
+                    // Fallback: perform a clean search with empty term to get default plugins
+                    this.fallbackToBrowseAll();
+                }
+            } else {
+                console.log('[WP Plugin Filters] No saved original content - using fallback');
+                // Fallback: perform a clean search with empty term to get default plugins
+                this.fallbackToBrowseAll();
+            }
+            
+            // CRITICAL: Re-cache elements after DOM changes
+            this.refreshElementCache();
+        },
+
+        /**
          * Clear all filters and revert to native WordPress layout
          */
         clearAllFilters: function() {
@@ -1624,7 +1869,7 @@
         /**
          * Update URL with current filter state - DISABLED to prevent access errors on refresh
          */
-        updateURL: function(filterData) {
+        updateURL: function() {
             // Disabled URL updating to prevent "not allowed to access page" errors on refresh
             // WordPress admin doesn't handle custom filter parameters well
             console.log('[WP Plugin Filters] URL update disabled to prevent refresh access errors');
