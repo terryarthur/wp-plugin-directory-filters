@@ -139,22 +139,18 @@
                 var observer = new MutationObserver(function(mutations) {
                     mutations.forEach(function(mutation) {
                         if (mutation.type === 'childList') {
-                            // Check if any modal elements were added
-                            var modalSelectors = [
+                            // Check specifically for plugin information modals (not loading states or other overlays)
+                            var pluginModalSelectors = [
                                 '#plugin-information-modal',
-                                '.thickbox',
-                                '#TB_window',
-                                '#TB_overlay',
-                                '[role="dialog"]',
-                                '.ui-dialog',
                                 '#plugin-information-content',
-                                '.plugin-information',
-                                '.plugin-details-modal'
+                                '.plugin-information'
                             ];
                             
-                            for (var i = 0; i < modalSelectors.length; i++) {
-                                if ($(modalSelectors[i]).length > 0) {
-                                    console.log('[WP Plugin Filters] Modal detected after initialization, removing filter controls');
+                            // Only remove filters if we detect a VISIBLE plugin information modal with content
+                            for (var i = 0; i < pluginModalSelectors.length; i++) {
+                                var modal = $(pluginModalSelectors[i]);
+                                if (modal.length > 0 && modal.is(':visible') && modal.find('.plugin-card-top, .plugin-title, .plugin-description').length > 0) {
+                                    console.log('[WP Plugin Filters] Plugin information modal detected, removing filter controls');
                                     self.removeFilterControls();
                                     return;
                                 }
