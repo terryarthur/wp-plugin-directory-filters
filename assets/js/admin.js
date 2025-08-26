@@ -492,6 +492,13 @@
             }
             
             var filterData = this.getCurrentFilterData();
+            
+            // Check if there's a search term before applying filters
+            if (!filterData.search_term || filterData.search_term.trim() === '') {
+                this.showSearchRequiredMessage();
+                return;
+            }
+            
             this.state.currentFilters = filterData;
             
             // Check if this is a pure search (no filters applied) or filtered search
@@ -1647,6 +1654,37 @@
             if (this.$elements.resultsContainer.length) {
                 this.$elements.resultsContainer.html(noResultsHtml);
             }
+        },
+
+        /**
+         * Show message when user tries to filter without search term
+         */
+        showSearchRequiredMessage: function() {
+            // Remove any existing message
+            $('.wp-plugin-search-required').remove();
+            
+            // Create message
+            var message = $(`
+                <div class="wp-plugin-search-required notice notice-warning" style="margin: 10px 0; padding: 12px;">
+                    <p><strong>Please enter a search keyword first.</strong> Filtering and sorting require a search term for better performance.</p>
+                </div>
+            `);
+            
+            // Insert after filter controls
+            var filterControls = $('.wp-plugin-filters-controls');
+            if (filterControls.length) {
+                filterControls.after(message);
+            }
+            
+            // Focus search input
+            if (this.$elements.searchInput && this.$elements.searchInput.length) {
+                this.$elements.searchInput.focus();
+            }
+            
+            // Auto-remove after 5 seconds
+            setTimeout(function() {
+                message.fadeOut(300, function() { $(this).remove(); });
+            }, 5000);
         },
 
         /**
