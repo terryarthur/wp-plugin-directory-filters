@@ -1,0 +1,328 @@
+name: Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run tests daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+env:
+  WP_TESTS_DIR: /tmp/wordpress-tests-lib
+  WP_CORE_DIR: /tmp/wordpress
+
+jobs:
+  phpunit:
+    name: PHPUnit (PHP ${{ matrix.php }}, WP ${{ matrix.wordpress }})
+    runs-on: ubuntu-latest
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['7.4', '8.0', '8.1', '8.2']
+        wordpress: ['5.8', '5.9', '6.0', '6.1', '6.2', '6.3', '6.4', 'latest']
+        exclude:
+          # Exclude incompatible combinations
+          - php: '8.2'
+            wordpress: '5.8'
+          - php: '8.1'
+            wordpress: '5.8'
+    
+    services:
+      mysql:
+        image: mysql:5.7
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: wp_test
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ matrix.php }}
+        extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv, imagick, mysql, mysqli, pdo_mysql
+        coverage: xdebug
+
+    - name: Validate composer.json and composer.lock
+      run: composer validate --strict
+
+    - name: Cache Composer dependencies
+      uses: actions/cache@v3
+      with:
+        path: /tmp/composer-cache
+        key: ${{ runner.os }}-${{ hashFiles('**/composer.lock') }}
+
+    - name: Install Composer dependencies
+      run: composer install --prefer-dist --no-progress
+
+    - name: Setup WordPress test environment
+      run: |
+        bash tests/bin/install-wp-tests.sh wp_test root root 127.0.0.1 ${{ matrix.wordpress }}
+
+    - name: Run PHPUnit tests
+      run: |
+        vendor/bin/phpunit --configuration phpunit.xml --coverage-clover coverage.xml
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: phpunit
+        name: phpunit-php${{ matrix.php }}-wp${{ matrix.wordpress }}
+
+  javascript:
+    name: JavaScript Tests
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [16, 18, 20]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+
+    - name: Install Node.js dependencies
+      run: npm ci
+
+    - name: Run ESLint
+      run: npm run lint
+
+    - name: Run Jest tests
+      run: npm run test:ci
+
+    - name: Upload JavaScript coverage
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./tests/coverage/js/lcov.info
+        flags: javascript
+        name: javascript-node${{ matrix.node-version }}
+
+  security:
+    name: Security Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.1'
+        extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv, imagick
+
+    - name: Install Composer dependencies
+      run: composer install --prefer-dist --no-progress
+
+    - name: Run security analyzer
+      run: |
+        composer require --dev roave/security-advisories:dev-latest || true
+        vendor/bin/security-checker security:check composer.lock
+
+    - name: Run PHPStan static analysis
+      run: |
+        composer require --dev phpstan/phpstan
+        vendor/bin/phpstan analyse includes/ --level=5
+
+    - name: PHPCS WordPress Coding Standards
+      run: |
+        composer require --dev wp-coding-standards/wpcs
+        vendor/bin/phpcs --config-set installed_paths vendor/wp-coding-standards/wpcs
+        vendor/bin/phpcs --standard=WordPress includes/ wp-plugin-directory-filters.php
+
+  performance:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      mysql:
+        image: mysql:5.7
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: wp_test
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.1'
+        extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv, imagick, mysql, mysqli, pdo_mysql
+
+    - name: Install Composer dependencies
+      run: composer install --prefer-dist --no-progress
+
+    - name: Setup WordPress test environment
+      run: |
+        bash tests/bin/install-wp-tests.sh wp_test root root 127.0.0.1 latest
+
+    - name: Run performance tests
+      run: |
+        vendor/bin/phpunit --configuration phpunit.xml --testsuite="Performance Tests" --verbose
+
+    - name: Performance benchmarks
+      run: |
+        php tests/performance/run-benchmarks.php
+
+  compatibility:
+    name: WordPress Compatibility
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        wordpress: ['5.8', '5.9', '6.0', '6.1', '6.2', '6.3', '6.4', 'latest']
+    
+    services:
+      mysql:
+        image: mysql:5.7
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: wp_test
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.1'
+        extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv, imagick, mysql, mysqli, pdo_mysql
+
+    - name: Install Composer dependencies
+      run: composer install --prefer-dist --no-progress
+
+    - name: Setup WordPress ${{ matrix.wordpress }}
+      run: |
+        bash tests/bin/install-wp-tests.sh wp_test root root 127.0.0.1 ${{ matrix.wordpress }}
+
+    - name: Run compatibility tests
+      run: |
+        vendor/bin/phpunit --configuration phpunit.xml --testsuite="Compatibility Tests"
+
+  multisite:
+    name: Multisite Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      mysql:
+        image: mysql:5.7
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: wp_test
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.1'
+        extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv, imagick, mysql, mysqli, pdo_mysql
+
+    - name: Install Composer dependencies
+      run: composer install --prefer-dist --no-progress
+
+    - name: Setup WordPress multisite
+      run: |
+        bash tests/bin/install-wp-tests.sh wp_test root root 127.0.0.1 latest
+        # Enable multisite in wp-tests-config.php
+        echo "define('WP_TESTS_MULTISITE', true);" >> /tmp/wordpress-tests-lib/wp-tests-config.php
+
+    - name: Run multisite tests
+      run: |
+        WP_TESTS_MULTISITE=1 vendor/bin/phpunit --configuration phpunit.xml
+
+  deploy-ready:
+    name: Deployment Ready Check
+    runs-on: ubuntu-latest
+    needs: [phpunit, javascript, security, performance, compatibility, multisite]
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Validate plugin structure
+      run: |
+        # Check required files exist
+        test -f wp-plugin-directory-filters.php
+        test -f readme.txt
+        test -d includes/
+        test -d assets/
+        test -d tests/
+        
+        # Check version consistency
+        PLUGIN_VERSION=$(grep "Version:" wp-plugin-directory-filters.php | sed 's/.*Version: *//')
+        README_VERSION=$(grep "Stable tag:" readme.txt | sed 's/.*Stable tag: *//')
+        
+        if [ "$PLUGIN_VERSION" != "$README_VERSION" ]; then
+          echo "Version mismatch: Plugin ($PLUGIN_VERSION) vs README ($README_VERSION)"
+          exit 1
+        fi
+
+    - name: Generate release artifact
+      run: |
+        # Create release directory
+        mkdir -p wp-plugin-directory-filters
+        
+        # Copy plugin files (exclude development files)
+        rsync -av --exclude='.git*' --exclude='tests/' --exclude='node_modules/' --exclude='.*' --exclude='*.md' --exclude='composer.*' --exclude='package*.json' --exclude='phpunit.xml' --exclude='webpack.config.js' . wp-plugin-directory-filters/
+        
+        # Create zip file
+        zip -r wp-plugin-directory-filters.zip wp-plugin-directory-filters/
+
+    - name: Upload release artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: wp-plugin-directory-filters
+        path: wp-plugin-directory-filters.zip
+
+  notify:
+    name: Notification
+    runs-on: ubuntu-latest
+    needs: [phpunit, javascript, security, performance, compatibility, multisite]
+    if: always()
+    
+    steps:
+    - name: Notify on success
+      if: ${{ needs.phpunit.result == 'success' && needs.javascript.result == 'success' && needs.security.result == 'success' }}
+      run: echo "✅ All tests passed successfully!"
+      
+    - name: Notify on failure
+      if: ${{ needs.phpunit.result == 'failure' || needs.javascript.result == 'failure' || needs.security.result == 'failure' }}
+      run: |
+        echo "❌ Some tests failed:"
+        echo "PHPUnit: ${{ needs.phpunit.result }}"
+        echo "JavaScript: ${{ needs.javascript.result }}"
+        echo "Security: ${{ needs.security.result }}"
+        echo "Performance: ${{ needs.performance.result }}"
+        echo "Compatibility: ${{ needs.compatibility.result }}"
+        echo "Multisite: ${{ needs.multisite.result }}"
