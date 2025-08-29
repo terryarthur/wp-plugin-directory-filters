@@ -2,7 +2,7 @@
 /**
  * AJAX Request Handler
  *
- * @package WP_Plugin_Directory_Filters
+ * @package WPPDFI_Directory_Filters
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * AJAX request handling class.
  */
-class WP_Plugin_Filters_AJAX_Handler {
+class WPPDFI_AJAX_Handler {
 
 	/**
 	 * Rate limiting - requests per minute per user.
@@ -22,7 +22,7 @@ class WP_Plugin_Filters_AJAX_Handler {
 	/**
 	 * Security handler instance.
 	 *
-	 * @var WP_Plugin_Filters_Security_Handler
+	 * @var WPPDFI_Security_Handler
 	 */
 	private $security_handler;
 
@@ -31,12 +31,12 @@ class WP_Plugin_Filters_AJAX_Handler {
 	 */
 	public function __construct() {
 		// Ensure plugin directory constant is defined.
-		if ( ! defined( 'WP_PLUGIN_FILTERS_PLUGIN_DIR' ) ) {
-			define( 'WP_PLUGIN_FILTERS_PLUGIN_DIR', plugin_dir_path( dirname( __FILE__ ) ) );
+		if ( ! defined( 'WPPDFI_PLUGIN_DIR' ) ) {
+			define( 'WPPDFI_PLUGIN_DIR', plugin_dir_path( dirname( __FILE__ ) ) );
 		}
 
-		require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-security-handler.php';
-		$this->security_handler = new WP_Plugin_Filters_Security_Handler();
+		require_once WPPDFI_PLUGIN_DIR . 'includes/class-security-handler.php';
+		$this->security_handler = new WPPDFI_Security_Handler();
 	}
 
 	/**
@@ -46,15 +46,15 @@ class WP_Plugin_Filters_AJAX_Handler {
 		// Add error handling for debugging.
 		try {
 			// Ensure all required classes are loaded.
-			if ( ! class_exists( 'WP_Plugin_Filters_API_Handler' ) ) {
-				require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-api-handler.php';
+			if ( ! class_exists( 'WPPDFI_API_Handler' ) ) {
+				require_once WPPDFI_PLUGIN_DIR . 'includes/class-wppdfi-api-handler.php';
 			}
-			if ( ! class_exists( 'WP_Plugin_Filters_Cache_Manager' ) ) {
-				require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-wp-plugin-filters-cache-manager.php';
+			if ( ! class_exists( 'WPPDFI_Cache_Manager' ) ) {
+				require_once WPPDFI_PLUGIN_DIR . 'includes/class-wppdfi-cache-manager.php';
 			}
 
 			// Security validation..
-			$security_check = $this->security_handler->validate_ajax_request( 'wp_plugin_filter_action', 'install_plugins' );
+			$security_check = $this->security_handler->validate_ajax_request( 'wppdfi_filter_action', 'install_plugins' );
 			if ( is_wp_error( $security_check ) ) {
 				wp_send_json_error(
 					array(
@@ -77,9 +77,9 @@ class WP_Plugin_Filters_AJAX_Handler {
 				);
 			}
 
-			// Sanitize and validate input..
+			// Sanitize and validate input - only process required fields.
 			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified above via security_handler
-			$request_data      = $this->sanitize_filter_request( $_POST );
+			$request_data      = $this->sanitize_filter_request();
 			$validation_result = $this->validate_filter_request( $request_data );
 
 			if ( is_wp_error( $validation_result ) ) {
@@ -110,8 +110,7 @@ class WP_Plugin_Filters_AJAX_Handler {
 
 		} catch ( Exception $e ) {
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
-				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-				error_log( '[WP Plugin Filters] Filter request exception: ' . $e->getMessage() . ' in ' . $e->getFile() . ' on line ' . $e->getLine() );
+				wp_debug_log( '[WP Plugin Filters] Filter request exception: ' . $e->getMessage() . ' in ' . $e->getFile() . ' on line ' . $e->getLine() );
 			}
 			wp_send_json_error(
 				array(
@@ -124,8 +123,7 @@ class WP_Plugin_Filters_AJAX_Handler {
 		} catch ( Error $e ) {
 			// Catch PHP 7+ fatal errors.
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
-				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-				error_log( '[WP Plugin Filters] PHP Fatal error in handle_filter_request: ' . $e->getMessage() . ' in ' . $e->getFile() . ' on line ' . $e->getLine() );
+				wp_debug_log( '[WP Plugin Filters] PHP Fatal error in handle_filter_request: ' . $e->getMessage() . ' in ' . $e->getFile() . ' on line ' . $e->getLine() );
 			}
 			wp_send_json_error(
 				array(
@@ -143,7 +141,7 @@ class WP_Plugin_Filters_AJAX_Handler {
 	 */
 	public function handle_sort_request() {
 		// Security validation.
-		$security_check = $this->security_handler->validate_ajax_request( 'wp_plugin_sort_action', 'install_plugins' );
+		$security_check = $this->security_handler->validate_ajax_request( 'wppdfi_sort_action', 'install_plugins' );
 		if ( is_wp_error( $security_check ) ) {
 			wp_send_json_error(
 				array(
@@ -166,9 +164,9 @@ class WP_Plugin_Filters_AJAX_Handler {
 			);
 		}
 
-		// Sanitize and validate input.
+		// Sanitize and validate input - only process required fields.
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified above via security_handler
-		$request_data = $this->sanitize_sort_request( $_POST );
+		$request_data = $this->sanitize_sort_request();
 
 		try {
 			// Execute sorted search.
@@ -188,8 +186,7 @@ class WP_Plugin_Filters_AJAX_Handler {
 
 		} catch ( Exception $e ) {
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
-				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-				error_log( '[WP Plugin Filters] Sort request exception: ' . $e->getMessage() );
+				wp_debug_log( '[WP Plugin Filters] Sort request exception: ' . $e->getMessage() );
 			}
 			wp_send_json_error(
 				array(
@@ -206,7 +203,7 @@ class WP_Plugin_Filters_AJAX_Handler {
 	 */
 	public function handle_rating_calculation() {
 		// Security validation.
-		$security_check = $this->security_handler->validate_ajax_request( 'wp_plugin_rating_action', 'install_plugins' );
+		$security_check = $this->security_handler->validate_ajax_request( 'wppdfi_rating_action', 'install_plugins' );
 		if ( is_wp_error( $security_check ) ) {
 			wp_send_json_error(
 				array(
@@ -230,7 +227,7 @@ class WP_Plugin_Filters_AJAX_Handler {
 		}
 
 		try {
-			$cache_manager = WP_Plugin_Filters_Cache_Manager::get_instance();
+			$cache_manager = WPPDFI_Cache_Manager::get_instance();
 
 			// Check cache first.
 			$cached_rating = $cache_manager->get( $plugin_slug . '_ratings', 'calculated_ratings' );
@@ -240,7 +237,7 @@ class WP_Plugin_Filters_AJAX_Handler {
 			}
 
 			// Get plugin details.
-			$api_handler    = new WP_Plugin_Filters_API_Handler();
+			$api_handler    = new WPPDFI_API_Handler();
 			$plugin_details = $api_handler->get_plugin_details( $plugin_slug );
 
 			if ( is_wp_error( $plugin_details ) ) {
@@ -254,8 +251,8 @@ class WP_Plugin_Filters_AJAX_Handler {
 			}
 
 			// Calculate ratings.
-			$rating_calculator = new WP_Plugin_Filters_Rating_Calculator();
-			$health_calculator = new WP_Plugin_Filters_Health_Calculator();
+			$rating_calculator = new WPPDFI_Rating_Calculator();
+			$health_calculator = new WPPDFI_Health_Calculator();
 
 			$usability_rating = $rating_calculator->calculate_usability_rating( $plugin_details );
 			$health_score     = $health_calculator->calculate_health_score( $plugin_details );
@@ -280,8 +277,7 @@ class WP_Plugin_Filters_AJAX_Handler {
 
 		} catch ( Exception $e ) {
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
-				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-				error_log( '[WP Plugin Filters] Rating calculation exception: ' . $e->getMessage() );
+				wp_debug_log( '[WP Plugin Filters] Rating calculation exception: ' . $e->getMessage() );
 			}
 			wp_send_json_error(
 				array(
@@ -298,7 +294,7 @@ class WP_Plugin_Filters_AJAX_Handler {
 	 */
 	public function handle_cache_clear() {
 		// Security validation. (requires manage_options capability).
-		$security_check = $this->security_handler->validate_ajax_request( 'wp_plugin_clear_cache', 'manage_options' );
+		$security_check = $this->security_handler->validate_ajax_request( 'wppdfi_clear_cache', 'manage_options' );
 		if ( is_wp_error( $security_check ) ) {
 			wp_send_json_error(
 				array(
@@ -313,7 +309,7 @@ class WP_Plugin_Filters_AJAX_Handler {
 		$cache_type = sanitize_key( $_POST['cache_type'] ?? 'all' );
 
 		try {
-			$cache_manager = WP_Plugin_Filters_Cache_Manager::get_instance();
+			$cache_manager = WPPDFI_Cache_Manager::get_instance();
 			$cleared_count = $cache_manager->clear_all_cache( $cache_type );
 
 			wp_send_json_success(
@@ -328,8 +324,7 @@ class WP_Plugin_Filters_AJAX_Handler {
 
 		} catch ( Exception $e ) {
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
-				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-				error_log( '[WP Plugin Filters] Cache clear exception: ' . $e->getMessage() );
+				wp_debug_log( '[WP Plugin Filters] Cache clear exception: ' . $e->getMessage() );
 			}
 			wp_send_json_error(
 				array(
@@ -348,8 +343,8 @@ class WP_Plugin_Filters_AJAX_Handler {
 	 * @return array|WP_Error Search results or error.
 	 */
 	private function execute_filtered_search( $request_data ) {
-		$api_handler   = new WP_Plugin_Filters_API_Handler();
-		$cache_manager = WP_Plugin_Filters_Cache_Manager::get_instance();
+		$api_handler   = new WPPDFI_API_Handler();
+		$cache_manager = WPPDFI_Cache_Manager::get_instance();
 
 		// Generate cache key for this search.
 		$cache_key = 'search_' . md5( serialize( $request_data ) );
@@ -513,9 +508,9 @@ class WP_Plugin_Filters_AJAX_Handler {
 	 * @return array Enhanced plugins.
 	 */
 	private function enhance_plugins_with_ratings( $plugins ) {
-		$rating_calculator = new WP_Plugin_Filters_Rating_Calculator();
-		$health_calculator = new WP_Plugin_Filters_Health_Calculator();
-		$cache_manager     = WP_Plugin_Filters_Cache_Manager::get_instance();
+		$rating_calculator = new WPPDFI_Rating_Calculator();
+		$health_calculator = new WPPDFI_Health_Calculator();
+		$cache_manager     = WPPDFI_Cache_Manager::get_instance();
 
 		foreach ( $plugins as &$plugin ) {
 			// Check cache first.
@@ -627,33 +622,32 @@ class WP_Plugin_Filters_AJAX_Handler {
 	}
 
 	/**
-	 * Sanitize filter request data
+	 * Sanitize filter request data - only process required fields
 	 *
-	 * @param array $post_data POST data.
 	 * @return array Sanitized data.
 	 */
-	private function sanitize_filter_request( $post_data ) {
+	private function sanitize_filter_request() {
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified via security_handler
 		return array(
-			'search_term'        => sanitize_text_field( $post_data['search_term'] ?? '' ),
-			'installation_range' => sanitize_key( $post_data['installation_range'] ?? 'all' ),
-			'update_timeframe'   => sanitize_key( $post_data['update_timeframe'] ?? 'all' ),
-			'usability_rating'   => floatval( $post_data['usability_rating'] ?? 0 ),
-			'health_score'       => intval( $post_data['health_score'] ?? 0 ),
-			'sort_by'            => sanitize_key( $post_data['sort_by'] ?? 'relevance' ),
-			'sort_direction'     => in_array( $post_data['sort_direction'] ?? 'desc', array( 'asc', 'desc' ), true ) ? $post_data['sort_direction'] : 'desc',
-			'page'               => max( 1, intval( $post_data['page'] ?? 1 ) ),
-			'per_page'           => max( 1, min( 48, intval( $post_data['per_page'] ?? 24 ) ) ),
+			'search_term'        => sanitize_text_field( wp_unslash( $_POST['search_term'] ?? '' ) ),
+			'installation_range' => sanitize_key( $_POST['installation_range'] ?? 'all' ),
+			'update_timeframe'   => sanitize_key( $_POST['update_timeframe'] ?? 'all' ),
+			'usability_rating'   => floatval( $_POST['usability_rating'] ?? 0 ),
+			'health_score'       => intval( $_POST['health_score'] ?? 0 ),
+			'sort_by'            => sanitize_key( $_POST['sort_by'] ?? 'relevance' ),
+			'sort_direction'     => in_array( $_POST['sort_direction'] ?? 'desc', array( 'asc', 'desc' ), true ) ? $_POST['sort_direction'] : 'desc',
+			'page'               => max( 1, intval( $_POST['page'] ?? 1 ) ),
+			'per_page'           => max( 1, min( 48, intval( $_POST['per_page'] ?? 24 ) ) ),
 		);
 	}
 
 	/**
-	 * Sanitize sort request data
+	 * Sanitize sort request data - only process required fields
 	 *
-	 * @param array $post_data POST data.
 	 * @return array Sanitized data.
 	 */
-	private function sanitize_sort_request( $post_data ) {
-		return $this->sanitize_filter_request( $post_data );
+	private function sanitize_sort_request() {
+		return $this->sanitize_filter_request();
 	}
 
 	/**
@@ -688,7 +682,7 @@ class WP_Plugin_Filters_AJAX_Handler {
 	 */
 	private function check_rate_limit() {
 		$user_id  = get_current_user_id();
-		$rate_key = 'wp_plugin_ajax_rate_' . $user_id;
+		$rate_key = 'wppdfi_ajax_rate_' . $user_id;
 
 		$current_count = get_transient( $rate_key );
 		if ( false === $current_count ) {

@@ -2,7 +2,7 @@
 /**
  * Plugin Health Score Calculator
  *
- * @package WP_Plugin_Directory_Filters
+ * @package WPPDFI_Directory_Filters
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Plugin health score calculation class
  */
-class WP_Plugin_Filters_Health_Calculator {
+class WPPDFI_Health_Calculator {
 
 	/**
 	 * Default algorithm weights.
@@ -43,7 +43,7 @@ class WP_Plugin_Filters_Health_Calculator {
 	 * Constructor.
 	 */
 	public function __construct() {
-		$settings      = get_option( 'wp_plugin_filters_settings', array() );
+		$settings      = get_option( 'wppdfi_settings', array() );
 		$this->weights = isset( $settings['health_weights'] ) ? $settings['health_weights'] : self::DEFAULT_WEIGHTS;
 
 		// Validate weights sum to 100.
@@ -401,9 +401,9 @@ class WP_Plugin_Filters_Health_Calculator {
 		$this->weights = array_map( 'intval', $weights );
 
 		// Update stored settings.
-		$settings                   = get_option( 'wp_plugin_filters_settings', array() );
+		$settings                   = get_option( 'wppdfi_settings', array() );
 		$settings['health_weights'] = $this->weights;
-		update_option( 'wp_plugin_filters_settings', $settings );
+		update_option( 'wppdfi_settings', $settings );
 
 		return true;
 	}

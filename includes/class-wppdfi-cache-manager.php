@@ -2,7 +2,7 @@
 /**
  * Cache Manager for WordPress Plugin Directory Filters
  *
- * @package WP_Plugin_Directory_Filters
+ * @package WPPDFI_Directory_Filters
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -12,12 +12,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Cache management class using WordPress Transients and Object Cache.
  */
-class WP_Plugin_Filters_Cache_Manager {
+class WPPDFI_Cache_Manager {
 
 	/**
 	 * Single instance of the class.
 	 *
-	 * @var WP_Plugin_Filters_Cache_Manager
+	 * @var WPPDFI_Cache_Manager
 	 */
 	private static $instance = null;
 
@@ -41,7 +41,7 @@ class WP_Plugin_Filters_Cache_Manager {
 	/**
 	 * Get single instance of the class
 	 *
-	 * @return WP_Plugin_Filters_Cache_Manager.
+	 * @return WPPDFI_Cache_Manager.
 	 */
 	public static function get_instance() {
 		if ( null === self::$instance ) {
@@ -62,7 +62,7 @@ class WP_Plugin_Filters_Cache_Manager {
 	 * Load cache configuration from WordPress options.
 	 */
 	private function load_cache_config() {
-		$settings           = get_option( 'wp_plugin_filters_settings', array() );
+		$settings           = get_option( 'wppdfi_settings', array() );
 		$this->cache_config = isset( $settings['cache_durations'] ) ? $settings['cache_durations'] : self::DEFAULT_CACHE_DURATIONS;
 	}
 
@@ -71,13 +71,13 @@ class WP_Plugin_Filters_Cache_Manager {
 	 */
 	private function init_hooks() {
 		// Schedule daily cache cleanup.
-		if ( ! wp_next_scheduled( 'wp_plugin_filters_cleanup' ) ) {
-			wp_schedule_event( time(), 'daily', 'wp_plugin_filters_cleanup' );
+		if ( ! wp_next_scheduled( 'wppdfi_cleanup' ) ) {
+			wp_schedule_event( time(), 'daily', 'wppdfi_cleanup' );
 		}
 
 		// Schedule cache warming for popular plugins.
-		if ( ! wp_next_scheduled( 'wp_plugin_filters_warm_cache' ) ) {
-			wp_schedule_event( time() + 300, 'hourly', 'wp_plugin_filters_warm_cache' );
+		if ( ! wp_next_scheduled( 'wppdfi_warm_cache' ) ) {
+			wp_schedule_event( time() + 300, 'hourly', 'wppdfi_warm_cache' );
 		}
 	}
 
@@ -219,20 +219,20 @@ class WP_Plugin_Filters_Cache_Manager {
 
 		// Try to get results from object cache first.
 		$cache_key = 'bulk_transients_' . md5( serialize( $transient_keys ) );
-		$results   = wp_cache_get( $cache_key, 'wp_plugin_filters_bulk' );
+		$results   = wp_cache_get( $cache_key, 'wppdfi_bulk' );
 
 		if ( false === $results ) {
 			// Single query to get all transients.
 			$query      = "SELECT option_name, option_value FROM {$wpdb->options} WHERE option_name IN ($placeholder_string) AND option_name NOT LIKE %s";
 			$query_args = array_merge( array_values( $transient_keys ), array( '%\\_transient\\_timeout\\_%' ) );
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Direct query needed for bulk transient retrieval performance optimization
-			$results    = $wpdb->get_results(
+			$results = $wpdb->get_results(
 				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Query is properly prepared above.
 				$wpdb->prepare( $query, $query_args ),
 				ARRAY_A
 			);
 			// Cache for 1 minute.
-			wp_cache_set( $cache_key, $results, 'wp_plugin_filters_bulk', 60 );
+			wp_cache_set( $cache_key, $results, 'wppdfi_bulk', 60 );
 		}
 
 		// Check expiration for found transients.
@@ -260,10 +260,10 @@ class WP_Plugin_Filters_Cache_Manager {
 			// Try to get timeout results from cache first.
 			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize -- Serialization needed for cache key generation.
 			$timeout_cache_key = 'timeout_check_' . md5( serialize( $timeout_keys ) );
-			$timeout_results   = wp_cache_get( $timeout_cache_key, 'wp_plugin_filters_timeout' );
+			$timeout_results   = wp_cache_get( $timeout_cache_key, 'wppdfi_timeout' );
 
 			if ( false === $timeout_results ) {
-				$timeout_query   = "SELECT option_name, option_value FROM {$wpdb->options} WHERE option_name IN ($timeout_placeholder_string)";
+				$timeout_query = "SELECT option_name, option_value FROM {$wpdb->options} WHERE option_name IN ($timeout_placeholder_string)";
 				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Direct query needed for bulk timeout check performance optimization
 				$timeout_results = $wpdb->get_results(
 					// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Query is properly prepared above.
@@ -271,7 +271,7 @@ class WP_Plugin_Filters_Cache_Manager {
 					ARRAY_A
 				);
 				// Cache for 30 seconds.
-				wp_cache_set( $timeout_cache_key, $timeout_results, 'wp_plugin_filters_timeout', 30 );
+				wp_cache_set( $timeout_cache_key, $timeout_results, 'wppdfi_timeout', 30 );
 			}
 
 			$current_time = time();
@@ -308,7 +308,7 @@ class WP_Plugin_Filters_Cache_Manager {
 	 * @return int Number of plugins cached.
 	 */
 	public function warm_popular_plugins_cache() {
-		$api_handler   = new WP_Plugin_Filters_API_Handler();
+		$api_handler   = new WPPDFI_API_Handler();
 		$popular_slugs = $api_handler->get_popular_plugin_slugs();
 
 		$warmed_count = 0;
@@ -323,8 +323,8 @@ class WP_Plugin_Filters_Cache_Manager {
 					$warmed_count++;
 
 					// Calculate and cache ratings.
-					$rating_calculator = new WP_Plugin_Filters_Rating_Calculator();
-					$health_calculator = new WP_Plugin_Filters_Health_Calculator();
+					$rating_calculator = new WPPDFI_Rating_Calculator();
+					$health_calculator = new WPPDFI_Health_Calculator();
 
 					$usability_rating = $rating_calculator->calculate_usability_rating( $plugin_details );
 					$health_score     = $health_calculator->calculate_health_score( $plugin_details );
@@ -395,7 +395,7 @@ class WP_Plugin_Filters_Cache_Manager {
 		$placeholders       = array_fill( 0, count( $all_names ), '%s' );
 		$placeholder_string = implode( ',', $placeholders );
 
-		$delete_query  = "DELETE FROM {$wpdb->options} WHERE option_name IN ($placeholder_string)";
+		$delete_query = "DELETE FROM {$wpdb->options} WHERE option_name IN ($placeholder_string)";
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Direct query needed for bulk transient deletion performance optimization
 		$deleted_count = $wpdb->query(
 			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Query is properly prepared above.
@@ -412,7 +412,7 @@ class WP_Plugin_Filters_Cache_Manager {
 
 		// Invalidate cache statistics since cache contents changed.
 		if ( 0 < $deleted_count ) {
-			wp_cache_delete( 'wp_plugin_cache_stats', 'wp_plugin_filters_stats' );
+			wp_cache_delete( 'wp_plugin_cache_stats', 'wppdfi_stats' );
 		}
 
 		return $deleted_count;
@@ -479,7 +479,7 @@ class WP_Plugin_Filters_Cache_Manager {
 
 		// Invalidate cache statistics since cache contents changed.
 		if ( 0 < $deleted_count ) {
-			wp_cache_delete( 'wp_plugin_cache_stats', 'wp_plugin_filters_stats' );
+			wp_cache_delete( 'wp_plugin_cache_stats', 'wppdfi_stats' );
 		}
 
 		return $deleted_count;
@@ -495,7 +495,7 @@ class WP_Plugin_Filters_Cache_Manager {
 
 		// Try to get stats from object cache first (cache for 5 minutes).
 		$cache_key = 'wp_plugin_cache_stats';
-		$stats     = wp_cache_get( $cache_key, 'wp_plugin_filters_stats' );
+		$stats     = wp_cache_get( $cache_key, 'wppdfi_stats' );
 
 		if ( false === $stats ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Direct query needed for cache statistics
@@ -519,7 +519,7 @@ class WP_Plugin_Filters_Cache_Manager {
 			);
 
 			// Cache the results for 5 minutes (300 seconds).
-			wp_cache_set( $cache_key, $stats, 'wp_plugin_filters_stats', 300 );
+			wp_cache_set( $cache_key, $stats, 'wppdfi_stats', 300 );
 		}
 
 		$analysis = array(
@@ -603,9 +603,9 @@ class WP_Plugin_Filters_Cache_Manager {
 	public function update_cache_config( $new_config ) {
 		$this->cache_config = array_merge( $this->cache_config, $new_config );
 
-		$settings                    = get_option( 'wp_plugin_filters_settings', array() );
+		$settings                    = get_option( 'wppdfi_settings', array() );
 		$settings['cache_durations'] = $this->cache_config;
 
-		return update_option( 'wp_plugin_filters_settings', $settings );
+		return update_option( 'wppdfi_settings', $settings );
 	}
 }

@@ -193,7 +193,7 @@
                 url: wpPluginFiltersAdmin.ajaxUrl,
                 method: 'POST',
                 data: {
-                    action: 'wp_plugin_clear_cache',
+                    action: 'wppdfi_clear_cache',
                     nonce: wpPluginFiltersAdmin.nonces.clear_cache,
                     cache_type: cacheType
                 },
@@ -272,7 +272,7 @@
                 url: wpPluginFiltersAdmin.ajaxUrl,
                 method: 'POST',
                 data: {
-                    action: 'wp_plugin_test_algorithm',
+                    action: 'wppdfi_test_algorithm',
                     nonce: wpPluginFiltersAdmin.nonces.test_algorithm,
                     algorithm_type: algorithmType,
                     weights: this.getCurrentWeights(algorithmType)

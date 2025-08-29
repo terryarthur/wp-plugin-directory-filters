@@ -2,7 +2,7 @@
 /**
  * Plugin Activator for WordPress Plugin Directory Filters
  *
- * @package WP_Plugin_Directory_Filters
+ * @package WPPDFI_Directory_Filters
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Fired during plugin activation
  */
-class WP_Plugin_Filters_Activator {
+class WPPDFI_Activator {
 
 	/**
 	 * Activate the plugin
@@ -22,7 +22,7 @@ class WP_Plugin_Filters_Activator {
 	public static function activate() {
 		// Check WordPress version compatibility.
 		if ( ! self::check_wordpress_version() ) {
-			deactivate_plugins( WP_PLUGIN_FILTERS_BASENAME );
+			deactivate_plugins( WPPDFI_BASENAME );
 			wp_die(
 				sprintf(
 					/* translators: %s: required WordPress version */
@@ -36,7 +36,7 @@ class WP_Plugin_Filters_Activator {
 
 		// Check PHP version compatibility.
 		if ( ! self::check_php_version() ) {
-			deactivate_plugins( WP_PLUGIN_FILTERS_BASENAME );
+			deactivate_plugins( WPPDFI_BASENAME );
 			wp_die(
 				sprintf(
 					/* translators: %1$s: required PHP version, %2$s: current PHP version */
@@ -51,13 +51,16 @@ class WP_Plugin_Filters_Activator {
 
 		// Check required functions.
 		if ( ! self::check_required_functions() ) {
-			deactivate_plugins( WP_PLUGIN_FILTERS_BASENAME );
+			deactivate_plugins( WPPDFI_BASENAME );
 			wp_die(
 				esc_html__( 'Plugin Directory Filters requires functions that are not available in your hosting environment.', 'wppd-filters' ),
 				esc_html__( 'Plugin Activation Error', 'wppd-filters' ),
 				array( 'back_link' => true )
 			);
 		}
+
+		// Run database migration if needed.
+		self::run_migration();
 
 		// Create default settings.
 		self::create_default_settings();
@@ -78,7 +81,7 @@ class WP_Plugin_Filters_Activator {
 		self::clear_activation_cache();
 
 		// Set activation flag for first-time setup.
-		set_transient( 'wp_plugin_filters_activated', true, 60 );
+		set_transient( 'wppdfi_activated', true, 60 );
 	}
 
 	/**
@@ -155,8 +158,8 @@ class WP_Plugin_Filters_Activator {
 		);
 
 		// Only add default settings if they don't exist.
-		if ( ! get_option( 'wp_plugin_filters_settings' ) ) {
-			add_option( 'wp_plugin_filters_settings', $default_settings );
+		if ( ! get_option( 'wppdfi_settings' ) ) {
+			add_option( 'wppdfi_settings', $default_settings );
 		}
 	}
 
@@ -165,18 +168,18 @@ class WP_Plugin_Filters_Activator {
 	 */
 	private static function schedule_cron_events() {
 		// Schedule daily cache cleanup.
-		if ( ! wp_next_scheduled( 'wp_plugin_filters_cleanup' ) ) {
-			wp_schedule_event( time(), 'daily', 'wp_plugin_filters_cleanup' );
+		if ( ! wp_next_scheduled( 'wppdfi_cleanup' ) ) {
+			wp_schedule_event( time(), 'daily', 'wppdfi_cleanup' );
 		}
 
 		// Schedule hourly cache warming for popular plugins.
-		if ( ! wp_next_scheduled( 'wp_plugin_filters_warm_cache' ) ) {
-			wp_schedule_event( time() + 300, 'hourly', 'wp_plugin_filters_warm_cache' ); // Start after 5 minutes.
+		if ( ! wp_next_scheduled( 'wppdfi_warm_cache' ) ) {
+			wp_schedule_event( time() + 300, 'hourly', 'wppdfi_warm_cache' ); // Start after 5 minutes.
 		}
 
 		// Schedule weekly statistics collection.
-		if ( ! wp_next_scheduled( 'wp_plugin_filters_collect_stats' ) ) {
-			wp_schedule_event( time() + 600, 'weekly', 'wp_plugin_filters_collect_stats' ); // Start after 10 minutes.
+		if ( ! wp_next_scheduled( 'wppdfi_collect_stats' ) ) {
+			wp_schedule_event( time() + 600, 'weekly', 'wppdfi_collect_stats' ); // Start after 10 minutes.
 		}
 	}
 
@@ -212,8 +215,8 @@ class WP_Plugin_Filters_Activator {
 	 * Set plugin version in database
 	 */
 	private static function set_plugin_version() {
-		update_option( 'wp_plugin_filters_version', WP_PLUGIN_FILTERS_VERSION );
-		update_option( 'wp_plugin_filters_db_version', '1.0.0' );
+		update_option( 'wppdfi_version', WPPDFI_VERSION );
+		update_option( 'wppdfi_db_version', '1.0.0' );
 	}
 
 	/**
@@ -223,7 +226,7 @@ class WP_Plugin_Filters_Activator {
 		if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
 			$log_data = array(
 				'event'             => 'plugin_activated',
-				'version'           => WP_PLUGIN_FILTERS_VERSION,
+				'version'           => WPPDFI_VERSION,
 				'wordpress_version' => get_bloginfo( 'version' ),
 				'php_version'       => PHP_VERSION,
 				'timestamp'         => current_time( 'mysql' ),
@@ -234,8 +237,7 @@ class WP_Plugin_Filters_Activator {
 			);
 
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
-                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-				error_log( '[WP Plugin Filters] Activation: ' . wp_json_encode( $log_data ) );
+				wp_debug_log( '[WP Plugin Filters] Activation: ' . wp_json_encode( $log_data ) );
 			}
 		}
 	}
@@ -267,7 +269,7 @@ class WP_Plugin_Filters_Activator {
 	 */
 	private static function is_network_activation() {
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- This is for activation context detection only
-		return is_multisite() && isset( $_GET['networkwide'] ) && '1' === $_GET['networkwide'];
+		return is_multisite() && isset( $_GET['networkwide'] ) && '1' === sanitize_text_field( wp_unslash( $_GET['networkwide'] ) );
 	}
 
 	/**
@@ -304,7 +306,7 @@ class WP_Plugin_Filters_Activator {
 			$test_url,
 			array(
 				'timeout'    => 10,
-				'user-agent' => 'WordPress Plugin Directory Filters/' . WP_PLUGIN_FILTERS_VERSION,
+				'user-agent' => 'WordPress Plugin Directory Filters/' . WPPDFI_VERSION,
 			)
 		);
 
@@ -334,7 +336,7 @@ class WP_Plugin_Filters_Activator {
 			'dismissible' => true,
 		);
 
-		set_transient( 'wp_plugin_filters_activation_notice', $notice, 300 ); // 5 minutes
+		set_transient( 'wppdfi_activation_notice', $notice, 300 ); // 5 minutes
 	}
 
 	/**
@@ -400,19 +402,19 @@ class WP_Plugin_Filters_Activator {
 	 */
 	public static function verify_activation() {
 		// Check if settings were created.
-		$settings = get_option( 'wp_plugin_filters_settings' );
+		$settings = get_option( 'wppdfi_settings' );
 		if ( ! $settings ) {
 			return false;
 		}
 
 		// Check if version was set.
-		$version = get_option( 'wp_plugin_filters_version' );
+		$version = get_option( 'wppdfi_version' );
 		if ( ! $version ) {
 			return false;
 		}
 
 		// Check if cron events were scheduled.
-		if ( ! wp_next_scheduled( 'wp_plugin_filters_cleanup' ) ) {
+		if ( ! wp_next_scheduled( 'wppdfi_cleanup' ) ) {
 			return false;
 		}
 
@@ -424,23 +426,37 @@ class WP_Plugin_Filters_Activator {
 	 */
 	public static function rollback_activation() {
 		// Remove settings.
-		delete_option( 'wp_plugin_filters_settings' );
-		delete_option( 'wp_plugin_filters_version' );
-		delete_option( 'wp_plugin_filters_db_version' );
+		delete_option( 'wppdfi_settings' );
+		delete_option( 'wppdfi_version' );
+		delete_option( 'wppdfi_db_version' );
 
 		// Clear scheduled events.
-		wp_clear_scheduled_hook( 'wp_plugin_filters_cleanup' );
-		wp_clear_scheduled_hook( 'wp_plugin_filters_warm_cache' );
-		wp_clear_scheduled_hook( 'wp_plugin_filters_collect_stats' );
+		wp_clear_scheduled_hook( 'wppdfi_cleanup' );
+		wp_clear_scheduled_hook( 'wppdfi_warm_cache' );
+		wp_clear_scheduled_hook( 'wppdfi_collect_stats' );
 
 		// Clear transients.
-		delete_transient( 'wp_plugin_filters_activated' );
-		delete_transient( 'wp_plugin_filters_activation_notice' );
+		delete_transient( 'wppdfi_activated' );
+		delete_transient( 'wppdfi_activation_notice' );
 
 		// Log rollback.
 		if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
-            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			error_log( '[WP Plugin Filters] Activation rolled back due to errors' );
+			wp_debug_log( '[WP Plugin Filters] Activation rolled back due to errors' );
+		}
+	}
+
+	/**
+	 * Run database migration from old naming to new wppdfi naming
+	 */
+	private static function run_migration() {
+		// Load migration class if not already loaded.
+		if ( ! class_exists( 'WPPDFI_Migration' ) ) {
+			require_once WPPDFI_PLUGIN_DIR . 'includes/class-wppdfi-migration.php';
+		}
+
+		// Only run migration if not already completed.
+		if ( ! WPPDFI_Migration::is_migrated() ) {
+			WPPDFI_Migration::migrate();
 		}
 	}
 }

@@ -8,6 +8,55 @@
  */
 
 /* =====================================================
+   Plugin Installer Page Integration Styles
+   ===================================================== */
+
+/* Ensure filter controls integrate seamlessly */
+.wp-plugin-directory-filters-controls {
+	margin: 20px 0;
+	padding: 15px;
+	background: #fff;
+	border: 1px solid #ccd0d4;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+}
+
+.wp-plugin-directory-filters-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 15px;
+	align-items: center;
+	margin-bottom: 10px;
+}
+
+.wp-plugin-directory-filters-field {
+	display: flex;
+	flex-direction: column;
+	min-width: 150px;
+}
+
+.wp-plugin-directory-filters-field label {
+	font-weight: 600;
+	margin-bottom: 4px;
+	color: #1d2327;
+}
+
+.wp-plugin-filter-select,
+.wp-plugin-filter-input {
+	min-width: 150px;
+}
+
+@media (max-width: 782px) {
+	.wp-plugin-directory-filters-row {
+		flex-direction: column;
+		align-items: stretch;
+	}
+	
+	.wp-plugin-directory-filters-field {
+		min-width: auto;
+	}
+}
+
+/* =====================================================
    Filter Controls Container
    ===================================================== */
 
@@ -59,7 +108,7 @@
     margin-left: auto;
     padding: 6px 12px;
     background: #2271b1;
-    border-radius: 6px;
+    border-radius: 3px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     font-size: 11px;
     font-weight: 500;
@@ -1584,4 +1633,172 @@ body.wp-filter-results-active .wp-compat-unknown,
 /* Hover effects for compatibility status */
 .tested-with:hover {
     opacity: 0.8;
+}
+
+/* =====================================================
+   Plugin Card Actions (Repositioned buttons)
+   ===================================================== */
+
+/* Details button in top right */
+.plugin-card-details-action {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 10;
+    width: 120px; /* Reserve space for button */
+    text-align: right;
+}
+
+/* Ensure header container has proper positioning context */
+body.wp-filter-active.wp-filter-results-active .entry-header,
+.plugin-card.wp-plugin-enhanced .entry-header {
+    position: relative !important;
+    overflow: hidden; /* Prevent text overflow into button area */
+}
+
+.plugin-card-details-action .button {
+    font-size: 12px !important;
+    padding: 4px 12px !important;
+    line-height: 1.4 !important;
+    height: auto !important;
+    min-height: 28px;
+    border-radius: 3px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+    background: #f6f7f7 !important;
+    border-color: #dcdcde !important;
+    color: #50575e !important;
+}
+
+.plugin-card-details-action .button:hover,
+.plugin-card-details-action .button:focus {
+    background: #f0f0f1 !important;
+    border-color: #8c8f94 !important;
+    color: #1d2327 !important;
+}
+
+/* Install button in bottom right */
+.plugin-card-install-action {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    z-index: 10;
+}
+
+.plugin-card-install-action .button-primary {
+    font-size: 13px !important;
+    padding: 6px 16px !important;
+    line-height: 1.4 !important;
+    height: auto !important;
+    min-height: 32px;
+    border-radius: 3px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+    background: #2271b1 !important;
+    border-color: #2271b1 !important;
+    color: #fff !important;
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.plugin-card-install-action .button-primary:hover,
+.plugin-card-install-action .button-primary:focus {
+    background: #135e96 !important;
+    border-color: #135e96 !important;
+    color: #fff !important;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+    transform: translateY(-1px);
+}
+
+/* Adjust footer to accommodate bottom right button */
+body.wp-filter-active.wp-filter-results-active .plugin-card footer,
+.plugin-card.wp-plugin-enhanced footer {
+    padding-right: 120px !important; /* Make space for install button */
+    min-height: 45px; /* Ensure footer is tall enough */
+}
+
+/* Adjust title to accommodate top right button */
+body.wp-filter-active.wp-filter-results-active .entry-title,
+.plugin-card.wp-plugin-enhanced .entry-title,
+body.wp-filter-active.wp-filter-results-active .entry-title h3,
+.plugin-card.wp-plugin-enhanced .entry-title h3,
+body.wp-filter-active.wp-filter-results-active .entry-title a,
+.plugin-card.wp-plugin-enhanced .entry-title a {
+    padding-right: 130px !important; /* Make space for details button */
+    margin-right: 0 !important;
+    max-width: calc(100% - 130px) !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    hyphens: auto !important;
+}
+
+/* Responsive adjustments for repositioned buttons */
+@media screen and (max-width: 782px) {
+    .plugin-card-details-action .button {
+        font-size: 11px !important;
+        padding: 3px 8px !important;
+        min-height: 24px;
+    }
+    
+    .plugin-card-install-action .button-primary {
+        font-size: 12px !important;
+        padding: 5px 12px !important;
+        min-height: 28px;
+    }
+    
+    /* Adjust spacing on mobile */
+    body.wp-filter-active.wp-filter-results-active .plugin-card footer,
+    .plugin-card.wp-plugin-enhanced footer {
+        padding-right: 100px !important;
+        min-height: 40px;
+    }
+    
+    body.wp-filter-active.wp-filter-results-active .entry-title,
+    .plugin-card.wp-plugin-enhanced .entry-title,
+    body.wp-filter-active.wp-filter-results-active .entry-title h3,
+    .plugin-card.wp-plugin-enhanced .entry-title h3,
+    body.wp-filter-active.wp-filter-results-active .entry-title a,
+    .plugin-card.wp-plugin-enhanced .entry-title a {
+        padding-right: 110px !important;
+        max-width: calc(100% - 110px) !important;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    /* Stack buttons vertically on very small screens */
+    .plugin-card-details-action {
+        position: relative;
+        top: auto;
+        right: auto;
+        margin-bottom: 8px;
+    }
+    
+    .plugin-card-install-action {
+        position: relative;
+        bottom: auto;
+        right: auto;
+        text-align: right;
+        margin-top: 12px;
+    }
+    
+    /* Remove extra padding on very small screens */
+    body.wp-filter-active.wp-filter-results-active .plugin-card footer,
+    .plugin-card.wp-plugin-enhanced footer {
+        padding-right: 20px !important;
+        min-height: auto;
+    }
+    
+    body.wp-filter-active.wp-filter-results-active .entry-title,
+    .plugin-card.wp-plugin-enhanced .entry-title,
+    body.wp-filter-active.wp-filter-results-active .entry-title h3,
+    .plugin-card.wp-plugin-enhanced .entry-title h3,
+    body.wp-filter-active.wp-filter-results-active .entry-title a,
+    .plugin-card.wp-plugin-enhanced .entry-title a {
+        padding-right: 20px !important;
+        max-width: calc(100% - 20px) !important;
+    }
 }

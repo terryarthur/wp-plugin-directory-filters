@@ -4,7 +4,7 @@ Tags: installer, filters, admin, directory
 Requires at least: 5.8
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.2.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -114,6 +114,23 @@ This plugin is designed to work with the default WordPress plugin installer. Com
 
 = 1.0.0 =
 Initial release of WPPD Filters. Enhances your plugin installer with advanced filtering and visual quality indicators.
+
+== External Services ==
+
+This plugin connects to the WordPress.org Plugin Directory API to retrieve plugin information and metadata. This external service is essential for the plugin's core functionality of filtering and displaying enhanced plugin information.
+
+**Service:** WordPress.org Plugin Directory API
+**Purpose:** Retrieve plugin listings, ratings, installation counts, update information, and compatibility data
+**Data Sent:** Search terms, filter parameters (installation counts, rating minimums, update timeframes)
+**When Data is Sent:** When users search for plugins or apply filters on the plugin installer page (Plugins > Add New)
+**Data Processing:** No personal user data is sent - only search criteria and filter preferences
+
+**Service URLs:**
+- API Endpoint: https://api.wordpress.org/plugins/info/1.2/
+- Terms of Service: https://wordpress.org/about/license/
+- Privacy Policy: https://wordpress.org/about/privacy/
+
+The WordPress.org Plugin Directory API is operated by the WordPress Foundation and follows WordPress.org's terms of service and privacy policy. All API calls are made to publicly available endpoints that provide the same information visible on the WordPress.org plugin directory website.
 
 == Privacy Policy ==
 

@@ -2,7 +2,7 @@
 /**
  * Admin Settings for WordPress Plugin Directory Filters
  *
- * @package WP_Plugin_Directory_Filters
+ * @package WPPDFI_Directory_Filters
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * WordPress admin settings page and configuration management
  */
-class WP_Plugin_Filters_Admin_Settings {
+class WPPDFI_Admin_Settings {
 
 	/**
 	 * Settings page slug
@@ -22,12 +22,12 @@ class WP_Plugin_Filters_Admin_Settings {
 	/**
 	 * Settings group
 	 */
-	const SETTINGS_GROUP = 'wp_plugin_filters_settings_group';
+	const SETTINGS_GROUP = 'wppdfi_settings_group';
 
 	/**
 	 * Settings option name
 	 */
-	const SETTINGS_OPTION = 'wp_plugin_filters_settings';
+	const SETTINGS_OPTION = 'wppdfi_settings';
 
 	/**
 	 * Initialize admin settings
@@ -37,7 +37,7 @@ class WP_Plugin_Filters_Admin_Settings {
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
 
 		// Add settings link to plugin page.
-		add_filter( 'plugin_action_links_' . WP_PLUGIN_FILTERS_BASENAME, array( $this, 'add_settings_link' ) );
+		add_filter( 'plugin_action_links_' . WPPDFI_BASENAME, array( $this, 'add_settings_link' ) );
 	}
 
 	/**
@@ -108,9 +108,9 @@ class WP_Plugin_Filters_Admin_Settings {
 
 		wp_enqueue_script(
 			'wp-plugin-directory-filters-admin-settings',
-			WP_PLUGIN_FILTERS_PLUGIN_URL . 'assets/js/admin-settings.js',
+			WPPDFI_PLUGIN_URL . 'assets/js/admin-settings.js',
 			array( 'jquery' ),
-			WP_PLUGIN_FILTERS_VERSION,
+			WPPDFI_VERSION,
 			true
 		);
 
@@ -120,8 +120,8 @@ class WP_Plugin_Filters_Admin_Settings {
 			array(
 				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 				'nonces'  => array(
-					'clear_cache'    => wp_create_nonce( 'wp_plugin_clear_cache' ),
-					'test_algorithm' => wp_create_nonce( 'wp_plugin_test_algorithm' ),
+					'clear_cache'    => wp_create_nonce( 'wppdfi_clear_cache' ),
+					'test_algorithm' => wp_create_nonce( 'wppdfi_test_algorithm' ),
 				),
 				'strings' => array(
 					'cacheCleared'          => __( 'Cache cleared successfully', 'wppd-filters' ),
@@ -135,9 +135,9 @@ class WP_Plugin_Filters_Admin_Settings {
 
 		wp_enqueue_style(
 			'wp-plugin-directory-filters-admin-settings',
-			WP_PLUGIN_FILTERS_PLUGIN_URL . 'assets/css/admin-settings.css',
+			WPPDFI_PLUGIN_URL . 'assets/css/admin-settings.css',
 			array(),
-			WP_PLUGIN_FILTERS_VERSION
+			WPPDFI_VERSION
 		);
 	}
 
@@ -229,10 +229,10 @@ class WP_Plugin_Filters_Admin_Settings {
 
 			<form method="post" action="">
 				<?php
-				wp_nonce_field( 'wp_plugin_filters_network_settings' );
+				wp_nonce_field( 'wppdfi_network_settings' );
 
 				// Network-specific settings would go here.
-				$network_settings = get_site_option( 'wp_plugin_filters_network_settings', array() );
+				$network_settings = get_site_option( 'wppdfi_network_settings', array() );
 				?>
 
 				<table class="form-table">
@@ -270,7 +270,7 @@ class WP_Plugin_Filters_Admin_Settings {
 		echo '<p>' . esc_html__( 'Configure cache durations and manage cached data.', 'wppd-filters' ) . '</p>';
 
 		// Display cache statistics.
-		$cache_manager = WP_Plugin_Filters_Cache_Manager::get_instance();
+		$cache_manager = WPPDFI_Cache_Manager::get_instance();
 		$stats         = $cache_manager->get_cache_statistics();
 
 		if ( $stats['total_transients'] > 0 ) {

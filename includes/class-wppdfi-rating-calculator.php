@@ -2,7 +2,7 @@
 /**
  * Plugin Usability Rating Calculator
  *
- * @package WP_Plugin_Directory_Filters
+ * @package WPPDFI_Directory_Filters
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Usability rating calculation class
  */
-class WP_Plugin_Filters_Rating_Calculator {
+class WPPDFI_Rating_Calculator {
 
 	/**
 	 * Default algorithm weights
@@ -42,7 +42,7 @@ class WP_Plugin_Filters_Rating_Calculator {
 	 * Constructor
 	 */
 	public function __construct() {
-		$settings      = get_option( 'wp_plugin_filters_settings', array() );
+		$settings      = get_option( 'wppdfi_settings', array() );
 		$this->weights = isset( $settings['usability_weights'] ) ? $settings['usability_weights'] : self::DEFAULT_WEIGHTS;
 
 		// Validate weights sum to 100.
@@ -297,9 +297,9 @@ class WP_Plugin_Filters_Rating_Calculator {
 		$this->weights = array_map( 'intval', $weights );
 
 		// Update stored settings.
-		$settings                      = get_option( 'wp_plugin_filters_settings', array() );
+		$settings                      = get_option( 'wppdfi_settings', array() );
 		$settings['usability_weights'] = $this->weights;
-		update_option( 'wp_plugin_filters_settings', $settings );
+		update_option( 'wppdfi_settings', $settings );
 
 		return true;
 	}
@@ -321,9 +321,9 @@ class WP_Plugin_Filters_Rating_Calculator {
 	public function reset_weights_to_default() {
 		$this->weights = self::DEFAULT_WEIGHTS;
 
-		$settings                      = get_option( 'wp_plugin_filters_settings', array() );
+		$settings                      = get_option( 'wppdfi_settings', array() );
 		$settings['usability_weights'] = $this->weights;
-		update_option( 'wp_plugin_filters_settings', $settings );
+		update_option( 'wppdfi_settings', $settings );
 
 		return true;
 	}

@@ -2,7 +2,7 @@
 /**
  * Core plugin functionality
  *
- * @package WP_Plugin_Directory_Filters
+ * @package WPPDFI_Directory_Filters
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -12,12 +12,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Main plugin class using Singleton pattern
  */
-class WP_Plugin_Directory_Filters {
+class WPPDFI_Directory_Filters {
 
 	/**
 	 * Single instance of the class
 	 *
-	 * @var WP_Plugin_Directory_Filters
+	 * @var WPPDFI_Directory_Filters
 	 */
 	private static $instance = null;
 
@@ -31,14 +31,14 @@ class WP_Plugin_Directory_Filters {
 	/**
 	 * Admin settings instance
 	 *
-	 * @var WP_Plugin_Filters_Admin_Settings
+	 * @var WPPDFI_Admin_Settings
 	 */
 	private $admin_settings;
 
 	/**
 	 * Get single instance of the class
 	 *
-	 * @return WP_Plugin_Directory_Filters
+	 * @return WPPDFI_Directory_Filters
 	 */
 	public static function get_instance() {
 		if ( null === self::$instance ) {
@@ -51,7 +51,7 @@ class WP_Plugin_Directory_Filters {
 	 * Constructor
 	 */
 	private function __construct() {
-		$this->version = WP_PLUGIN_FILTERS_VERSION;
+		$this->version = WPPDFI_VERSION;
 		$this->init_hooks();
 		$this->load_dependencies();
 		$this->init_admin_settings();
@@ -70,13 +70,13 @@ class WP_Plugin_Directory_Filters {
 		add_action( 'load-plugin-install.php', array( $this, 'enhance_plugin_installer' ) );
 
 		// AJAX hooks for logged-in users.
-		add_action( 'wp_ajax_wp_plugin_filter', array( $this, 'handle_filter_request' ) );
-		add_action( 'wp_ajax_wp_plugin_sort', array( $this, 'handle_sort_request' ) );
-		add_action( 'wp_ajax_wp_plugin_rating', array( $this, 'handle_rating_calculation' ) );
-		add_action( 'wp_ajax_wp_plugin_clear_cache', array( $this, 'handle_cache_clear' ) );
+		add_action( 'wp_ajax_wppdfi_filter', array( $this, 'handle_filter_request' ) );
+		add_action( 'wp_ajax_wppdfi_sort', array( $this, 'handle_sort_request' ) );
+		add_action( 'wp_ajax_wppdfi_rating', array( $this, 'handle_rating_calculation' ) );
+		add_action( 'wp_ajax_wppdfi_clear_cache', array( $this, 'handle_cache_clear' ) );
 
 		// Debug AJAX endpoint.
-		add_action( 'wp_ajax_wp_plugin_test', array( $this, 'handle_test_request' ) );
+		add_action( 'wp_ajax_wppdfi_test', array( $this, 'handle_test_request' ) );
 
 		// Multisite hooks.
 		if ( is_multisite() ) {
@@ -84,8 +84,8 @@ class WP_Plugin_Directory_Filters {
 		}
 
 		// Cron hooks.
-		add_action( 'wp_plugin_filters_cleanup', array( $this, 'cleanup_cache' ) );
-		add_action( 'wp_plugin_filters_warm_cache', array( $this, 'warm_cache' ) );
+		add_action( 'wppdfi_cleanup', array( $this, 'cleanup_cache' ) );
+		add_action( 'wppdfi_warm_cache', array( $this, 'warm_cache' ) );
 	}
 
 	/**
@@ -93,20 +93,20 @@ class WP_Plugin_Directory_Filters {
 	 */
 	private function load_dependencies() {
 		// Core classes.
-		require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-wp-plugin-filters-api-handler.php';
-		require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-wp-plugin-filters-rating-calculator.php';
-		require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-wp-plugin-filters-health-calculator.php';
-		require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-wp-plugin-filters-cache-manager.php';
-		require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-wp-plugin-filters-ajax-handler.php';
-		require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-wp-plugin-filters-admin-settings.php';
-		require_once WP_PLUGIN_FILTERS_PLUGIN_DIR . 'includes/class-wp-plugin-filters-security-handler.php';
+		require_once WPPDFI_PLUGIN_DIR . 'includes/class-wppdfi-api-handler.php';
+		require_once WPPDFI_PLUGIN_DIR . 'includes/class-wppdfi-rating-calculator.php';
+		require_once WPPDFI_PLUGIN_DIR . 'includes/class-wppdfi-health-calculator.php';
+		require_once WPPDFI_PLUGIN_DIR . 'includes/class-wppdfi-cache-manager.php';
+		require_once WPPDFI_PLUGIN_DIR . 'includes/class-wppdfi-ajax-handler.php';
+		require_once WPPDFI_PLUGIN_DIR . 'includes/class-wppdfi-admin-settings.php';
+		require_once WPPDFI_PLUGIN_DIR . 'includes/class-wppdfi-security-handler.php';
 	}
 
 	/**
 	 * Initialize admin settings once
 	 */
 	private function init_admin_settings() {
-		$this->admin_settings = new WP_Plugin_Filters_Admin_Settings();
+		$this->admin_settings = new WPPDFI_Admin_Settings();
 		$this->admin_settings->init();
 	}
 
@@ -132,7 +132,7 @@ class WP_Plugin_Directory_Filters {
 		// Enqueue JavaScript.
 		wp_enqueue_script(
 			'wppd-filters',
-			WP_PLUGIN_FILTERS_PLUGIN_URL . 'assets/js/admin.js',
+			WPPDFI_PLUGIN_URL . 'assets/js/admin.js',
 			array( 'jquery', 'wp-util' ),
 			$this->version,
 			true
@@ -143,14 +143,15 @@ class WP_Plugin_Directory_Filters {
 			'wppd-filters',
 			'wpPluginFilters',
 			array(
-				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-				'nonces'  => array(
-					'filter_plugins'   => wp_create_nonce( 'wp_plugin_filter_action' ),
-					'sort_plugins'     => wp_create_nonce( 'wp_plugin_sort_action' ),
-					'calculate_rating' => wp_create_nonce( 'wp_plugin_rating_action' ),
-					'clear_cache'      => wp_create_nonce( 'wp_plugin_clear_cache' ),
+				'ajaxUrl'   => admin_url( 'admin-ajax.php' ),
+				'pluginUrl' => WPPDFI_PLUGIN_URL,
+				'nonces'    => array(
+					'filter_plugins'   => wp_create_nonce( 'wppdfi_filter_action' ),
+					'sort_plugins'     => wp_create_nonce( 'wppdfi_sort_action' ),
+					'calculate_rating' => wp_create_nonce( 'wppdfi_rating_action' ),
+					'clear_cache'      => wp_create_nonce( 'wppdfi_clear_cache' ),
 				),
-				'strings' => array(
+				'strings'   => array(
 					'loading'   => __( 'Loading...', 'wppd-filters' ),
 					'error'     => __( 'An error occurred. Please try again.', 'wppd-filters' ),
 					'noResults' => __( 'No plugins found matching your criteria.', 'wppd-filters' ),
@@ -162,7 +163,7 @@ class WP_Plugin_Directory_Filters {
 		// Enqueue CSS.
 		wp_enqueue_style(
 			'wp-plugin-directory-filters-admin',
-			WP_PLUGIN_FILTERS_PLUGIN_URL . 'assets/css/admin.css',
+			WPPDFI_PLUGIN_URL . 'assets/css/admin.css',
 			array( 'wp-admin', 'dashicons' ),
 			$this->version
 		);
@@ -199,70 +200,16 @@ class WP_Plugin_Directory_Filters {
 	 * Enhance plugin installer page
 	 */
 	public function enhance_plugin_installer() {
-		// Add enhancement CSS to plugin installer page.
-		add_action( 'admin_head', array( $this, 'inject_enhancement_styles' ) );
+		// Enhancement styles are now included in the main admin.css file.
 	}
 
 
-	/**
-	 * Inject CSS enhancements
-	 */
-	public function inject_enhancement_styles() {
-		?>
-		<style type="text/css">
-		/* Ensure filter controls integrate seamlessly */
-		.wp-plugin-directory-filters-controls {
-			margin: 20px 0;
-			padding: 15px;
-			background: #fff;
-			border: 1px solid #ccd0d4;
-			box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
-		}
-		
-		.wp-plugin-directory-filters-row {
-			display: flex;
-			flex-wrap: wrap;
-			gap: 15px;
-			align-items: center;
-			margin-bottom: 10px;
-		}
-		
-		.wp-plugin-directory-filters-field {
-			display: flex;
-			flex-direction: column;
-			min-width: 150px;
-		}
-		
-		.wp-plugin-directory-filters-field label {
-			font-weight: 600;
-			margin-bottom: 4px;
-			color: #1d2327;
-		}
-		
-		.wp-plugin-filter-select,
-		.wp-plugin-filter-input {
-			min-width: 150px;
-		}
-		
-		@media (max-width: 782px) {
-			.wp-plugin-directory-filters-row {
-				flex-direction: column;
-				align-items: stretch;
-			}
-			
-			.wp-plugin-directory-filters-field {
-				min-width: auto;
-			}
-		}
-		</style>
-		<?php
-	}
 
 	/**
 	 * Handle filter requests
 	 */
 	public function handle_filter_request() {
-		$ajax_handler = new WP_Plugin_Filters_AJAX_Handler();
+		$ajax_handler = new WPPDFI_AJAX_Handler();
 		$ajax_handler->handle_filter_request();
 	}
 
@@ -270,7 +217,7 @@ class WP_Plugin_Directory_Filters {
 	 * Handle sort requests
 	 */
 	public function handle_sort_request() {
-		$ajax_handler = new WP_Plugin_Filters_AJAX_Handler();
+		$ajax_handler = new WPPDFI_AJAX_Handler();
 		$ajax_handler->handle_sort_request();
 	}
 
@@ -278,7 +225,7 @@ class WP_Plugin_Directory_Filters {
 	 * Handle rating calculation
 	 */
 	public function handle_rating_calculation() {
-		$ajax_handler = new WP_Plugin_Filters_AJAX_Handler();
+		$ajax_handler = new WPPDFI_AJAX_Handler();
 		$ajax_handler->handle_rating_calculation();
 	}
 
@@ -286,7 +233,7 @@ class WP_Plugin_Directory_Filters {
 	 * Handle cache clearing
 	 */
 	public function handle_cache_clear() {
-		$ajax_handler = new WP_Plugin_Filters_AJAX_Handler();
+		$ajax_handler = new WPPDFI_AJAX_Handler();
 		$ajax_handler->handle_cache_clear();
 	}
 
@@ -307,8 +254,7 @@ class WP_Plugin_Directory_Filters {
 			);
 		} catch ( Exception $e ) {
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
-				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-				error_log( '[WP Plugin Filters] Test AJAX error: ' . $e->getMessage() );
+				wp_debug_log( '[WP Plugin Filters] Test AJAX error: ' . $e->getMessage() );
 			}
 			wp_send_json_error(
 				array(
@@ -346,7 +292,7 @@ class WP_Plugin_Directory_Filters {
 	 * Cleanup cache (cron job)
 	 */
 	public function cleanup_cache() {
-		$cache_manager = WP_Plugin_Filters_Cache_Manager::get_instance();
+		$cache_manager = WPPDFI_Cache_Manager::get_instance();
 		$cache_manager->cleanup_expired_cache();
 	}
 
@@ -354,7 +300,7 @@ class WP_Plugin_Directory_Filters {
 	 * Warm cache (cron job)
 	 */
 	public function warm_cache() {
-		$cache_manager = WP_Plugin_Filters_Cache_Manager::get_instance();
+		$cache_manager = WPPDFI_Cache_Manager::get_instance();
 		$cache_manager->warm_popular_plugins_cache();
 	}
 

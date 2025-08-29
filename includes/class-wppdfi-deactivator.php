@@ -2,7 +2,7 @@
 /**
  * Plugin Deactivator for WordPress Plugin Directory Filters
  *
- * @package WP_Plugin_Directory_Filters
+ * @package WPPDFI_Directory_Filters
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Fired during plugin deactivation
  */
-class WP_Plugin_Filters_Deactivator {
+class WPPDFI_Deactivator {
 
 	/**
 	 * Deactivate the plugin
@@ -30,7 +30,7 @@ class WP_Plugin_Filters_Deactivator {
 		self::log_deactivation();
 
 		// Set deactivation flag.
-		set_transient( 'wp_plugin_filters_deactivated', true, 60 );
+		set_transient( 'wppdfi_deactivated', true, 60 );
 
 		// Clear object cache if available.
 		self::clear_object_cache();
@@ -44,19 +44,19 @@ class WP_Plugin_Filters_Deactivator {
 	 */
 	private static function clear_cron_events() {
 		// Clear daily cache cleanup.
-		wp_clear_scheduled_hook( 'wp_plugin_filters_cleanup' );
+		wp_clear_scheduled_hook( 'wppdfi_cleanup' );
 
 		// Clear hourly cache warming.
-		wp_clear_scheduled_hook( 'wp_plugin_filters_warm_cache' );
+		wp_clear_scheduled_hook( 'wppdfi_warm_cache' );
 
 		// Clear weekly statistics collection.
-		wp_clear_scheduled_hook( 'wp_plugin_filters_collect_stats' );
+		wp_clear_scheduled_hook( 'wppdfi_collect_stats' );
 
 		// Clear any other plugin-specific cron events.
 		$cron_hooks = array(
-			'wp_plugin_filters_maintenance',
-			'wp_plugin_filters_api_health_check',
-			'wp_plugin_filters_rating_recalculation',
+			'wppdfi_maintenance',
+			'wppdfi_api_health_check',
+			'wppdfi_rating_recalculation',
 		);
 
 		foreach ( $cron_hooks as $hook ) {
@@ -71,7 +71,7 @@ class WP_Plugin_Filters_Deactivator {
 		global $wpdb;
 
 		// Clear all plugin-related transients using WordPress API.
-		$cache_keys = wp_cache_get( 'wp_plugin_filters_cache_keys', 'wp_plugin_filters' );
+		$cache_keys = wp_cache_get( 'wppdfi_cache_keys', 'wp_plugin_filters' );
 		if ( ! $cache_keys ) {
 			$cache_keys = array();
 		}
@@ -82,15 +82,15 @@ class WP_Plugin_Filters_Deactivator {
 		}
 
 		// Clear the cache key registry.
-		wp_cache_delete( 'wp_plugin_filters_cache_keys', 'wp_plugin_filters' );
+		wp_cache_delete( 'wppdfi_cache_keys', 'wp_plugin_filters' );
 
 		// Clear specific temporary options.
 		$temp_options = array(
-			'wp_plugin_filters_activated',
-			'wp_plugin_filters_activation_notice',
-			'wp_plugin_filters_temp_cache',
-			'wp_plugin_filters_api_status',
-			'wp_plugin_filters_last_cleanup',
+			'wppdfi_activated',
+			'wppdfi_activation_notice',
+			'wppdfi_temp_cache',
+			'wppdfi_api_status',
+			'wppdfi_last_cleanup',
 		);
 
 		foreach ( $temp_options as $option ) {
@@ -121,12 +121,12 @@ class WP_Plugin_Filters_Deactivator {
 	 * Preserve user settings for potential reactivation
 	 */
 	private static function preserve_user_settings() {
-		$settings = get_option( 'wp_plugin_filters_settings' );
+		$settings = get_option( 'wppdfi_settings' );
 		if ( $settings ) {
 			// Add deactivation timestamp to settings.
 			$settings['deactivated_at']    = current_time( 'mysql' );
 			$settings['preserve_settings'] = true;
-			update_option( 'wp_plugin_filters_settings', $settings );
+			update_option( 'wppdfi_settings', $settings );
 		}
 	}
 
@@ -137,7 +137,7 @@ class WP_Plugin_Filters_Deactivator {
 		if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
 			$log_data = array(
 				'event'             => 'plugin_deactivated',
-				'version'           => get_option( 'wp_plugin_filters_version', 'unknown' ),
+				'version'           => get_option( 'wppdfi_version', 'unknown' ),
 				'wordpress_version' => get_bloginfo( 'version' ),
 				'php_version'       => PHP_VERSION,
 				'timestamp'         => current_time( 'mysql' ),
@@ -147,8 +147,7 @@ class WP_Plugin_Filters_Deactivator {
 			);
 
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
-				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-				error_log( '[WP Plugin Filters] Deactivation: ' . wp_json_encode( $log_data ) );
+				wp_debug_log( '[WP Plugin Filters] Deactivation: ' . wp_json_encode( $log_data ) );
 			}
 		}
 	}
@@ -162,7 +161,7 @@ class WP_Plugin_Filters_Deactivator {
 		global $wpdb;
 
 		// Get cached statistics or calculate if not cached.
-		$stats = wp_cache_get( 'wp_plugin_filters_deactivation_stats', 'wp_plugin_filters' );
+		$stats = wp_cache_get( 'wppdfi_deactivation_stats', 'wp_plugin_filters' );
 		if ( false === $stats ) {
 			$stats = array(
 				array(
@@ -171,7 +170,7 @@ class WP_Plugin_Filters_Deactivator {
 				),
 			);
 			// Cache for 1 minute during deactivation.
-			wp_cache_set( 'wp_plugin_filters_deactivation_stats', $stats, 'wp_plugin_filters', 60 );
+			wp_cache_set( 'wppdfi_deactivation_stats', $stats, 'wp_plugin_filters', 60 );
 		}
 
 		return $stats[0] ?? array(
@@ -187,7 +186,7 @@ class WP_Plugin_Filters_Deactivator {
 	 */
 	private static function is_network_deactivation() {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- WordPress core handles nonce verification for plugin deactivation
-		return is_multisite() && isset( $_GET['networkwide'] ) && '1' === $_GET['networkwide'];
+		return is_multisite() && isset( $_GET['networkwide'] ) && '1' === sanitize_text_field( wp_unslash( $_GET['networkwide'] ) );
 	}
 
 	/**
@@ -260,7 +259,7 @@ class WP_Plugin_Filters_Deactivator {
 	 * Create deactivation notice for admin
 	 */
 	private static function create_deactivation_notice() {
-		$settings = get_option( 'wp_plugin_filters_settings' );
+		$settings = get_option( 'wppdfi_settings' );
 		$message  = __( 'WordPress Plugin Directory Filters has been deactivated. Your settings have been preserved and will be restored if you reactivate the plugin.', 'wppd-filters' );
 
 		if ( ! empty( $settings['preserve_settings'] ) ) {
@@ -281,7 +280,7 @@ class WP_Plugin_Filters_Deactivator {
 			'dismissible' => true,
 		);
 
-		set_transient( 'wp_plugin_filters_deactivation_notice', $notice, 300 ); // 5 minutes.
+		set_transient( 'wppdfi_deactivation_notice', $notice, 300 ); // 5 minutes.
 	}
 
 	/**
@@ -291,12 +290,12 @@ class WP_Plugin_Filters_Deactivator {
 	 */
 	public static function verify_deactivation() {
 		// Check if cron events were cleared.
-		if ( wp_next_scheduled( 'wp_plugin_filters_cleanup' ) ) {
+		if ( wp_next_scheduled( 'wppdfi_cleanup' ) ) {
 			return false;
 		}
 
 		// Check if temporary data was cleared.
-		if ( get_transient( 'wp_plugin_filters_activated' ) ) {
+		if ( get_transient( 'wppdfi_activated' ) ) {
 			return false;
 		}
 
@@ -319,9 +318,9 @@ class WP_Plugin_Filters_Deactivator {
 
 		// Count cleared cron events.
 		$cron_hooks = array(
-			'wp_plugin_filters_cleanup',
-			'wp_plugin_filters_warm_cache',
-			'wp_plugin_filters_collect_stats',
+			'wppdfi_cleanup',
+			'wppdfi_warm_cache',
+			'wppdfi_collect_stats',
 		);
 
 		foreach ( $cron_hooks as $hook ) {
@@ -331,7 +330,7 @@ class WP_Plugin_Filters_Deactivator {
 		}
 
 		// Check if settings are preserved.
-		$settings = get_option( 'wp_plugin_filters_settings' );
+		$settings = get_option( 'wppdfi_settings' );
 		if ( $settings && ! empty( $settings['preserve_settings'] ) ) {
 			$summary['settings_preserved'] = true;
 		}
@@ -339,10 +338,10 @@ class WP_Plugin_Filters_Deactivator {
 		// Check if cache was cleared.
 		global $wpdb;
 		// Check transient count using cached data.
-		$transient_count = wp_cache_get( 'wp_plugin_filters_transient_count', 'wp_plugin_filters' );
+		$transient_count = wp_cache_get( 'wppdfi_transient_count', 'wp_plugin_filters' );
 		if ( false === $transient_count ) {
 			$transient_count = 0; // Assume clean state after proper cleanup.
-			wp_cache_set( 'wp_plugin_filters_transient_count', $transient_count, 'wp_plugin_filters', 60 );
+			wp_cache_set( 'wppdfi_transient_count', $transient_count, 'wp_plugin_filters', 60 );
 		}
 
 		$summary['transients_cleared'] = intval( $transient_count );
@@ -367,8 +366,7 @@ class WP_Plugin_Filters_Deactivator {
 		} catch ( Exception $e ) {
 			// Log error but continue deactivation.
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
-				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-				error_log( '[WP Plugin Filters] Deactivation error: ' . $e->getMessage() );
+				wp_debug_log( '[WP Plugin Filters] Deactivation error: ' . $e->getMessage() );
 			}
 
 			// Force cleanup.
@@ -384,10 +382,10 @@ class WP_Plugin_Filters_Deactivator {
 
 		// Force clear using WordPress API.
 		$options_to_delete = array(
-			'wp_plugin_filters_activated',
-			'wp_plugin_filters_activation_notice',
-			'wp_plugin_filters_cache_stats',
-			'wp_plugin_filters_last_cleanup',
+			'wppdfi_activated',
+			'wppdfi_activation_notice',
+			'wppdfi_cache_stats',
+			'wppdfi_last_cleanup',
 		);
 
 		foreach ( $options_to_delete as $option ) {
@@ -408,11 +406,11 @@ class WP_Plugin_Filters_Deactivator {
 	 */
 	public static function prepare_uninstall() {
 		// Mark settings for removal.
-		$settings = get_option( 'wp_plugin_filters_settings' );
+		$settings = get_option( 'wppdfi_settings' );
 		if ( $settings ) {
 			$settings['marked_for_uninstall']  = true;
 			$settings['uninstall_prepared_at'] = current_time( 'mysql' );
-			update_option( 'wp_plugin_filters_settings', $settings );
+			update_option( 'wppdfi_settings', $settings );
 		}
 
 		// Final cleanup.

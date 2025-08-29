@@ -2,7 +2,7 @@
 /**
  * WordPress.org Plugin API Handler
  *
- * @package WP_Plugin_Directory_Filters
+ * @package WPPDFI_Directory_Filters
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * WordPress.org Plugin API integration class
  */
-class WP_Plugin_Filters_API_Handler {
+class WPPDFI_API_Handler {
 
 	/**
 	 * WordPress.org API base URL
@@ -97,8 +97,7 @@ class WP_Plugin_Filters_API_Handler {
 
 		// Debug: Log the request args.
 		if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
-			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			error_log( '[WP Plugin Filters] API Request Args: ' . wp_json_encode( $request_args ) );
+			wp_debug_log( '[WP Plugin Filters] API Request Args: ' . wp_json_encode( $request_args ) );
 		}
 
 		// Icons ARE supported in query_plugins - the Chrome extension proves this works.
@@ -117,8 +116,7 @@ class WP_Plugin_Filters_API_Handler {
 		// Debug: Log first plugin to see if icons are included after processing.
 		if ( isset( $processed_response['plugins'] ) && count( $processed_response['plugins'] ) > 0 ) {
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
-				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-				error_log( '[WP Plugin Filters] First processed plugin: ' . wp_json_encode( $processed_response['plugins'][0] ) );
+				wp_debug_log( '[WP Plugin Filters] First processed plugin: ' . wp_json_encode( $processed_response['plugins'][0] ) );
 			}
 		}
 
@@ -223,8 +221,7 @@ class WP_Plugin_Filters_API_Handler {
 
 		if ( is_wp_error( $response ) ) {
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
-				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-				error_log( '[WP Plugin Filters] API Request Failed: ' . $response->get_error_message() );
+				wp_debug_log( '[WP Plugin Filters] API Request Failed: ' . $response->get_error_message() );
 			}
 			return new WP_Error( 'api_error', __( 'Failed to connect to WordPress.org API', 'wppd-filters' ) );
 		}
@@ -232,8 +229,7 @@ class WP_Plugin_Filters_API_Handler {
 		$response_code = wp_remote_retrieve_response_code( $response );
 		if ( 200 !== $response_code ) {
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
-				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-				error_log( '[WP Plugin Filters] API Request HTTP Error: ' . $response_code );
+				wp_debug_log( '[WP Plugin Filters] API Request HTTP Error: ' . $response_code );
 			}
 			/* translators: %d: HTTP status code */
 			return new WP_Error( 'api_http_error', sprintf( __( 'API request failed with status code: %d', 'wppd-filters' ), $response_code ) );
@@ -244,8 +240,7 @@ class WP_Plugin_Filters_API_Handler {
 
 		if ( json_last_error() !== JSON_ERROR_NONE ) {
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
-				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-				error_log( '[WP Plugin Filters] JSON Decode Error: ' . json_last_error_msg() );
+				wp_debug_log( '[WP Plugin Filters] JSON Decode Error: ' . json_last_error_msg() );
 			}
 			return new WP_Error( 'json_decode_error', __( 'Invalid JSON response from WordPress.org API', 'wppd-filters' ) );
 		}

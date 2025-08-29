@@ -2,7 +2,7 @@
 /**
  * Plugin Uninstaller for WordPress Plugin Directory Filters
  *
- * @package WP_Plugin_Directory_Filters
+ * @package WPPDFI_Directory_Filters
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Fired during plugin uninstall
  */
-class WP_Plugin_Filters_Uninstaller {
+class WPPDFI_Uninstaller {
 
 	/**
 	 * Uninstall the plugin
@@ -47,8 +47,7 @@ class WP_Plugin_Filters_Uninstaller {
 		} catch ( Exception $e ) {
 			// Log the error.
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
-				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-				error_log( '[WP Plugin Filters] Uninstall failed: ' . $e->getMessage() );
+				wp_debug_log( '[WP Plugin Filters] Uninstall failed: ' . $e->getMessage() );
 			}
 
 			// Attempt emergency cleanup.
@@ -56,8 +55,7 @@ class WP_Plugin_Filters_Uninstaller {
 
 			// Log emergency cleanup.
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
-				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-				error_log( '[WP Plugin Filters] Emergency cleanup completed after failed uninstall' );
+				wp_debug_log( '[WP Plugin Filters] Emergency cleanup completed after failed uninstall' );
 			}
 		}
 	}
@@ -112,14 +110,14 @@ class WP_Plugin_Filters_Uninstaller {
 
 		// Remove plugin-specific options.
 		$options_to_remove = array(
-			'wp_plugin_filters_settings',
-			'wp_plugin_filters_version',
-			'wp_plugin_filters_db_version',
-			'wp_plugin_filters_activated',
-			'wp_plugin_filters_first_activation',
-			'wp_plugin_filters_api_status',
-			'wp_plugin_filters_last_cleanup',
-			'wp_plugin_filters_statistics',
+			'wppdfi_settings',
+			'wppdfi_version',
+			'wppdfi_db_version',
+			'wppdfi_activated',
+			'wppdfi_first_activation',
+			'wppdfi_api_status',
+			'wppdfi_last_cleanup',
+			'wppdfi_statistics',
 		);
 
 		foreach ( $options_to_remove as $option ) {
@@ -128,10 +126,10 @@ class WP_Plugin_Filters_Uninstaller {
 
 		// Remove any remaining plugin options using WordPress functions.
 		$known_options = array(
-			'wp_plugin_filters_cache_duration',
-			'wp_plugin_filters_api_timeout',
-			'wp_plugin_filters_settings',
-			'wp_plugin_filters_version',
+			'wppdfi_cache_duration',
+			'wppdfi_api_timeout',
+			'wppdfi_settings',
+			'wppdfi_version',
 		);
 
 		$deleted_count = 0;
@@ -150,8 +148,8 @@ class WP_Plugin_Filters_Uninstaller {
 	 */
 	private static function remove_network_options() {
 		$network_options = array(
-			'wp_plugin_filters_network_settings',
-			'wp_plugin_filters_network_activated',
+			'wppdfi_network_settings',
+			'wppdfi_network_activated',
 		);
 
 		foreach ( $network_options as $option ) {
@@ -187,17 +185,16 @@ class WP_Plugin_Filters_Uninstaller {
 
 		if ( 0 === $deleted_count ) {
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
-				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-				error_log( '[WP Plugin Filters] No transients found to delete' );
+				wp_debug_log( '[WP Plugin Filters] No transients found to delete' );
 			}
 		}
 
 		// Remove specific transients.
 		$transients_to_remove = array(
-			'wp_plugin_filters_activated',
-			'wp_plugin_filters_deactivated',
-			'wp_plugin_filters_activation_notice',
-			'wp_plugin_filters_deactivation_notice',
+			'wppdfi_activated',
+			'wppdfi_deactivated',
+			'wppdfi_activation_notice',
+			'wppdfi_deactivation_notice',
 		);
 
 		foreach ( $transients_to_remove as $transient ) {
@@ -210,12 +207,12 @@ class WP_Plugin_Filters_Uninstaller {
 	 */
 	private static function clear_cron_events() {
 		$cron_hooks = array(
-			'wp_plugin_filters_cleanup',
-			'wp_plugin_filters_warm_cache',
-			'wp_plugin_filters_collect_stats',
-			'wp_plugin_filters_maintenance',
-			'wp_plugin_filters_api_health_check',
-			'wp_plugin_filters_rating_recalculation',
+			'wppdfi_cleanup',
+			'wppdfi_warm_cache',
+			'wppdfi_collect_stats',
+			'wppdfi_maintenance',
+			'wppdfi_api_health_check',
+			'wppdfi_rating_recalculation',
 		);
 
 		foreach ( $cron_hooks as $hook ) {
@@ -248,8 +245,7 @@ class WP_Plugin_Filters_Uninstaller {
 		// Check if directory is readable.
 		if ( ! is_readable( $dir ) ) {
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
-				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-				error_log( '[WP Plugin Filters] Cannot read directory for deletion: ' . $dir );
+				wp_debug_log( '[WP Plugin Filters] Cannot read directory for deletion: ' . $dir );
 			}
 			return;
 		}
@@ -271,22 +267,19 @@ class WP_Plugin_Filters_Uninstaller {
 						} else {
 							// Log that WP_Filesystem couldn't handle the file.
 							if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
-								// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-								error_log( '[WP Plugin Filters] Cannot delete file via WP_Filesystem: ' . $path );
+								wp_debug_log( '[WP Plugin Filters] Cannot delete file via WP_Filesystem: ' . $path );
 							}
 						}
 					} else {
 						// WP_Filesystem failed, log the failure.
 						if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
-							// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-							error_log( '[WP Plugin Filters] WP_Filesystem initialization failed for file: ' . $path );
+							wp_debug_log( '[WP Plugin Filters] WP_Filesystem initialization failed for file: ' . $path );
 						}
 					}
 				}
 			} catch ( Exception $e ) {
 				if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
-					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-					error_log( '[WP Plugin Filters] Error deleting: ' . $path . ' - ' . $e->getMessage() );
+					wp_debug_log( '[WP Plugin Filters] Error deleting: ' . $path . ' - ' . $e->getMessage() );
 				}
 			}
 		}
@@ -300,21 +293,18 @@ class WP_Plugin_Filters_Uninstaller {
 				} else {
 					// Log that WP_Filesystem couldn't handle the directory.
 					if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
-						// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-						error_log( '[WP Plugin Filters] Cannot delete directory via WP_Filesystem: ' . $dir );
+						wp_debug_log( '[WP Plugin Filters] Cannot delete directory via WP_Filesystem: ' . $dir );
 					}
 				}
 			} else {
 				// WP_Filesystem failed, log the failure.
 				if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
-					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-					error_log( '[WP Plugin Filters] WP_Filesystem initialization failed for directory: ' . $dir );
+					wp_debug_log( '[WP Plugin Filters] WP_Filesystem initialization failed for directory: ' . $dir );
 				}
 			}
 		} catch ( Exception $e ) {
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
-				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-				error_log( '[WP Plugin Filters] Error deleting directory: ' . $dir . ' - ' . $e->getMessage() );
+				wp_debug_log( '[WP Plugin Filters] Error deleting directory: ' . $dir . ' - ' . $e->getMessage() );
 			}
 		}
 	}
@@ -367,7 +357,7 @@ class WP_Plugin_Filters_Uninstaller {
 		if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
 			$log_data = array(
 				'event'             => 'plugin_uninstalled',
-				'version'           => get_option( 'wp_plugin_filters_version', 'unknown' ),
+				'version'           => get_option( 'wppdfi_version', 'unknown' ),
 				'wordpress_version' => get_bloginfo( 'version' ),
 				'php_version'       => PHP_VERSION,
 				'timestamp'         => current_time( 'mysql' ),
@@ -377,8 +367,7 @@ class WP_Plugin_Filters_Uninstaller {
 			);
 
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
-				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-				error_log( '[WP Plugin Filters] Uninstall: ' . wp_json_encode( $log_data ) );
+				wp_debug_log( '[WP Plugin Filters] Uninstall: ' . wp_json_encode( $log_data ) );
 			}
 		}
 	}
@@ -393,10 +382,10 @@ class WP_Plugin_Filters_Uninstaller {
 
 		// Check remaining plugin data using WordPress functions.
 		$known_options = array(
-			'wp_plugin_filters_cache_duration',
-			'wp_plugin_filters_api_timeout',
-			'wp_plugin_filters_settings',
-			'wp_plugin_filters_version',
+			'wppdfi_cache_duration',
+			'wppdfi_api_timeout',
+			'wppdfi_settings',
+			'wppdfi_version',
 		);
 
 		$remaining_options = 0;
@@ -439,10 +428,10 @@ class WP_Plugin_Filters_Uninstaller {
 
 		// Check if any plugin data remains using WordPress functions.
 		$known_options = array(
-			'wp_plugin_filters_cache_duration',
-			'wp_plugin_filters_api_timeout',
-			'wp_plugin_filters_settings',
-			'wp_plugin_filters_version',
+			'wppdfi_cache_duration',
+			'wppdfi_api_timeout',
+			'wppdfi_settings',
+			'wppdfi_version',
 		);
 
 		$remaining_options = 0;
@@ -467,7 +456,7 @@ class WP_Plugin_Filters_Uninstaller {
 		}
 
 		// Check if cron events were cleared.
-		$remaining_crons = wp_next_scheduled( 'wp_plugin_filters_cleanup' ) ? 1 : 0;
+		$remaining_crons = wp_next_scheduled( 'wppdfi_cleanup' ) ? 1 : 0;
 
 		return ( 0 === $remaining_options && 0 === $remaining_transients && 0 === $remaining_crons );
 	}
@@ -480,10 +469,10 @@ class WP_Plugin_Filters_Uninstaller {
 
 		// Force delete all plugin-related entries using WordPress functions.
 		$all_options = array(
-			'wp_plugin_filters_cache_duration',
-			'wp_plugin_filters_api_timeout',
-			'wp_plugin_filters_settings',
-			'wp_plugin_filters_version',
+			'wppdfi_cache_duration',
+			'wppdfi_api_timeout',
+			'wppdfi_settings',
+			'wppdfi_version',
 		);
 
 		$all_transients = array(
@@ -511,9 +500,9 @@ class WP_Plugin_Filters_Uninstaller {
 		}
 
 		// Clear all cron events (just in case).
-		wp_clear_scheduled_hook( 'wp_plugin_filters_cleanup' );
-		wp_clear_scheduled_hook( 'wp_plugin_filters_warm_cache' );
-		wp_clear_scheduled_hook( 'wp_plugin_filters_collect_stats' );
+		wp_clear_scheduled_hook( 'wppdfi_cleanup' );
+		wp_clear_scheduled_hook( 'wppdfi_warm_cache' );
+		wp_clear_scheduled_hook( 'wppdfi_collect_stats' );
 
 		// Force clear cache.
 		if ( wp_using_ext_object_cache() ) {
@@ -521,8 +510,7 @@ class WP_Plugin_Filters_Uninstaller {
 		}
 
 		if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
-			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			error_log( '[WP Plugin Filters] Emergency cleanup completed' );
+			wp_debug_log( '[WP Plugin Filters] Emergency cleanup completed' );
 		}
 	}
 
@@ -541,18 +529,18 @@ class WP_Plugin_Filters_Uninstaller {
 	 * Create uninstall backup (optional)
 	 */
 	private static function create_uninstall_backup() {
-		$settings = get_option( 'wp_plugin_filters_settings' );
+		$settings = get_option( 'wppdfi_settings' );
 
 		if ( $settings ) {
 			$backup_data = array(
 				'settings'          => $settings,
-				'version'           => get_option( 'wp_plugin_filters_version' ),
+				'version'           => get_option( 'wppdfi_version' ),
 				'timestamp'         => current_time( 'mysql' ),
 				'wordpress_version' => get_bloginfo( 'version' ),
 			);
 
 			// Store backup as a temporary option (will be auto-removed).
-			set_transient( 'wp_plugin_filters_uninstall_backup', $backup_data, WEEK_IN_SECONDS );
+			set_transient( 'wppdfi_uninstall_backup', $backup_data, WEEK_IN_SECONDS );
 		}
 	}
 }

@@ -2,7 +2,7 @@
 /**
  * Security Handler for WordPress Plugin Directory Filters
  *
- * @package WP_Plugin_Directory_Filters
+ * @package WPPDFI_Directory_Filters
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Security validation and sanitization class
  */
-class WP_Plugin_Filters_Security_Handler {
+class WPPDFI_Security_Handler {
 
 	/**
 	 * Validate AJAX request security
@@ -228,7 +228,7 @@ class WP_Plugin_Filters_Security_Handler {
 		$ip_address = $this->get_client_ip();
 
 		// Create rate limit key based on user and IP.
-		$rate_key = "wp_plugin_rate_{$action}_{$user_id}_{$ip_address}";
+		$rate_key = "wppdfi_rate_{$action}_{$user_id}_{$ip_address}";
 
 		$current_count = get_transient( $rate_key );
 		if ( false === $current_count ) {
@@ -345,8 +345,7 @@ class WP_Plugin_Filters_Security_Handler {
 			);
 
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
-				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-				error_log( '[WP Plugin Filters Security] ' . wp_json_encode( $log_data ) );
+				wp_debug_log( '[WP Plugin Filters Security] ' . wp_json_encode( $log_data ) );
 			}
 		}
 	}
