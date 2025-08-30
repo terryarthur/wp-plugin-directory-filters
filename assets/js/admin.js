@@ -1060,7 +1060,7 @@
                                 <span title="${plugin.last_updated || 'Unknown'}">${this.formatRelativeTime(plugin.last_updated)}</span>
                             </div>
                             <div class="column-downloaded">
-                                ${this.formatInstallCount(installs)} Active Installations
+                                <span class="${this.getInstallationsColorClass(installs)}">${this.formatInstallCount(installs)} Active Installations</span>
                             </div>
                             <div class="column-compatibility">
                                 <span class="compatibility-compatible">
@@ -1130,7 +1130,7 @@
                                 </span>
                                 <span class="active-installs">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path fill-rule="evenodd" d="M11.25 5h1.5v15h-1.5V5zM6 10h1.5v10H6V10zm12 4h-1.5v6H18v-6z" clip-rule="evenodd"></path></svg>
-                                    <span>${this.formatInstallCount(installs)} active installations</span>
+                                    <span class="${this.getInstallationsColorClass(installs)}">${this.formatInstallCount(installs)} active installations</span>
                                 </span>
                                 <span class="tested-with ${wpCompatStatus.cssClass}">
                                     <span style="display: inline-flex; align-items: center; margin-right: 6px;">${wpCompatStatus.icon}</span>
@@ -1142,11 +1142,11 @@
                                 </span>
                                 <span class="usability-score usability-${usabilityColor}">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path></svg>
-                                    <span>Usability Rating: ${usability.score}/100</span>
+                                    <span class="${this.getUsabilityColorClass(usability.score)}">Usability Rating: ${usability.score}/100</span>
                                 </span>
                                 <span class="health-score health-${this.getHealthColor(healthScore)}" data-slug="${plugin.slug}">
                                     <span class="health-meter">${this.getHealthPowerMeter(healthScore)}</span>
-                                    <span>Health Score: ${healthScore}/100</span>
+                                    <span class="${this.getHealthScoreColorClass(healthScore)}">Health Score: ${healthScore}/100</span>
                                 </span>
                             </div>
                             <div class="plugin-card-install-action" style="position: absolute; bottom: 0; right: 0;">
@@ -1580,6 +1580,51 @@
                 return count + '+';
             }
             return 'Less than 10';
+        },
+
+        /**
+         * Get CSS class for installation count color coding
+         */
+        getInstallationsColorClass: function(count) {
+            if (count >= 1000000) {
+                return 'installations-high';      // 1M+ installs - green
+            } else if (count >= 100000) {
+                return 'installations-medium-high'; // 100K-1M installs - light green
+            } else if (count >= 10000) {
+                return 'installations-medium';    // 10K-100K installs - orange
+            } else {
+                return 'installations-low';       // under 10K installs - red
+            }
+        },
+
+        /**
+         * Get CSS class for usability rating color coding
+         */
+        getUsabilityColorClass: function(rating) {
+            if (rating >= 4.5) {
+                return 'usability-excellent';     // 4.5+ rating - green
+            } else if (rating >= 3.5) {
+                return 'usability-good';          // 3.5-4.4 rating - light green
+            } else if (rating >= 2.5) {
+                return 'usability-fair';          // 2.5-3.4 rating - orange
+            } else {
+                return 'usability-poor';          // under 2.5 rating - red
+            }
+        },
+
+        /**
+         * Get CSS class for health score color coding
+         */
+        getHealthScoreColorClass: function(score) {
+            if (score >= 86) {
+                return 'health-excellent';        // 86-100 score - green
+            } else if (score >= 71) {
+                return 'health-good';             // 71-85 score - light green
+            } else if (score >= 41) {
+                return 'health-fair';             // 41-70 score - orange
+            } else {
+                return 'health-poor';             // 0-40 score - red
+            }
         },
 
         /**

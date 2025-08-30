@@ -3,7 +3,7 @@
  * Plugin Name: WPPD Filters
  * Plugin URI: https://wppd-filters.terryarthur.com/
  * Description: Enhances the WordPress admin plugin installer with advanced filtering, sorting, and rating capabilities. Features colored status indicators, WordPress compatibility checking, and modern UI improvements.
- * Version: 1.2.0
+ * Version: 1.2.1
  * Author: Terry Arthur
  * Author URI: https://terryarthur.com
  * License: GPL-2.0-or-later
@@ -24,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Plugin constants.
-define( 'WPPDFI_VERSION', '1.2.0' );
+define( 'WPPDFI_VERSION', '1.2.1' );
 define( 'WPPDFI_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'WPPDFI_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'WPPDFI_BASENAME', plugin_basename( __FILE__ ) );

@@ -109,49 +109,32 @@ class WPPDFI_Health_Calculator {
 	 * @return float|null Component score (0.0-1.0) or null if no data.
 	 */
 	private function calculate_update_frequency_score( $plugin_data ) {
-		// This is a simplified heuristic based on version number structure.
-		// In a real implementation, this would analyze historical update patterns.
+		// Calculate update frequency score based on time since last update.
+		// Shorter time between updates indicates better maintenance and active development.
 
-		if ( ! isset( $plugin_data['version'] ) || ! isset( $plugin_data['last_updated'] ) ) {
+		if ( ! isset( $plugin_data['last_updated'] ) ) {
 			return null;
 		}
 
-		$version      = $plugin_data['version'];
-		$last_updated = $plugin_data['last_updated'];
+		$days_since_update = $this->get_days_since_update( $plugin_data['last_updated'] );
 
-		// Parse version for complexity (more segments = more active development).
-		$version_parts            = explode( '.', $version );
-		$version_complexity_score = 0;
-
-		if ( count( $version_parts ) >= 3 ) {
-			$version_complexity_score = 0.8; // Semantic versioning suggests active development.
-		} elseif ( count( $version_parts ) === 2 ) {
-			$version_complexity_score = 0.6; // Some versioning structure.
-		} else {
-			$version_complexity_score = 0.4; // Simple versioning.
-		}
-
-		// Check if version suggests active development (patch versions).
-		$patch_version = isset( $version_parts[2] ) ? intval( $version_parts[2] ) : 0;
-		if ( $patch_version > 5 ) {
-			$version_complexity_score += 0.1; // Bonus for many patches.
-		}
-
-		// Factor in recency (plugins updated recently are likely more active).
-		$days_since_update = $this->get_days_since_update( $last_updated );
-		$recency_factor    = 1.0;
-
-		if ( $days_since_update <= 30 ) {
-			$recency_factor = 1.0;   // Recently updated.
-		} elseif ( $days_since_update <= 90 ) {
-			$recency_factor = 0.9;   // Updated within 3 months.
+		// Score based on update frequency (more recent updates = better maintenance).
+		if ( $days_since_update <= 90 ) {
+			// Excellent: Updated within 3 months - actively maintained.
+			return 1.0;
 		} elseif ( $days_since_update <= 180 ) {
-			$recency_factor = 0.7;   // Updated within 6 months.
+			// Good: Updated within 6 months - well maintained.
+			return 0.8;
+		} elseif ( $days_since_update <= 365 ) {
+			// Fair: Updated within 1 year - acceptable maintenance.
+			return 0.6;
+		} elseif ( $days_since_update <= 730 ) {
+			// Poor: Updated within 2 years - concerning maintenance lag.
+			return 0.4;
 		} else {
-			$recency_factor = 0.5;   // Not recently updated.
+			// Very poor: Not updated in over 2 years - likely abandoned.
+			return 0.2;
 		}
-
-		return min( 1.0, $version_complexity_score * $recency_factor );
 	}
 
 	/**

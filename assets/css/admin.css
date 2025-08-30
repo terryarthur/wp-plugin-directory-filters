@@ -73,8 +73,8 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    flex-wrap: nowrap;
-    justify-content: space-between;
+    flex-wrap: wrap;
+    justify-content: flex-start;
 }
 
 .wp-plugin-filters-controls-left {
@@ -977,6 +977,17 @@ body.wp-filter-active.wp-filter-results-active .plugin-card footer .usability-sc
         max-width: 180px;
     }
     
+    /* Better filter bar wrapping on smaller screens */
+    .wp-plugin-filters-inline {
+        gap: 6px;
+    }
+    
+    .wp-plugin-filters-controls-left,
+    .wp-plugin-filters-controls-right {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    
     /* Adjust grid for medium screens */
     body.wp-filter-active .plugin-cards,
     body.wp-filter-active .wp-block-post-template,
@@ -988,21 +999,36 @@ body.wp-filter-active.wp-filter-results-active .plugin-card footer .usability-sc
 }
 
 @media screen and (max-width: 960px) {
-    .wp-plugin-filters-controls .wp-plugin-filters-row {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 10px;
+    /* Allow filter bar to wrap while keeping some horizontal layout */
+    .wp-plugin-filters-inline {
+        justify-content: flex-start;
+        gap: 5px;
     }
     
-    .wp-plugin-filters-field {
+    .wp-plugin-filters-controls-left,
+    .wp-plugin-filters-controls-right {
         min-width: auto;
-        max-width: none;
         flex: none;
     }
     
-    #wp-plugin-clear-filters {
-        margin-top: 10px;
-        align-self: flex-start;
+    .wp-plugin-filters-field {
+        min-width: 120px;
+        max-width: 160px;
+        flex: 0 0 auto;
+    }
+    
+    .wp-plugin-filter-select,
+    .wp-plugin-filter-input {
+        min-width: 120px;
+    }
+    
+    /* Cards: Two columns on tablet */
+    body.wp-filter-active .plugin-cards,
+    body.wp-filter-active .wp-block-post-template,
+    body.wp-filter-active .plugin-browser .plugin-list,
+    body.wp-filter-active .wp-list-table tbody,
+    body.wp-filter-active #the-list {
+        grid-template-columns: repeat(2, 1fr) !important;
     }
 }
 
@@ -1016,6 +1042,25 @@ body.wp-filter-active.wp-filter-results-active .plugin-card footer .usability-sc
         margin-bottom: 10px;
     }
     
+    /* Filter bar: More compact but still horizontal where possible */
+    .wp-plugin-filters-inline {
+        gap: 4px;
+        row-gap: 8px;
+    }
+    
+    .wp-plugin-filters-field {
+        min-width: 100px;
+        max-width: 140px;
+    }
+    
+    .wp-plugin-filter-select,
+    .wp-plugin-filter-input {
+        min-width: 100px;
+        font-size: 14px;
+        height: 36px;
+        padding: 0 8px;
+    }
+    
     /* Single column on mobile like WordPress.org */
     body.wp-filter-active .plugin-cards,
     body.wp-filter-active .wp-block-post-template,
@@ -1023,6 +1068,11 @@ body.wp-filter-active.wp-filter-results-active .plugin-card footer .usability-sc
     body.wp-filter-active .wp-list-table tbody,
     body.wp-filter-active #the-list {
         grid-template-columns: 1fr !important;
+    }
+    
+    /* Plugin cards: Better mobile spacing */
+    .plugin-card {
+        margin-bottom: 20px;
     }
 }
 
@@ -1636,6 +1686,114 @@ body.wp-filter-results-active .wp-compat-unknown,
 }
 
 /* =====================================================
+   Active Installations Color Coding
+   ===================================================== */
+
+/* High installation count - very popular plugins */
+body.wp-filter-active .installations-high,
+body.wp-filter-results-active .installations-high,
+.plugin-card .installations-high,
+.wp-plugin-enhanced .installations-high {
+    color: #00a32a !important; /* WordPress green - 1M+ installs */
+}
+
+/* Medium-high installation count - popular plugins */
+body.wp-filter-active .installations-medium-high,
+body.wp-filter-results-active .installations-medium-high,
+.plugin-card .installations-medium-high,
+.wp-plugin-enhanced .installations-medium-high {
+    color: #4ab866 !important; /* Light green - 100K-1M installs */
+}
+
+/* Medium installation count - moderately used */
+body.wp-filter-active .installations-medium,
+body.wp-filter-results-active .installations-medium,
+.plugin-card .installations-medium,
+.wp-plugin-enhanced .installations-medium {
+    color: #f56e28 !important; /* WordPress orange - 10K-100K installs */
+}
+
+/* Low installation count - less proven */
+body.wp-filter-active .installations-low,
+body.wp-filter-results-active .installations-low,
+.plugin-card .installations-low,
+.wp-plugin-enhanced .installations-low {
+    color: #d63638 !important; /* WordPress red - under 10K installs */
+}
+
+/* =====================================================
+   Usability Rating Color Coding
+   ===================================================== */
+
+/* Excellent usability rating */
+body.wp-filter-active .usability-excellent,
+body.wp-filter-results-active .usability-excellent,
+.plugin-card .usability-excellent,
+.wp-plugin-enhanced .usability-excellent {
+    color: #00a32a !important; /* WordPress green - 4.5+ rating */
+}
+
+/* Good usability rating */
+body.wp-filter-active .usability-good,
+body.wp-filter-results-active .usability-good,
+.plugin-card .usability-good,
+.wp-plugin-enhanced .usability-good {
+    color: #4ab866 !important; /* Light green - 3.5-4.4 rating */
+}
+
+/* Fair usability rating */
+body.wp-filter-active .usability-fair,
+body.wp-filter-results-active .usability-fair,
+.plugin-card .usability-fair,
+.wp-plugin-enhanced .usability-fair {
+    color: #f56e28 !important; /* WordPress orange - 2.5-3.4 rating */
+}
+
+/* Poor usability rating */
+body.wp-filter-active .usability-poor,
+body.wp-filter-results-active .usability-poor,
+.plugin-card .usability-poor,
+.wp-plugin-enhanced .usability-poor {
+    color: #d63638 !important; /* WordPress red - under 2.5 rating */
+}
+
+/* =====================================================
+   Health Score Color Coding
+   ===================================================== */
+
+/* Excellent health score */
+body.wp-filter-active .health-excellent,
+body.wp-filter-results-active .health-excellent,
+.plugin-card .health-excellent,
+.wp-plugin-enhanced .health-excellent {
+    color: #00a32a !important; /* WordPress green - 86-100 score */
+}
+
+/* Good health score */
+body.wp-filter-active .health-good,
+body.wp-filter-results-active .health-good,
+.plugin-card .health-good,
+.wp-plugin-enhanced .health-good {
+    color: #4ab866 !important; /* Light green - 71-85 score */
+}
+
+/* Fair health score */
+body.wp-filter-active .health-fair,
+body.wp-filter-results-active .health-fair,
+.plugin-card .health-fair,
+.wp-plugin-enhanced .health-fair {
+    color: #f56e28 !important; /* WordPress orange - 41-70 score */
+}
+
+/* Poor health score */
+body.wp-filter-active .health-poor,
+body.wp-filter-results-active .health-poor,
+.plugin-card .health-poor,
+.wp-plugin-enhanced .health-poor {
+    color: #d63638 !important; /* WordPress red - 0-40 score */
+}
+
+/* =====================================================
    Plugin Card Actions (Repositioned buttons)
    ===================================================== */
 
@@ -1769,6 +1927,38 @@ body.wp-filter-active.wp-filter-results-active .entry-title a,
 }
 
 @media screen and (max-width: 480px) {
+    /* Filter bar: Stack elements for very small screens */
+    .wp-plugin-filters-controls {
+        padding: 8px;
+    }
+    
+    .wp-plugin-filters-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    
+    .wp-plugin-filters-controls-left,
+    .wp-plugin-filters-controls-right {
+        width: 100%;
+        justify-content: stretch;
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .wp-plugin-filter-select,
+    .wp-plugin-filter-input {
+        width: 100% !important;
+        max-width: none !important;
+    }
+    
+    /* Plugin cards: Optimize for small screens */
+    .plugin-browser .plugin-grid .plugin-card {
+        grid-template-columns: 1fr !important;
+        width: 100% !important;
+        margin: 0 0 10px 0 !important;
+    }
+    
     /* Stack buttons vertically on very small screens */
     .plugin-card-details-action {
         position: relative;
